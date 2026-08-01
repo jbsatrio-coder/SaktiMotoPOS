@@ -1,0 +1,274 @@
+<script>
+alert("VERSI BARU DashboardWOJS");
+let allWO = [];
+
+/**
+ * Load Dashboard
+ */
+window.onload = function () {
+
+  google.script.run
+    .withSuccessHandler(function (data) {
+
+      console.log(data);
+
+      alert("Jumlah WO = " + data.length);
+
+      allWO = data || [];
+
+      try{
+
+        try{
+
+  renderWO(allWO);
+
+}catch(e){
+
+  alert(
+    "renderWO ERROR:\n\n" +
+    e.name +
+    "\n\n" +
+    e.message
+  );
+
+}
+
+      }catch(e){
+
+        alert(e);
+
+      }
+
+    })
+    .withFailureHandler(function(err){
+
+      alert(err.message);
+
+    })
+    .getAllWorkOrder();
+
+};
+    .withFailureHandler(function (err) {
+
+      alert(err.message);
+
+    })
+    .getAllWorkOrder();
+
+};
+
+
+/**
+ * Filter Search
+ */
+function filterWO() {
+
+  const key = document
+    .getElementById("search")
+    .value
+    .toLowerCase()
+    .trim();
+
+  if (key == "") {
+
+    renderWO(allWO);
+
+    return;
+
+  }
+
+  const hasil = allWO.filter(function (r) {
+
+    return (
+
+      String(r.nama || "").toLowerCase().includes(key)
+
+      ||
+
+      String(r.plat || "").toLowerCase().includes(key)
+
+      ||
+
+      String(r.hp || "").toLowerCase().includes(key)
+
+      ||
+
+      String(r.noWO || "").toLowerCase().includes(key)
+
+    );
+
+  });
+
+  renderWO(hasil);
+
+}
+
+
+/**
+ * Render Card
+ */
+function renderWO(data) {
+
+  const div = document.getElementById("listWO");
+
+  div.innerHTML = "";
+
+  if (!data || data.length == 0) {
+
+    div.innerHTML = `
+
+      <div class="col-12">
+
+        <div class="alert alert-warning">
+
+          Tidak ada Work Order
+
+        </div>
+
+      </div>
+
+    `;
+
+    return;
+
+  }
+
+  data.forEach(function (wo) {
+
+    div.innerHTML += `
+
+    <div class="col-md-6 col-lg-4">
+
+      <div class="wo-card p-3">
+
+        <div class="d-flex justify-content-between">
+
+          <h5 class="text-danger fw-bold">
+
+            ${wo.noWO}
+
+          </h5>
+
+          <span class="status ${getStatusClass(wo.status)}">
+
+    ${wo.status}
+
+</span>
+
+        </div>
+
+        <hr>
+
+        <div class="info-label">
+
+          No Polisi
+
+        </div>
+
+        <div class="info-value">
+
+          ${wo.plat}
+
+        </div>
+
+        <br>
+
+        <div class="info-label">
+
+          Pelanggan
+
+        </div>
+
+        <div class="info-value">
+
+          ${wo.nama}
+
+        </div>
+
+        <br>
+
+        <div class="info-label">
+
+          Kendaraan
+
+        </div>
+
+        <div class="info-value">
+
+          ${wo.merk} ${wo.model}
+
+        </div>
+
+        <br>
+
+        <div class="info-label">
+
+          No HP
+
+        </div>
+
+        <div class="info-value">
+
+          ${wo.hp || "-"}
+        </div>
+
+        <br>
+
+        <button
+          class="btn btn-danger btn-detail mt-2"
+          onclick="bukaDetail('${wo.noWO}')">
+
+          DETAIL
+
+        </button>
+
+      </div>
+
+    </div>
+
+    `;
+
+  });
+
+}
+
+
+/**
+ * Buka Detail
+ */
+
+function getStatusClass(status){
+
+  switch(String(status).toUpperCase()){
+
+    case "MENUNGGU":
+      return "status-menunggu";
+
+    case "DIAGNOSA":
+      return "status-diagnosa";
+
+    case "MENUNGGU APPROVAL":
+      return "status-approval";
+
+    case "PROSES":
+      return "status-proses";
+
+    case "QC":
+      return "status-qc";
+
+    case "SIAP DIAMBIL":
+    case "SELESAI":
+      return "status-selesai";
+
+    default:
+      return "";
+
+  }
+
+}
+
+  google.script.run.openDetailWO(noWO);
+
+}
+
+</script>

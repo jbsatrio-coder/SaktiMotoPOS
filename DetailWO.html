@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<base target="_top">
+
+<meta charset="UTF-8">
+
+<?!= include("Bootstrap"); ?>
+
+</head>
+
+<body class="p-4">
+
+<div class="card shadow">
+
+<div class="card-header bg-danger text-white">
+
+<h4 class="mb-0">
+
+<i class="bi bi-tools"></i>
+
+DETAIL WORK ORDER
+
+</h4>
+
+</div>
+
+<div class="card-body">
+
+<h3 id="noWO"></h3>
+
+<hr>
+
+<div class="mb-3">
+
+<b>Pelanggan</b>
+
+<div id="nama"></div>
+
+</div>
+
+<div class="mb-3">
+
+<b>Plat Nomor</b>
+
+<div id="plat"></div>
+
+</div>
+
+<div class="mb-3">
+
+<b>Kendaraan</b>
+
+<div id="kendaraan"></div>
+
+</div>
+
+<div class="mb-3">
+
+<b>Status</b>
+
+<div id="status"></div>
+
+</div>
+
+<hr>
+
+<div class="mb-3">
+
+  <div class="mb-3">
+
+<label class="form-label">
+Keluhan Pelanggan
+</label>
+
+<textarea
+id="keluhan"
+class="form-control"
+rows="4"
+readonly></textarea>
+
+</div>
+
+<label class="form-label">
+Diagnosa
+</label>
+
+<textarea
+id="diagnosa"
+class="form-control"
+rows="4"></textarea>
+
+</div>
+
+<div class="mb-3">
+
+<label class="form-label">
+Status
+</label>
+
+<select
+id="statusWO"
+class="form-select">
+
+<option>MENUNGGU</option>
+<option>DIAGNOSA</option>
+<option>MENUNGGU APPROVAL</option>
+<option>PROSES</option>
+<option>QC</option>
+<option>SIAP DIAMBIL</option>
+<option>SELESAI</option>
+
+</select>
+
+</div>
+
+<div class="mb-3">
+
+<label class="form-label">
+Mekanik
+</label>
+
+<select
+id="mekanik"
+class="form-select">
+</select>
+
+</div>
+
+<button
+class="btn btn-danger w-100"
+onclick="simpanPerubahan()">
+
+<i class="bi bi-floppy"></i>
+
+SIMPAN PERUBAHAN
+
+</button>
+
+</div>
+
+</div>
+
+<script>
+
+const noWO = "<?= noWO ?>";
+
+google.script.run
+
+.withSuccessHandler(function(data){
+
+document.getElementById("noWO").innerHTML = data.noWO;
+document.getElementById("nama").innerHTML = data.nama;
+document.getElementById("plat").innerHTML = data.plat;
+document.getElementById("kendaraan").innerHTML =
+    data.merk + " " + data.model;
+
+document.getElementById("status").innerHTML = data.status;
+
+// isi form edit
+
+document.getElementById("keluhan").value =
+    data.keluhan || "";
+
+alert("Keluhan dari server = " + data.keluhan);
+
+document.getElementById("diagnosa").value =
+    data.diagnosa || "";
+
+document.getElementById("statusWO").value =
+    data.status;
+
+loadMekanik(data.mekanik);
+
+})
+
+.getWorkOrder(noWO);
+
+
+function loadMekanik(selected){
+
+  google.script.run
+    .withSuccessHandler(function(data){
+
+      const select =
+        document.getElementById("mekanik");
+
+      select.innerHTML="";
+
+      data.forEach(function(r){
+
+        const opt =
+          document.createElement("option");
+
+        opt.value = r[0];
+        opt.textContent = r[1];
+
+        if(r[0]==selected){
+          opt.selected=true;
+        }
+
+        select.appendChild(opt);
+
+      });
+
+    })
+    .getMasterMekanik();
+
+}
+
+function simpanPerubahan(){
+
+  const data = {
+
+    noWO : document.getElementById("noWO").innerText,
+
+    diagnosa : document.getElementById("diagnosa").value,
+
+    status : document.getElementById("statusWO").value,
+
+    idMekanik : document.getElementById("mekanik").value
+
+  };
+
+  google.script.run
+    .withSuccessHandler(function(){
+
+      alert("✅ Perubahan berhasil disimpan.");
+
+      google.script.host.close();
+
+    })
+    .withFailureHandler(function(err){
+
+      alert(err.message);
+
+    })
+    .updateWorkOrder(data);
+
+}
+
+</script>
+
+</body>
+
+</html>

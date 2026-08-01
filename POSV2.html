@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+  <base target="_top">
+  <meta charset="UTF-8">
+
+  <?!= include("Bootstrap"); ?>
+  <?!= include("POSV2CSS"); ?>
+
+</head>
+
+<body>
+
+<div class="container-fluid py-3">
+
+    <!-- HEADER -->
+
+    <div class="card shadow-sm mb-3">
+
+        <div class="card-header bg-danger text-white">
+
+            <div class="d-flex justify-content-between align-items-center">
+
+                <h4 class="mb-0">
+                    SAKTI MOTO POS
+                </h4>
+
+                <h5 class="mb-0" id="invoiceNo">
+                    Invoice Baru
+                </h5>
+
+            </div>
+
+        </div>
+
+        <div class="card-body">
+
+            <div class="row g-3">
+
+                <div class="col-md-3">
+
+                    <label class="form-label">
+                        Pelanggan
+                    </label>
+
+                    <div id="customerName" class="form-control">
+                        Belum dipilih
+                    </div>
+
+                </div>
+
+                <div class="col-md-3">
+
+                    <label class="form-label">
+                        Kendaraan
+                    </label>
+
+                    <div id="vehicleName" class="form-control">
+                        -
+                    </div>
+
+                </div>
+
+                <div class="col-md-3">
+
+                    <label class="form-label">
+                        Mekanik
+                    </label>
+
+                    <div id="mechanicName" class="form-control">
+                        -
+                    </div>
+
+                </div>
+
+                <div class="col-md-3">
+
+                    <label class="form-label">
+                        Work Order
+                    </label>
+
+                    <div id="workOrderNo" class="form-control">
+                        -
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- BODY -->
+
+    <div class="row">
+
+        <!-- PANEL KIRI -->
+
+        <div class="col-lg-4">
+
+            <div class="card shadow-sm h-100">
+
+                <div class="card-header">
+                    Cari Barang / Jasa
+                </div>
+
+                <div class="card-body">
+
+                    <input
+                        id="search"
+                        class="form-control form-control-lg"
+                        placeholder="Ketik nama barang atau jasa...">
+
+                    <div
+                        id="searchResult"
+                        class="mt-3">
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- PANEL KANAN -->
+
+        <div class="col-lg-8">
+
+            <div class="card shadow-sm">
+
+                <div class="card-header bg-success text-white">
+                    Keranjang Transaksi
+                </div>
+
+                <div class="card-body">
+
+                    <table class="table table-hover">
+
+                        <thead>
+
+                            <tr>
+                                <th width="60">Qty</th>
+                                <th>Item</th>
+                                <th width="120">Harga</th>
+                                <th width="120">Total</th>
+                                <th width="50"></th>
+                            </tr>
+
+                        </thead>
+
+                        <tbody id="cartBody">
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+            <div class="card shadow-sm mt-3">
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between">
+                        <span>Subtotal Barang</span>
+                        <strong id="barangTotal">Rp0</strong>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <span>Subtotal Jasa</span>
+                        <strong id="jasaTotal">Rp0</strong>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <span>Diskon</span>
+                        <strong id="diskonTotal">Rp0</strong>
+                    </div>
+
+                    <hr>
+
+                    <div class="d-flex justify-content-between">
+                        <h4>TOTAL</h4>
+                        <h4 id="grandTotal">Rp0</h4>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- FOOTER -->
+
+    <div class="text-end mt-4">
+
+        <button class="btn btn-secondary">
+            Batal
+        </button>
+
+        <button class="btn btn-success">
+            Cetak
+        </button>
+
+        <button class="btn btn-danger">
+            Simpan
+        </button>
+
+    </div>
+
+</div>
+
+<?!= include("POSV2JS"); ?>
+
+</body>
+</html>

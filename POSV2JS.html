@@ -1,0 +1,139 @@
+<script>
+
+let cart = [];
+let searchResult = [];
+
+window.onload = function () {
+
+  const txtSearch = document.getElementById("search");
+
+  txtSearch.focus();
+
+  txtSearch.addEventListener("keyup", function () {
+    doSearch(this.value);
+  });
+
+};
+
+function rupiah(number) {
+
+  return "Rp " + Number(number || 0).toLocaleString("id-ID");
+
+}
+
+function doSearch(keyword) {
+
+  keyword = String(keyword || "").trim();
+
+  if (keyword == "") {
+
+    document.getElementById("searchResult").innerHTML = "";
+
+    return;
+
+  }
+
+  google.script.run
+
+    .withSuccessHandler(function (data) {
+
+      searchResult = data || [];
+
+      renderSearch();
+
+    })
+
+    .withFailureHandler(function (err) {
+
+      alert(err.message);
+
+    })
+
+    .searchPOSProduct(keyword);
+
+}
+
+function renderSearch() {
+
+  const div = document.getElementById("searchResult");
+
+  div.innerHTML = "";
+
+  if (searchResult.length == 0) {
+
+    div.innerHTML = "<div class='text-muted'>Tidak ditemukan.</div>";
+
+    return;
+
+  }
+
+  searchResult.forEach(function(item, index){
+
+    div.innerHTML += `
+      <div class="search-item"
+           onclick="addToCart(${index})">
+
+        <strong>${item.nama}</strong><br>
+
+        <small>${item.jenis} | ${rupiah(item.harga)}</small>
+
+      </div>
+    `;
+
+  });
+
+}
+
+function addToCart(index){
+
+  const item = searchResult[index];
+
+  cart.push({
+
+    kode: item.kode,
+
+    nama: item.nama,
+
+    jenis: item.jenis,
+
+    harga: item.harga,
+
+    qty: 1,
+
+    subtotal: item.harga
+
+  });
+
+  renderCart();
+
+}
+
+function renderCart(){
+
+  const tbody = document.getElementById("cartBody");
+
+  tbody.innerHTML = "";
+
+  cart.forEach(function(item){
+
+    tbody.innerHTML += `
+      <tr>
+
+        <td>${item.qty}</td>
+
+        <td>${item.nama}</td>
+
+        <td>${rupiah(item.harga)}</td>
+
+        <td>${rupiah(item.subtotal)}</td>
+
+        <td></td>
+
+      </tr>
+    `;
+
+  });
+
+}
+
+</script>

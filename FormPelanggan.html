@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 18px;
+      color: #222;
+    }
+
+    h2 {
+      margin-top: 0;
+    }
+
+    .section {
+      font-weight: bold;
+      margin-top: 18px;
+      margin-bottom: 8px;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 5px;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      margin-top: 10px;
+      margin-bottom: 4px;
+    }
+
+    input, textarea {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 8px;
+      border: 1px solid #bbb;
+      border-radius: 4px;
+    }
+
+    textarea {
+      resize: vertical;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 10px 18px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    #simpan {
+      background: #222;
+      color: white;
+    }
+
+    #batal {
+      margin-left: 6px;
+    }
+
+    #status {
+      margin-top: 12px;
+      font-size: 13px;
+    }
+  </style>
+</head>
+
+<body>
+
+<h2>Pelanggan Baru</h2>
+
+<div class="section">Data Pelanggan</div>
+
+<label>Nama *</label>
+<input id="nama">
+
+<label>No. HP</label>
+<input id="noHP">
+
+<label>Tanggal Lahir</label>
+<input id="tanggalLahir" type="date">
+
+<label>Alamat</label>
+<textarea id="alamat" rows="2"></textarea>
+
+
+<div class="section">Data Kendaraan</div>
+
+<label>Plat Nomor *</label>
+<input id="plat" placeholder="B 1234 ABC">
+
+<label>Merk</label>
+<input id="merk" placeholder="Honda">
+
+<label>Model</label>
+<input id="model" placeholder="Vario 125">
+
+<label>Tahun</label>
+<input id="tahun" type="number">
+
+<label>Warna</label>
+<input id="warna">
+
+
+<button id="simpan" onclick="simpan()">
+  SIMPAN
+</button>
+
+<button id="batal"
+        onclick="google.script.host.close()">
+  BATAL
+</button>
+
+<div id="status"></div>
+
+
+<script>
+
+function simpan() {
+
+  const tombol = document.getElementById("simpan");
+  const status = document.getElementById("status");
+
+  const data = {
+    nama: document.getElementById("nama").value,
+    noHP: document.getElementById("noHP").value,
+    tanggalLahir:
+      document.getElementById("tanggalLahir").value,
+    alamat: document.getElementById("alamat").value,
+
+    plat: document.getElementById("plat").value,
+    merk: document.getElementById("merk").value,
+    model: document.getElementById("model").value,
+    tahun: document.getElementById("tahun").value,
+    warna: document.getElementById("warna").value
+  };
+
+  if (!data.nama.trim()) {
+    status.innerHTML =
+      "Nama pelanggan wajib diisi.";
+    return;
+  }
+
+  if (!data.plat.trim()) {
+    status.innerHTML =
+      "Plat nomor wajib diisi.";
+    return;
+  }
+
+  tombol.disabled = true;
+  status.innerHTML = "Menyimpan...";
+
+  google.script.run
+
+    .withSuccessHandler(function(result) {
+
+      status.innerHTML =
+        "Pelanggan berhasil disimpan.";
+
+      setTimeout(function() {
+        google.script.host.close();
+      }, 700);
+
+    })
+
+    .withFailureHandler(function(error) {
+
+      status.innerHTML =
+        "Gagal: " + error.message;
+
+      tombol.disabled = false;
+
+    })
+
+    .simpanPelangganBaru(data);
+}
+
+</script>
+
+</body>
+</html>

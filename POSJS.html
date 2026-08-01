@@ -1,0 +1,127 @@
+<script>
+
+// ===============================
+// STATE
+// ===============================
+
+let invoice = [];
+
+let currentWO = null;
+
+
+// ===============================
+// FORMAT RUPIAH
+// ===============================
+
+function rupiah(nilai){
+
+    return "Rp " + Number(nilai).toLocaleString("id-ID");
+
+}
+
+
+// ===============================
+// HITUNG TOTAL
+// ===============================
+
+function hitungTotal(){
+
+    let total = 0;
+
+    invoice.forEach(item=>{
+
+        total += item.qty * item.harga;
+
+    });
+
+    document.getElementById("grandTotal").innerHTML = rupiah(total);
+
+}
+
+
+// ===============================
+// RENDER INVOICE
+// ===============================
+
+function renderInvoice(){
+
+    const body = document.getElementById("invoiceBody");
+
+    body.innerHTML = "";
+
+    invoice.forEach(function(item,index){
+
+        body.innerHTML += `
+
+        <tr>
+
+            <td>
+
+                <strong>${item.nama}</strong>
+
+                <br>
+
+                <small class="text-muted">
+
+                    ${item.jenis}
+
+                </small>
+
+            </td>
+
+            <td>
+
+                ${item.qty}
+
+            </td>
+
+            <td>
+
+                ${rupiah(item.harga)}
+
+            </td>
+
+            <td>
+
+                ${rupiah(item.qty * item.harga)}
+
+            </td>
+
+            <td>
+
+                <button
+
+                    class="btn btn-sm btn-outline-danger"
+
+                    onclick="hapusItem(${index})">
+
+                    ×
+
+                </button>
+
+            </td>
+
+        </tr>
+
+        `;
+
+    });
+
+    hitungTotal();
+
+}
+
+
+// ===============================
+// HAPUS ITEM
+// ===============================
+
+function hapusItem(index){
+
+    invoice.splice(index,1);
+
+    renderInvoice();
+
+}
+
+</script>

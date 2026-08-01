@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+  <base target="_top">
+  <meta charset="UTF-8">
+
+  <?!= include("Bootstrap"); ?>
+  <?!= include("DashboardWOCSS"); ?>
+
+</head>
+
+<body>
+
+<div class="container-fluid py-3">
+
+  <!-- HEADER -->
+  <div class="row align-items-center mb-3">
+
+    <div class="col">
+
+      <h3 class="fw-bold text-danger mb-0">
+        Dashboard Work Order
+      </h3>
+
+      <small class="text-muted">
+        SAKTI MOTO Workshop Management System
+      </small>
+
+    </div>
+
+  </div>
+
+  <!-- SEARCH -->
+
+  <div class="row mb-3">
+
+    <div class="col">
+
+      <input
+        id="search"
+        class="form-control form-control-lg"
+        placeholder="🔍 Cari No WO / Nama / Plat / No HP"
+        onkeyup="filterWO()">
+
+    </div>
+
+  </div>
+
+  <!-- SUMMARY -->
+
+  <div class="row g-3 mb-4">
+
+    <div class="col">
+
+      <div class="summary-card">
+
+        <div class="summary-title">MENUNGGU</div>
+
+        <div id="sumMenunggu" class="summary-value">0</div>
+
+      </div>
+
+    </div>
+
+    <div class="col">
+
+      <div class="summary-card">
+
+        <div class="summary-title">PROSES</div>
+
+        <div id="sumProses" class="summary-value">0</div>
+
+      </div>
+
+    </div>
+
+    <div class="col">
+
+      <div class="summary-card">
+
+        <div class="summary-title">QC</div>
+
+        <div id="sumQC" class="summary-value">0</div>
+
+      </div>
+
+    </div>
+
+    <div class="col">
+
+      <div class="summary-card">
+
+        <div class="summary-title">SELESAI</div>
+
+        <div id="sumSelesai" class="summary-value">0</div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- LIST -->
+
+  <div
+      id="listWO"
+      class="row g-3">
+
+  </div>
+
+</div>
+
+<?!= include("DashboardWOJS"); ?>
+
+</body>
+</html>

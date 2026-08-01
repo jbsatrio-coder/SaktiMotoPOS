@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+  <base target="_top">
+
+  <style>
+
+    @page {
+      size: 58mm auto;
+      margin: 2mm;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      width: 54mm;
+      margin: 0 auto;
+      padding: 2mm;
+      font-family:
+        "Courier New",
+        monospace;
+      font-size: 10px;
+      color: #000;
+      background: #fff;
+    }
+
+    .center {
+      text-align: center;
+    }
+
+    .judul {
+      font-size: 16px;
+      font-weight: bold;
+    }
+
+    .kecil {
+      font-size: 9px;
+    }
+.alamat {
+  font-size: 8px;
+  line-height: 1.3;
+  margin-top: 4px;
+}
+
+.kontak {
+  font-size: 9px;
+  font-weight: bold;
+  margin-top: 4px;
+}
+
+
+    .garis {
+      border-top: 1px dashed #000;
+      margin: 6px 0;
+    }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      gap: 5px;
+    }
+
+    .item {
+      margin-bottom: 6px;
+    }
+
+    .nama-item {
+      font-weight: bold;
+      word-wrap: break-word;
+    }
+
+    .detail-item {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .kanan {
+      text-align: right;
+    }
+
+    .total {
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    #printButton {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 12px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    #status {
+      text-align: center;
+      padding: 20px 0;
+    }
+
+    @media print {
+
+      #printButton {
+        display: none;
+      }
+
+      body {
+        width: 54mm;
+        padding: 0;
+      }
+
+    }
+
+  </style>
+
+</head>
+
+
+<body>
+
+<button
+  id="printButton"
+  onclick="window.print()"
+>
+  CETAK STRUK
+</button>
+
+
+<div id="status">
+  Memuat struk...
+</div>
+
+
+<div id="struk" style="display:none;">
+
+
+ <div class="center">
+
+  <div class="judul">
+    SAKTI MOTO
+  </div>
+
+  <div class="kecil">
+    Bengkel Motor
+  </div>
+
+  <div class="alamat">
+    Jl. Legoso Raya No. 73, Pisangan<br>
+    Ciputat Timur, Tangerang Selatan<br>
+    Banten 15419
+  </div>
+
+  <div class="kontak">
+    WA: +62 858-1000-5491
+  </div>
+
+  
+
+</div>
+
+
+  <div class="garis"></div>
+
+
+  <div class="row">
+    <span>No</span>
+    <span id="noTransaksi"></span>
+  </div>
+
+  <div class="row">
+    <span>Tanggal</span>
+    <span id="tanggal"></span>
+  </div>
+
+  <div class="row">
+    <span>Admin</span>
+    <span id="admin"></span>
+  </div>
+
+
+  <div class="garis"></div>
+
+
+  <div>
+    Pelanggan:
+    <span id="pelanggan"></span>
+  </div>
+
+  <div>
+    Kendaraan:
+    <span id="plat"></span>
+  </div>
+
+  <div>
+    Mekanik:
+    <span id="mekanik"></span>
+  </div>
+
+
+  <div class="garis"></div>
+
+
+  <div id="items"></div>
+
+
+  <div class="garis"></div>
+
+
+  <div class="row">
+    <span>Subtotal</span>
+    <span id="subtotal"></span>
+  </div>
+
+  <div class="row">
+    <span>Diskon</span>
+    <span id="diskon"></span>
+  </div>
+
+
+  <div class="garis"></div>
+
+
+  <div class="row total">
+    <span>TOTAL</span>
+    <span id="grandTotal"></span>
+  </div>
+
+
+  <div class="garis"></div>
+
+
+  <div class="row">
+    <span>Metode</span>
+    <span id="metode"></span>
+  </div>
+
+  <div class="row">
+    <span>Bayar</span>
+    <span id="bayar"></span>
+  </div>
+
+  <div class="row">
+    <span>Kembali</span>
+    <span id="kembalian"></span>
+  </div>
+
+
+  <div class="garis"></div>
+
+
+  <div class="center">
+
+  <b>TERIMA KASIH</b>
+
+  <br><br>
+
+  Terima kasih telah mempercayakan<br>
+  motor Anda kepada SAKTI MOTO.
+
+  <br><br>
+
+  Semoga perjalanan Anda<br>
+  selalu aman dan menyenangkan.
+
+</div>
+
+<div class="garis"></div>
+
+<div class="center kecil">
+  Follow kami untuk tips & info bengkel<br>
+  IG & TikTok: @bengkel_saktimoto
+</div>
+
+<br>
+
+<div class="center kecil">
+  *** SAKTI MOTO ***
+</div>
+
+
+</div>
+
+
+<script>
+
+const noTransaksi =
+  "<?= noTransaksi ?>";
+
+
+function rupiah(nilai) {
+
+  return "Rp" +
+    Number(nilai || 0)
+      .toLocaleString("id-ID");
+
+}
+
+
+google.script.run
+
+  .withSuccessHandler(function(data) {
+
+
+    document.getElementById("noTransaksi")
+      .textContent =
+        data.noTransaksi;
+
+
+    document.getElementById("tanggal")
+      .textContent =
+        data.tanggal;
+
+
+    document.getElementById("admin")
+      .textContent =
+        data.admin;
+
+
+    document.getElementById("pelanggan")
+      .textContent =
+        data.pelanggan;
+
+
+    document.getElementById("plat")
+      .textContent =
+        data.plat;
+
+
+    document.getElementById("mekanik")
+      .textContent =
+        data.mekanik;
+
+
+    // ==========================
+    // ITEMS
+    // ==========================
+
+    const container =
+      document.getElementById("items");
+
+
+    data.items.forEach(function(item) {
+
+
+      const div =
+        document.createElement("div");
+
+
+      div.className =
+        "item";
+
+
+      let detailHarga =
+
+        item.qty +
+        " x " +
+        rupiah(item.harga);
+
+
+      if (item.diskon > 0) {
+
+        detailHarga +=
+          " (-" +
+          rupiah(item.diskon) +
+          ")";
+
+      }
+
+
+      div.innerHTML =
+
+        '<div class="nama-item">' +
+        item.nama +
+        '</div>' +
+
+        '<div class="detail-item">' +
+
+          '<span>' +
+          detailHarga +
+          '</span>' +
+
+          '<span>' +
+          rupiah(item.subtotal) +
+          '</span>' +
+
+        '</div>';
+
+
+      container.appendChild(div);
+
+    });
+
+
+    document.getElementById("subtotal")
+      .textContent =
+        rupiah(data.subtotal);
+
+
+    document.getElementById("diskon")
+      .textContent =
+        rupiah(data.diskonNota);
+
+
+    document.getElementById("grandTotal")
+      .textContent =
+        rupiah(data.grandTotal);
+
+
+    document.getElementById("metode")
+      .textContent =
+        data.metodeBayar;
+
+
+    document.getElementById("bayar")
+      .textContent =
+        rupiah(data.bayar);
+
+
+    document.getElementById("kembalian")
+      .textContent =
+        rupiah(data.kembalian);
+
+
+    document.getElementById("status")
+      .style.display =
+        "none";
+
+
+    document.getElementById("struk")
+      .style.display =
+        "block";
+
+
+  })
+
+
+  .withFailureHandler(function(error) {
+
+    document.getElementById("status")
+      .innerHTML =
+        "Gagal memuat struk:<br>" +
+        error.message;
+
+  })
+
+
+  .getDataStruk(noTransaksi);
+
+</script>
+
+</body>
+
+</html>

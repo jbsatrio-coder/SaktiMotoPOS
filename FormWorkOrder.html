@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<base target="_top">
+
+<meta charset="UTF-8">
+
+<?!= include("Bootstrap"); ?>
+
+<?!= include("WorkOrderCSS"); ?>
+
+</head>
+
+<body>
+
+<div class="card">
+
+<h2>WORK ORDER BARU</h2>
+
+<label>Nomor Polisi</label>
+
+<div class="row">
+
+<input
+id="platNomor"
+class="flex1">
+
+<button
+type="button"
+class="searchBtn"
+onclick="cariPlat()">
+
+🔍 Cari
+
+</button>
+</div>
+
+<div id="hasilCari"
+style="
+margin-top:8px;
+border:1px solid #ddd;
+border-radius:6px;
+display:none;
+max-height:220px;
+overflow-y:auto;
+background:#fff;
+">
+</div>
+
+<label>Nama Pelanggan</label>
+
+<input
+id="namaPelanggan"
+readonly>
+
+<input type="hidden" id="idPelanggan">
+
+<input type="hidden" id="idKendaraan">
+
+<label>Kendaraan</label>
+
+<input
+id="kendaraan"
+readonly>
+
+<label>No HP</label>
+
+<input
+id="nohp"
+readonly>
+
+<label>KM</label>
+
+<input
+type="number"
+id="km">
+
+<label>Keluhan</label>
+
+<textarea
+id="keluhan"
+rows="3"></textarea>
+
+<label>Catatan Tambahan</label>
+
+<textarea
+rows="3"
+id="catatan"></textarea>
+
+<label>Mekanik</label>
+
+<select id="mekanik"></select>
+
+<label>Prioritas</label>
+
+<select id="prioritas">
+
+<option>NORMAL</option>
+
+<option>URGENT</option>
+
+<option>GARANSI</option>
+
+</select>
+
+<button
+type="button"
+class="btn-full"
+onclick="simpanWorkOrder()">
+
+SIMPAN WORK ORDER
+
+</button>
+</div>
+
+<script>
+function cariPlat() {
+
+  const plat = document.getElementById("platNomor").value;
+
+  google.script.run
+    .withSuccessHandler(function(data){
+
+      if (!data) {
+        alert("Plat nomor tidak ditemukan.");
+        return;
+      }
+
+      document.getElementById("namaPelanggan").value = data.nama;
+      document.getElementById("kendaraan").value = data.merk + " " + data.model;
+
+      document.getElementById("idPelanggan").value = data.idPelanggan;
+
+document.getElementById("idKendaraan").value = data.idKendaraan;
+
+
+
+      // Tambahkan jika field ini sudah ada di HTML
+      if (document.getElementById("km")) {
+        document.getElementById("km").value = data.kilometer || "";
+      }
+
+    })
+    .withFailureHandler(function(err){
+      alert("ERROR: " + err.message);
+    })
+    .findKendaraanByPlat(plat);
+
+}
+document.addEventListener("DOMContentLoaded", function () {
+
+  loadMekanik();
+
+  document
+    .getElementById("platNomor")
+    .addEventListener("input", function(){
+
+      const keyword = this.value.trim();
+
+      if(keyword.length < 2){
+
+        document.getElementById("hasilCari").style.display = "none";
+
+        return;
+
+      }
+
+      cariKendaraan();
+
+    });
+
+});
+
+function cariKendaraan(){
+
+  const keyword =
+    document.getElementById("platNomor").value;
+
+  if(keyword.trim()=="") return;
+
+  google.script.run
+    .withSuccessHandler(renderHasilCari)
+    .searchKendaraan(keyword);
+
+}
+function loadMekanik() {
+
+  google.script.run
+    .withSuccessHandler(function(data){
+
+      renderMekanik(data);
+
+    })
+    .withFailureHandler(function(err){
+
+      alert(err.message);
+
+    })
+    .getMasterMekanik();
+
+}
+
+function renderMekanik(data){
+
+  const select =
+    document.getElementById("mekanik");
+
+  select.innerHTML = "";
+
+  const kosong =
+    document.createElement("option");
+
+  kosong.value = "";
+
+  kosong.textContent =
+    "-- Pilih Mekanik --";
+
+  select.appendChild(kosong);
+
+  data.forEach(function(row){
+
+    const option =
+      document.createElement("option");
+
+    option.value = row[0];      // ID Mekanik
+
+    option.textContent = row[1]; // Nama Mekanik
+
+    select.appendChild(option);
+
+  });
+
+}
+
+function renderHasilCari(list){
+
+  const box = document.getElementById("hasilCari");
+
+  box.innerHTML = "";
+
+  if(list.length === 0){
+
+    box.style.display = "none";
+
+    return;
+
+  }
+
+  box.style.display = "block";
+
+  list.forEach(function(item){
+
+    const div = document.createElement("div");
+
+    div.style.padding = "10px";
+    div.style.cursor = "pointer";
+    div.style.borderBottom = "1px solid #eeeeee";
+
+    div.innerHTML =
+      "<div style='font-weight:bold'>" + item.nama + "</div>" +
+      "<div style='font-size:13px;color:#666'>" +
+      item.plat +
+      " • " +
+      item.merk +
+      " " +
+      item.model +
+      "</div>";
+
+    div.onmouseover = function(){
+      div.style.background = "#f5f5f5";
+    };
+
+    div.onmouseout = function(){
+      div.style.background = "white";
+    };
+
+    div.onclick = function(){
+
+      pilihKendaraan(item);
+
+    };
+
+    box.appendChild(div);
+
+  });
+
+}
+
+function pilihKendaraan(item){
+
+  document.getElementById("platNomor").value =
+    item.plat;
+
+  document.getElementById("hasilCari").style.display =
+    "none";
+
+  cariPlat();
+
+}
+
+function pilihKendaraan(data){
+
+  document.getElementById("platNomor").value=data.plat;
+
+  document.getElementById("hasilCari").style.display="none";
+
+  cariPlat();
+
+}
+
+function testData(){
+
+  alert("Belum dibuat.");
+
+}
+
+function simpanWorkOrder(){
+
+  const data = {
+
+    idPelanggan :
+      document.getElementById("idPelanggan").value,
+
+    namaPelanggan :
+      document.getElementById("namaPelanggan").value,
+
+    idKendaraan :
+      document.getElementById("idKendaraan").value,
+
+    plat :
+      document.getElementById("platNomor").value,
+
+    merk :
+      document.getElementById("kendaraan").value.split(" ")[0],
+
+    model :
+      document.getElementById("kendaraan").value.split(" ").slice(1).join(" "),
+
+    km :
+      document.getElementById("km").value,
+
+    keluhan :
+      document.getElementById("keluhan").value,
+
+    catatan :
+      document.getElementById("catatan").value,
+
+    idMekanik :
+      document.getElementById("mekanik").value,
+
+    prioritas :
+      document.getElementById("prioritas").value
+
+  };
+
+  google.script.run
+
+    .withSuccessHandler(function(noWO){
+
+      alert(
+
+        "✅ Work Order berhasil dibuat\n\n" +
+
+        noWO
+
+      );
+
+      google.script.host.close();
+
+    })
+
+    .withFailureHandler(function(err){
+
+      alert(err.message);
+
+    })
+
+    .saveWorkOrder(data);
+
+}
+
+</script>
+
+</body>
+
+</html>
