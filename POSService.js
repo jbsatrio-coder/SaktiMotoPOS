@@ -1,3 +1,52 @@
-function myFunction() {
-  
-}
+const POSService = {
+
+  cart: [],
+
+  addItem(item){
+
+    const existing = this.cart.find(x => x.kode === item.kode);
+
+    if(existing){
+
+      existing.qty++;
+      existing.subtotal = existing.qty * existing.harga;
+
+      return;
+
+    }
+
+    this.cart.push({
+
+      kode: item.kode,
+      nama: item.nama,
+      jenis: item.jenis,
+
+      harga: Number(item.harga),
+
+      qty: 1,
+
+      subtotal: Number(item.harga)
+
+    });
+
+  },
+
+  getCart(){
+
+    return this.cart;
+
+  },
+
+  clear(){
+
+    this.cart=[];
+
+  },
+
+  getGrandTotal(){
+
+    return this.cart.reduce((t,x)=>t+x.subtotal,0);
+
+  }
+
+};
