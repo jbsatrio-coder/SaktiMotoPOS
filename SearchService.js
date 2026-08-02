@@ -1,17 +1,29 @@
 const SearchService = {
 
-  search(keyword) {
+ search(keyword) {
 
-    const hasil = ProductRepository.search(keyword);
+  const hasil = ProductRepository.search(keyword);
 
-    Logger.log("HASIL = " + hasil.length);
+  Logger.log("HASIL = " + hasil.length);
 
-    // Tes kirim object yang sangat sederhana
-    return hasil.map(item => ({
-      kode: item.kode,
-      nama: item.nama
-    }));
+  return hasil.map(item => ({
 
-  }
+    kode: item.kode,
+    barcode: item.barcode || "",
+
+    nama: item.nama,
+    jenis: item.jenis,
+
+    kategori: item.kategori || "",
+    satuan: item.satuan || "",
+
+    // sementara kirim apa adanya
+    harga: item.harga,
+
+    stok: item.stok || 0
+
+  }));
+
+}
 
 };
