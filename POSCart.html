@@ -33,6 +33,42 @@ const POSCart = {
 
   },
 
+  increaseQty(kode){
+
+  const item = this.cart.find(x => x.kode === kode);
+
+  if(!item) return;
+
+  item.qty++;
+  item.subtotal = item.qty * item.harga;
+
+},
+
+decreaseQty(kode){
+
+  const item = this.cart.find(x => x.kode === kode);
+
+  if(!item) return;
+
+  item.qty--;
+
+  if(item.qty <= 0){
+
+    this.removeItem(kode);
+    return;
+
+  }
+
+  item.subtotal = item.qty * item.harga;
+
+},
+
+removeItem(kode){
+
+  this.cart = this.cart.filter(x => x.kode !== kode);
+
+},
+
   getCart(){
 
     return this.cart;

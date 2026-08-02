@@ -104,27 +104,88 @@ function renderCart(){
 
   tbody.innerHTML = "";
 
- POSCart.getCart().forEach(function(item){
+  POSCart.getCart().forEach(function(item){
 
     tbody.innerHTML += `
       <tr>
 
-        <td>${item.qty}</td>
+        <td class="text-center align-middle">
 
-        <td>${item.nama}</td>
+          <div class="d-flex flex-column align-items-center">
 
-        <td>${rupiah(item.harga)}</td>
+            <button
+              class="btn btn-sm btn-outline-success mb-1"
+              onclick="increaseQty('${item.kode}')">
+              +
+            </button>
 
-        <td>${rupiah(item.subtotal)}</td>
+            <strong class="my-1">${item.qty}</strong>
 
-        <td></td>
+            <button
+              class="btn btn-sm btn-outline-danger mt-1"
+              onclick="decreaseQty('${item.kode}')">
+              −
+            </button>
+
+          </div>
+
+        </td>
+
+        <td>
+          ${item.nama}
+        </td>
+
+        <td class="text-end">
+          ${rupiah(item.harga)}
+        </td>
+
+        <td class="text-end fw-semibold">
+          ${rupiah(item.subtotal)}
+        </td>
+
+        <td class="text-center">
+
+          <button
+            class="btn btn-sm btn-danger"
+            onclick="removeItem('${item.kode}')">
+
+            🗑
+
+          </button>
+
+        </td>
 
       </tr>
     `;
 
   });
- document.getElementById("grandTotal").innerHTML =
-    rupiah(POSCart.getGrandTotal()); 
+
+  document.getElementById("grandTotal").innerHTML =
+    rupiah(POSCart.getGrandTotal());
+
+}
+
+function increaseQty(kode){
+
+  POSCart.increaseQty(kode);
+
+  renderCart();
+
+}
+
+function decreaseQty(kode){
+
+  POSCart.decreaseQty(kode);
+
+  renderCart();
+
+}
+
+function removeItem(kode){
+
+  POSCart.removeItem(kode);
+
+  renderCart();
 
 }
 
