@@ -35,13 +35,16 @@ function doSearch(keyword) {
 
   google.script.run
 
-    .withSuccessHandler(function (data) {
+    .withSuccessHandler(function(data) {
 
-  console.log("DATA DARI SERVER =", data);
+    console.log("RAW DATA =", data);
+    console.log("TYPE =", typeof data);
+    console.log("IS ARRAY =", Array.isArray(data));
+    console.log("LENGTH =", data ? data.length : "NULL");
 
-  searchResult = data || [];
+    searchResult = data || [];
 
-  renderSearch();
+    renderSearch();
 
 })
 

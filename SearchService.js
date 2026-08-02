@@ -1,18 +1,15 @@
-/**
- * ============================================
- * Search Service
- * ============================================
- */
-
 const SearchService = {
 
   search(keyword) {
 
-    keyword = String(keyword || "").trim();
+    Logger.log("=== SEARCH SERVICE ===");
+    Logger.log(keyword);
 
-    if (!keyword) return [];
+    const hasil = ProductRepository.search(keyword);
 
-    return ProductRepository.search(keyword);
+    Logger.log("HASIL = " + hasil.length);
+
+    return hasil;
 
   }
 
