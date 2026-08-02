@@ -37,11 +37,13 @@ function doSearch(keyword) {
 
     .withSuccessHandler(function (data) {
 
-      searchResult = data || [];
+  console.log("DATA DARI SERVER =", data);
 
-      renderSearch();
+  searchResult = data || [];
 
-    })
+  renderSearch();
+
+})
 
     .withFailureHandler(function (err) {
 
@@ -85,10 +87,6 @@ function renderSearch() {
 }
 
 function addToCart(index){
-
-  const item = searchResult[index];
-
- function addToCart(index){
 
   POSService.addItem(searchResult[index]);
 

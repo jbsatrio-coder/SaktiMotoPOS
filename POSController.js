@@ -30,13 +30,9 @@ function openPOSV2() {
 /**
  * Smart Search
  */
-function searchPOSProduct(keyword){
+function searchPOSProduct(keyword) {
 
-  const hasil = ProductRepository.search(keyword);
-
-  Logger.log(JSON.stringify(hasil, null, 2));
-
-  return hasil;
+  return SearchService.search(keyword);
 
 }
 

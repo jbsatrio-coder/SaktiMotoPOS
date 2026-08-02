@@ -1,14 +1,19 @@
+function onOpen(e) {
+  buildMenu_();
+}
+
 function buildMenu_() {
 
-  const ui = SpreadsheetApp.getUi();
+  SpreadsheetApp.getUi()
+    .createMenu("SAKTI MOTO")
 
-  ui.createMenu("SAKTI MOTO")
+    .addItem("🏍️ POS V2", "openPOSV2")
+
+    .addSeparator()
 
     .addItem("🏍️ Work Order Baru", "showFormWorkOrder")
 
-    .addItem(
-"Dashboard Work Order",
-"showDashboardWO")
+    .addItem("📋 Dashboard Work Order", "showDashboardWO")
 
     .addSeparator()
 
@@ -19,7 +24,5 @@ function buildMenu_() {
 }
 
 function testMenu() {
-
   SpreadsheetApp.getUi().alert("Menu OK");
-
 }
