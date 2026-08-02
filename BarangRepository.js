@@ -21,7 +21,7 @@ const BarangRepository = {
     .getValues()
     .slice(1);
 
-}
+},
 
   search(keyword) {
 
