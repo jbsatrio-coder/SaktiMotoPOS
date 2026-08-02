@@ -14,24 +14,26 @@ const ProductRepository = {
 
     keyword = String(keyword || "").trim();
 
-    const barang = BarangRepository
-      .search(keyword)
-      .map(r => ({
+   const barang = BarangRepository
+  .search(keyword)
+  .map(r => ({
 
-        sumber: "BARANG",
-        jenis: "BARANG",
+    sumber: "BARANG",
+    jenis: "BARANG",
 
-        kode: r[COL_BARANG.KODE],
-        barcode: r[COL_BARANG.BARCODE],
-        nama: r[COL_BARANG.NAMA],
+    kode: r[COL_BARANG.KODE],
+    barcode: r[COL_BARANG.BARCODE],
+    nama: r[COL_BARANG.NAMA],
 
-        kategori: r[COL_BARANG.KATEGORI],
-        satuan: r[COL_BARANG.SATUAN],
+    kategori: r[COL_BARANG.KATEGORI],
+    satuan: r[COL_BARANG.SATUAN],
 
-        harga: Number(r[COL_BARANG.HARGAJUAL] || 0),
-        stok: Number(r[COL_BARANG.STOK])
+    // sementara kirim string asli
+    harga: r[COL_BARANG.HARGAJUAL],
 
-      }));
+    stok: Number(r[COL_BARANG.STOK])
+
+  }));
 
 
     const jasa = JasaRepository
