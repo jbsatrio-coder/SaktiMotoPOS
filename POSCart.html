@@ -85,8 +85,24 @@ removeItem(kode){
 
     return this.cart.reduce((t,x)=>t+x.subtotal,0);
 
-  }
+  },
 
+
+getBarangTotal(){
+
+  return this.cart
+    .filter(x => x.jenis === "BARANG")
+    .reduce((t, x) => t + x.subtotal, 0);
+
+},
+
+getJasaTotal(){
+
+  return this.cart
+    .filter(x => x.jenis === "JASA")
+    .reduce((t, x) => t + x.subtotal, 0);
+
+}
 };
 
 </script>

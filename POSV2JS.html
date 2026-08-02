@@ -160,7 +160,13 @@ function renderCart(){
 
   });
 
-  document.getElementById("grandTotal").innerHTML =
+  document.getElementById("barangTotal").innerHTML =
+    rupiah(POSCart.getBarangTotal());
+
+document.getElementById("jasaTotal").innerHTML =
+    rupiah(POSCart.getJasaTotal());
+
+document.getElementById("grandTotal").innerHTML =
     rupiah(POSCart.getGrandTotal());
 
 }
