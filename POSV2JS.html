@@ -1,6 +1,6 @@
 <script>
 
-// Cart dipindahkan ke POSService
+// Cart dipindahkan ke POSCart
 let searchResult = [];
 
 window.onload = function () {
@@ -91,7 +91,7 @@ function renderSearch() {
 
 function addToCart(index){
 
-  POSService.addItem(searchResult[index]);
+  POSCart.addItem(searchResult[index]);
 
   renderCart();
 
@@ -103,7 +103,7 @@ function renderCart(){
 
   tbody.innerHTML = "";
 
- POSService.getCart().forEach(function(item){
+ POSCart.getCart().forEach(function(item){
 
     tbody.innerHTML += `
       <tr>
@@ -123,7 +123,7 @@ function renderCart(){
 
   });
  document.getElementById("grandTotal").innerHTML =
-    rupiah(POSService.getGrandTotal()); 
+    rupiah(POSCart.getGrandTotal()); 
 
 }
 
