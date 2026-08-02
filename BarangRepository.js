@@ -29,9 +29,7 @@ const BarangRepository = {
 
   const data = this.getAll();
 
-  Logger.log("Jumlah data = " + data.length);
-
-  Logger.log("Baris pertama = " + JSON.stringify(data[0]));
+  
 
   return data.filter(r => {
 

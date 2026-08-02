@@ -6,6 +6,8 @@ const POSCart = {
 
   addItem(item){
 
+    if (!item) return;
+
     const existing = this.cart.find(x => x.kode === item.kode);
 
     if(existing){
@@ -23,11 +25,11 @@ const POSCart = {
       nama: item.nama,
       jenis: item.jenis,
 
-      harga: Number(item.harga),
+      harga: parseNumber(item.harga),
 
       qty:1,
 
-      subtotal:Number(item.harga)
+      subtotal:parseNumber(item.harga)
 
     });
 

@@ -12,67 +12,52 @@ const ProductRepository = {
    */
   search(keyword) {
 
-    keyword = String(keyword || "").trim();
+  keyword = String(keyword || "")
+    .toLowerCase()
+    .trim();
 
-   const barang = BarangRepository
-  .search(keyword)
-  .map(r => ({
+  const barang = BarangRepository
+    .search(keyword)
+    .map(r => ({
 
-    sumber: "BARANG",
-    jenis: "BARANG",
+      sumber: "BARANG",
+      jenis: "BARANG",
 
-    kode: r[COL_BARANG.KODE],
-    barcode: r[COL_BARANG.BARCODE],
-    nama: r[COL_BARANG.NAMA],
+      kode: r[COL_BARANG.KODE],
+      barcode: r[COL_BARANG.BARCODE],
+      nama: r[COL_BARANG.NAMA],
 
-    kategori: r[COL_BARANG.KATEGORI],
-    satuan: r[COL_BARANG.SATUAN],
+      kategori: r[COL_BARANG.KATEGORI],
+      satuan: r[COL_BARANG.SATUAN],
 
-    // sementara kirim string asli
-    harga: parseNumber(r[COL_BARANG.HARGAJUAL]),
+      harga: parseNumber(r[COL_BARANG.HARGAJUAL]),
+      stok: parseNumber(r[COL_BARANG.STOK])
 
-stok: parseNumber(r[COL_BARANG.STOK])
+    }));
 
-  }));
+  const jasa = JasaRepository
+    .search(keyword)
+    .filter(r => r != null)
+    .map(r => ({
 
+      sumber: "JASA",
+      jenis: "JASA",
 
-    const hasilJasa = JasaRepository.search(keyword);
+      kode: r[COL_JASA.KODE],
+      nama: r[COL_JASA.NAMA],
 
-Logger.log("JUMLAH JASA = " + hasilJasa.length);
+      kategori: r[COL_JASA.KATEGORI],
 
-hasilJasa.forEach((r, i) => {
-  Logger.log("JASA[" + i + "] = " + JSON.stringify(r));
-});
+      harga: parseNumber(r[COL_JASA.HARGA]),
+      komisi: parseNumber(r[COL_JASA.KOMISI]),
+      estimasi: parseNumber(r[COL_JASA.ESTIMASI])
 
-const jasa = hasilJasa.map((r, i) => {
+    }));
 
-  if (!r) {
-    throw new Error("Data jasa ke-" + i + " bernilai undefined");
-  }
+  return [...barang, ...jasa]
+    .sort((a, b) => a.nama.localeCompare(b.nama));
 
-  return {
-
-    sumber: "JASA",
-    jenis: "JASA",
-
-    kode: r[COL_JASA.KODE],
-    nama: r[COL_JASA.NAMA],
-
-    kategori: r[COL_JASA.KATEGORI],
-
-    harga: parseNumber(r[COL_JASA.HARGA]),
-    komisi: parseNumber(r[COL_JASA.KOMISI]),
-    estimasi: parseNumber(r[COL_JASA.ESTIMASI])
-
-  };
-
-});
-
-
-    return [...barang, ...jasa]
-      .sort((a, b) => a.nama.localeCompare(b.nama));
-
-  },
+},
 
   /**
    * Cari berdasarkan kode
@@ -94,8 +79,8 @@ const jasa = hasilJasa.map((r, i) => {
         kategori: barang[COL_BARANG.KATEGORI],
         satuan: barang[COL_BARANG.SATUAN],
 
-        harga: Number(barang[COL_BARANG.HARGAJUAL]),
-        stok: Number(barang[COL_BARANG.STOK])
+        harga: parseNumber(barang[COL_BARANG.HARGAJUAL]),
+        stok: parseNumber(barang[COL_BARANG.STOK])
       };
 
     }
@@ -113,9 +98,9 @@ const jasa = hasilJasa.map((r, i) => {
 
         kategori: jasa[COL_JASA.KATEGORI],
 
-        harga: Number(jasa[COL_JASA.HARGA]),
-        komisi: Number(jasa[COL_JASA.KOMISI]),
-        estimasi: Number(jasa[COL_JASA.ESTIMASI])
+        harga: parseNumber(jasa[COL_JASA.HARGA]),
+        komisi: parseNumber(jasa[COL_JASA.KOMISI]),
+        estimasi: parseNumber(jasa[COL_JASA.ESTIMASI])
       };
 
     }
