@@ -36,27 +36,39 @@ stok: parseNumber(r[COL_BARANG.STOK])
   }));
 
 
-    const jasa = JasaRepository
-      .search(keyword)
-      .map(r => ({
+    const hasilJasa = JasaRepository.search(keyword);
 
-        sumber: "JASA",
-        jenis: "JASA",
+Logger.log("JUMLAH JASA = " + hasilJasa.length);
 
-        kode: r[COL_JASA.KODE],
-        nama: r[COL_JASA.NAMA],
+hasilJasa.forEach((r, i) => {
+  Logger.log("JASA[" + i + "] = " + JSON.stringify(r));
+});
 
-        kategori: r[COL_JASA.KATEGORI],
+const jasa = hasilJasa.map((r, i) => {
 
-        harga: parseNumber(r[COL_JASA.HARGA]),
-komisi: parseNumber(r[COL_JASA.KOMISI]),
-estimasi: parseNumber(r[COL_JASA.ESTIMASI])
+  if (!r) {
+    throw new Error("Data jasa ke-" + i + " bernilai undefined");
+  }
 
-      }));
+  return {
 
-Logger.log("=== PRODUCT PERTAMA ===");
-Logger.log(JSON.stringify(barang[0]));
-Logger.log("TYPE HARGA = " + typeof barang[0].harga);
+    sumber: "JASA",
+    jenis: "JASA",
+
+    kode: r[COL_JASA.KODE],
+    nama: r[COL_JASA.NAMA],
+
+    kategori: r[COL_JASA.KATEGORI],
+
+    harga: parseNumber(r[COL_JASA.HARGA]),
+    komisi: parseNumber(r[COL_JASA.KOMISI]),
+    estimasi: parseNumber(r[COL_JASA.ESTIMASI])
+
+  };
+
+});
+
+
     return [...barang, ...jasa]
       .sort((a, b) => a.nama.localeCompare(b.nama));
 

@@ -25,27 +25,32 @@ const JasaRepository = {
 
   search(keyword) {
 
-    keyword = String(keyword || "").toLowerCase().trim();
+  keyword = String(keyword || "").toLowerCase().trim();
 
-    return this.getAll().filter(r => {
+  const hasil = this.getAll().filter(r => {
 
-      return (
+    return (
 
-        String(r[COL_JASA.NAMA]).toLowerCase().includes(keyword)
+      String(r[COL_JASA.NAMA]).toLowerCase().includes(keyword)
 
-        ||
+      ||
 
-        String(r[COL_JASA.KODE]).toLowerCase().includes(keyword)
+      String(r[COL_JASA.KODE]).toLowerCase().includes(keyword)
 
-        ||
+      ||
 
-        String(r[COL_JASA.KATEGORI]).toLowerCase().includes(keyword)
+      String(r[COL_JASA.KATEGORI]).toLowerCase().includes(keyword)
 
-      );
+    );
 
-    });
+  });
 
-  },
+  Logger.log("=== HASIL JASA ===");
+  Logger.log(JSON.stringify(hasil));
+
+  return hasil;
+
+},
 
   getByKode(kode) {
 

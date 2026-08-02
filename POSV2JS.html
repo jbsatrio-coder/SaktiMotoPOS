@@ -15,6 +15,14 @@ window.onload = function () {
 
 };
 
+const txtPayment = document.getElementById("paymentAmount");
+
+txtPayment.addEventListener("input", function(){
+
+  updatePayment();
+
+});
+
 function rupiah(number) {
 
   return "Rp " + Number(number || 0).toLocaleString("id-ID");
@@ -51,9 +59,11 @@ function doSearch(keyword) {
 
     .withFailureHandler(function (err) {
 
-      alert(err.message);
+    console.error(err);
 
-    })
+    // alert(err.message);
+
+})
 
     .searchPOSProduct(keyword);
 
@@ -169,6 +179,8 @@ document.getElementById("jasaTotal").innerHTML =
 document.getElementById("grandTotal").innerHTML =
     rupiah(POSCart.getGrandTotal());
 
+ updatePayment();   
+
 }
 
 function increaseQty(kode){
@@ -192,6 +204,28 @@ function removeItem(kode){
   POSCart.removeItem(kode);
 
   renderCart();
+
+}
+
+function updatePayment(){
+
+  const bayar = Number(
+    document.getElementById("paymentAmount").value || 0
+  );
+
+  const total = POSCart.getGrandTotal();
+
+  const kembali = bayar - total;
+
+  const btnSave = document.getElementById("btnSave");
+
+  document.getElementById("changeAmount").innerHTML =
+    rupiah(Math.max(kembali,0));
+
+  // Jika tombol sudah ada, baru ubah statusnya
+  if (btnSave) {
+    btnSave.disabled = bayar < total;
+  }
 
 }
 
