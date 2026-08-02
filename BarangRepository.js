@@ -12,16 +12,16 @@ const BarangRepository = {
 
   getAll() {
 
-    const sh = this.sheet();
+  const sh = this.sheet();
 
-    if (sh.getLastRow() < 2) return [];
+  if (sh.getLastRow() < 2) return [];
 
-    return sh
-      .getDataRange()
-      .getDisplayValues()
-      .slice(1);
+  return sh
+    .getDataRange()
+    .getValues()
+    .slice(1);
 
-  },
+}
 
   search(keyword) {
 

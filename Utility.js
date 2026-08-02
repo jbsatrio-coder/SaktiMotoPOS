@@ -45,3 +45,14 @@ function toast_(message){
     .toast(message);
 
 }
+
+function parseNumber(value) {
+
+  if (value === "" || value == null) return 0;
+
+  return Number(
+    String(value).replace(/,/g, "")
+  ) || 0;
+
+}
+

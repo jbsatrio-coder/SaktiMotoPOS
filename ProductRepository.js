@@ -29,9 +29,9 @@ const ProductRepository = {
     satuan: r[COL_BARANG.SATUAN],
 
     // sementara kirim string asli
-    harga: r[COL_BARANG.HARGAJUAL],
+    harga: parseNumber(r[COL_BARANG.HARGAJUAL]),
 
-    stok: Number(r[COL_BARANG.STOK])
+stok: parseNumber(r[COL_BARANG.STOK])
 
   }));
 
@@ -48,9 +48,9 @@ const ProductRepository = {
 
         kategori: r[COL_JASA.KATEGORI],
 
-        harga: Number(r[COL_JASA.HARGA] || 0),
-        komisi: Number(r[COL_JASA.KOMISI]),
-        estimasi: Number(r[COL_JASA.ESTIMASI])
+        harga: parseNumber(r[COL_JASA.HARGA]),
+komisi: parseNumber(r[COL_JASA.KOMISI]),
+estimasi: parseNumber(r[COL_JASA.ESTIMASI])
 
       }));
 
