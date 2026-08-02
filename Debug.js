@@ -68,3 +68,26 @@ function testSheetBarang() {
   );
 
 }
+
+function testCellType() {
+
+  const sh = SpreadsheetApp.getActive()
+    .getSheetByName("02_MasterBarang");
+
+  Logger.log(sh.getRange("N2").getValue());
+  Logger.log(typeof sh.getRange("N2").getValue());
+
+}
+
+function testGetValues() {
+
+  const sh = SpreadsheetApp
+    .getActiveSpreadsheet()
+    .getSheetByName(CONFIG.SHEET.BARANG);
+
+  const value = sh.getRange(2, 14).getValue();   // kolom N (Harga Jual)
+
+  Logger.log(value);
+  Logger.log(typeof value);
+
+}

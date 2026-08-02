@@ -54,7 +54,9 @@ estimasi: parseNumber(r[COL_JASA.ESTIMASI])
 
       }));
 
-
+Logger.log("=== PRODUCT PERTAMA ===");
+Logger.log(JSON.stringify(barang[0]));
+Logger.log("TYPE HARGA = " + typeof barang[0].harga);
     return [...barang, ...jasa]
       .sort((a, b) => a.nama.localeCompare(b.nama));
 
