@@ -134,13 +134,17 @@ function logStep(step){
 
     items: payload.items
 
-  });
+});
 
-  logStep("Save Detail");
+logStep("Save Detail");
 
-  
-  logStep("TOTAL");
-  
+// Kurangi stok
+
+
+logStep("TOTAL");
+
+  StockService.reduceStock(payload.items);
+
   return {
 
     success: true,
