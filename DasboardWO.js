@@ -152,3 +152,13 @@ function getWorkOrder(noWO){
   return null;
 
 }
+
+function testGetAllWorkOrder(){
+
+  const data = getAllWorkOrder();
+
+  Logger.log("Jumlah WO = " + data.length);
+
+  Logger.log(data);
+
+}

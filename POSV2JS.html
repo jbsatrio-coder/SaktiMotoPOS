@@ -1,7 +1,45 @@
 <script>
 
+function parseNumber(value){
+
+  if(value === null || value === undefined) return 0;
+
+  if(typeof value === "number") return value;
+
+  return Number(
+    String(value)
+        .replace(/\./g, "")   // hapus titik ribuan
+        .replace(/,/g, "")    // tetap dukung koma jika ada
+        .trim()
+) || 0;
+
+}
 // Cart dipindahkan ke POSCart
 let searchResult = [];
+
+const POSState = {
+
+  pelanggan: {
+    id: "PLG000001",
+    nama: "TEST"
+  },
+
+  kendaraan: {
+    id: "KND000001",
+    platNomor: "B1234XYZ"
+  },
+
+  transaksi: {
+
+    mekanikUtama: "MKN001",
+
+    workOrder: "",
+
+    metodeBayar: "TUNAI"
+
+  }
+
+};
 
 window.onload = function () {
 
@@ -19,13 +57,32 @@ const txtPayment = document.getElementById("paymentAmount");
 
 txtPayment.addEventListener("input", function(){
 
-  updatePayment();
+    const posisiCursor = this.selectionStart;
+
+    this.value = formatNumber(this.value);
+
+    this.setSelectionRange(
+        this.value.length,
+        this.value.length
+    );
+
+    updatePayment();
 
 });
 
 function rupiah(number) {
 
   return "Rp " + Number(number || 0).toLocaleString("id-ID");
+
+}
+
+function formatNumber(value){
+
+    const angka = parseNumber(value);
+
+    if (angka === 0) return "";
+
+    return angka.toLocaleString("id-ID");
 
 }
 
@@ -45,11 +102,6 @@ function doSearch(keyword) {
 
     .withSuccessHandler(function(data) {
 
-    console.log("RAW DATA =", data);
-    console.log("HARGA ITEM PERTAMA =", data[0].harga, typeof data[0].harga);
-    console.log("TYPE =", typeof data);
-    console.log("IS ARRAY =", Array.isArray(data));
-    console.log("LENGTH =", data ? data.length : "NULL");
 
     searchResult = data || [];
 
@@ -179,8 +231,8 @@ document.getElementById("jasaTotal").innerHTML =
 document.getElementById("grandTotal").innerHTML =
     rupiah(POSCart.getGrandTotal());
 
- updatePayment();   
-
+ updatePayment();
+ 
 }
 
 function increaseQty(kode){
@@ -209,9 +261,9 @@ function removeItem(kode){
 
 function updatePayment(){
 
-  const bayar = Number(
-    document.getElementById("paymentAmount").value || 0
-  );
+  const bayar = parseNumber(
+    document.getElementById("paymentAmount").value
+);
 
   const total = POSCart.getGrandTotal();
 
@@ -223,10 +275,116 @@ function updatePayment(){
     rupiah(Math.max(kembali,0));
 
   // Jika tombol sudah ada, baru ubah statusnya
-  if (btnSave) {
-    btnSave.disabled = bayar < total;
-  }
+  updateSaveButton();
+
+}
+function saveTransaction() {
+
+  const payload = {
+
+    pelanggan: POSState.pelanggan,
+
+    kendaraan: POSState.kendaraan,
+
+    transaksi: {
+
+      mekanikUtama:
+        POSState.transaksi.mekanikUtama,
+
+      workOrder:
+        POSState.transaksi.workOrder,
+
+      metodeBayar:
+        POSState.transaksi.metodeBayar,
+
+      diskonNota: 0,
+
+      bayar: parseNumber(
+    document.getElementById("paymentAmount").value
+),
+
+      admin: "TEST"
+
+    },
+
+    items: POSCart.getCart()
+
+  };
+
+  const btn = document.getElementById("btnSave");
+
+btn.disabled = true;
+btn.textContent = "Menyimpan...";
+  google.script.run
+
+  .withSuccessHandler(function(result){
+
+    alert(
+      "✅ Transaksi berhasil!\n\n" +
+      result.noTransaksi
+    );
+
+    resetPOS();
+
+})
+
+  .withFailureHandler(function(err){
+
+    btn.disabled = false;
+    btn.textContent = "Simpan";
+
+    alert(err.message);
+
+    console.error(err);
+
+})
+
+  .savePOSTransaction(payload);
+
+}
+function resetPOS(){
+
+    // Bersihkan textbox pencarian
+    document.getElementById("search").value = "";
+
+    // Bersihkan hasil pencarian
+    doSearch("");
+
+    // Reset pembayaran
+    document.getElementById("paymentAmount").value = "";
+
+    // Kosongkan keranjang
+    POSCart.clear();
+
+    // Render ulang cart (otomatis update total & tombol)
+    renderCart();
+
+    // Kembalikan teks tombol
+    const btn = document.getElementById("btnSave");
+    btn.textContent = "Simpan";
+
+    // Fokus kembali ke pencarian
+    setTimeout(function () {
+        document.getElementById("search").focus();
+    }, 100);
 
 }
 
+function updateSaveButton(){
+
+    const btn = document.getElementById("btnSave");
+
+    if (!btn) return;
+
+    const total = POSCart.getGrandTotal();
+
+   const bayar = parseNumber(
+    document.getElementById("paymentAmount").value
+);
+
+    const adaItem = POSCart.getCart().length > 0;
+
+    btn.disabled = !(adaItem && bayar >= total);
+
+}
 </script>

@@ -195,10 +195,11 @@
     </label>
 
     <input
-        id="paymentAmount"
-        type="number"
-        class="form-control form-control-lg"
-        placeholder="0">
+    id="paymentAmount"
+    type="text"
+    inputmode="numeric"
+    class="form-control form-control-lg"
+    placeholder="0">
 
 </div>
 
@@ -232,9 +233,14 @@
             Cetak
         </button>
 
-        <button class="btn btn-danger">
-            Simpan
-        </button>
+      <button
+    id="btnSave"
+    class="btn btn-danger"
+    onclick="saveTransaction()">
+
+    Simpan
+
+</button>
 
     </div>
 
