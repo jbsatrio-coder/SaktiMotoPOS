@@ -1,11 +1,11 @@
 /**
  * ============================================
- * Stock Service
- * Sprint 4A
+ * Inventory Service
+ * Sprint 4C.0
  * ============================================
  */
 
-const StockService = {
+const InventoryService = {
 
   /**
    * Kurangi stok barang
@@ -16,30 +16,30 @@ const StockService = {
 
     items.forEach(item => {
 
+      // Jasa tidak memiliki stok
       if (item.jenis !== "BARANG") return;
 
-      const stok =
-         BarangRepository.getStock(
-             item.kode
-      );
+      // Ambil stok saat ini
+      const stok = BarangRepository.getStock(item.kode);
 
+      // Validasi stok
       if (stok < item.qty) {
 
-  throw new Error(
+        throw new Error(
 
-    "Stok tidak mencukupi\n\n" +
+          "Stok tidak mencukupi\n\n" +
 
-    "Kode : " + item.kode + "\n" +
+          "Kode : " + item.kode + "\n" +
 
-    "Barang : " + item.nama + "\n" +
+          "Barang : " + item.nama + "\n" +
 
-    "Stok : " + stok + "\n" +
+          "Stok : " + stok + "\n" +
 
-    "Diminta : " + item.qty
+          "Diminta : " + item.qty
 
-  );
+        );
 
-}
+      }
 
       Logger.log(
         "Kurangi stok : " +
@@ -48,10 +48,11 @@ const StockService = {
         item.qty
       );
 
+      // Update stok
       BarangRepository.updateStock(
         item.kode,
         item.qty
-);
+      );
 
     });
 
@@ -59,9 +60,15 @@ const StockService = {
 
 };
 
-function testReduceStock(){
+/**
+ * ============================================
+ * Unit Test
+ * ============================================
+ */
 
-  StockService.reduceStock([
+function testReduceStock() {
+
+  InventoryService.reduceStock([
     {
       jenis: "BARANG",
       kode: "BRG000114",
@@ -71,9 +78,9 @@ function testReduceStock(){
 
 }
 
-function testReduceStockInsufficient(){
+function testReduceStockInsufficient() {
 
-  StockService.reduceStock([
+  InventoryService.reduceStock([
     {
       jenis: "BARANG",
       kode: "BRG000114",

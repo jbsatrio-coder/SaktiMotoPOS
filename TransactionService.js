@@ -143,7 +143,7 @@ logStep("Save Detail");
 
 logStep("TOTAL");
 
-  StockService.reduceStock(payload.items);
+  InventoryService.reduceStock(payload.items);
 
   return {
 

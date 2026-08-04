@@ -235,3 +235,35 @@ const COL_JASA = {
   STATUS: 7
 
 };
+
+const COL_STOK = {
+
+  ID: 0,
+
+  TANGGAL: 1,
+
+  JAM: 2,
+
+  KODEBARANG: 3,
+
+  NAMABARANG: 4,
+
+  JENISMUTASI: 5,
+
+  REFERENSI: 6,
+
+  STOKAWAL: 7,
+
+  QTYMASUK: 8,
+
+  QTYKELUAR: 9,
+
+  STOKAKHIR: 10,
+
+  KETERANGAN: 11,
+
+  ADMIN: 12,
+
+  CREATEDAT: 13
+
+};
