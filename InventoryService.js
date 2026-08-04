@@ -24,7 +24,7 @@ const InventoryService = {
       // Item jasa tidak memiliki stok
       if (item.jenis !== "BARANG") return;
 
-      const stok = BarangRepository.getStock(item.kode);
+      const stok = this.getCurrentStock(item.kode);
 
       // Validasi stok
       if (stok < item.qty) {
@@ -69,11 +69,30 @@ const InventoryService = {
    */
   moveStock(movement) {
 
+    // 1. Validasi input
     this.validateMovement(movement);
 
-    Logger.log("Validation OK");
+    // 2. Ambil stok saat ini
+    const currentStock =
+        this.getCurrentStock(
+            movement.kodeBarang
+        );
 
-  },
+    // 3. Hitung stok baru
+    const result =
+        this.calculateNewStock(
+            currentStock,
+            movement
+        );
+Logger.log(result);
+
+    // 4. Update stok master
+    this.updateCurrentStock(result);
+
+    // 5. Return hasil
+    return result;
+
+},
 
   /**
    * =====================================================
@@ -134,9 +153,82 @@ getCurrentStock(kodeBarang){
 
     );
 
-}
+},
 
-};
+calculateNewStock(currentStock, movement){
+
+    let qtyIn = 0;
+    let qtyOut = 0;
+    let newStock = currentStock;
+
+    switch (movement.movementType) {
+
+        case "SALE":
+
+            qtyOut = movement.qty;
+            newStock = currentStock - movement.qty;
+            break;
+
+        case "PURCHASE":
+
+            qtyIn = movement.qty;
+            newStock = currentStock + movement.qty;
+            break;
+
+        default:
+
+            throw new Error(
+                "Movement Type tidak dikenali : " +
+                movement.movementType
+            );
+
+    }
+
+    return {
+
+        movement : movement,
+
+        qty : movement.qty,
+
+        qtyIn : qtyIn,
+
+        qtyOut : qtyOut,
+
+        currentStock : currentStock,
+
+        newStock : newStock
+
+    };
+
+},
+
+
+updateCurrentStock(result){
+
+    BarangRepository.updateStockAbsolute(
+
+        result.movement.kodeBarang,
+
+        result.newStock
+
+    );
+
+    Logger.log(
+
+        "[UPDATE STOCK] " +
+
+        result.currentStock +
+
+        " -> " +
+
+        result.newStock
+
+    );
+    return result;
+
+},
+
+}
 
 
 /**
@@ -200,5 +292,83 @@ function testGetCurrentStock(){
       );
 
   Logger.log(stok);
+
+}
+
+function testCalculateNewStockSale(){
+
+    const result =
+        InventoryService.calculateNewStock(
+            23,
+            {
+                movementType : "SALE",
+                qty : 2
+            }
+        );
+
+    Logger.log(result);
+
+}
+
+function testCalculateNewStockPurchase(){
+
+    const result =
+        InventoryService.calculateNewStock(
+            23,
+            {
+                movementType : "PURCHASE",
+                qty : 5
+            }
+        );
+
+    Logger.log(result);
+
+}
+
+function testUpdateCurrentStock(){
+
+    const result = {
+
+        movement : {
+
+            kodeBarang : "BRG000114"
+
+        },
+
+        currentStock : 50,
+
+        newStock : 30
+
+    };
+
+    const stok =
+        InventoryService.updateCurrentStock(
+            result
+        );
+
+    Logger.log(stok);
+
+}
+
+function testMoveStockSale(){
+
+    const result =
+        InventoryService.moveStock({
+
+            kodeBarang : "BRG000114",
+
+            movementType : "SALE",
+
+            qty : 2,
+
+            reference : "TEST001",
+
+            note : "Sprint 4C.3",
+
+            performedBy : "Developer"
+
+        });
+
+    Logger.log(result);
 
 }

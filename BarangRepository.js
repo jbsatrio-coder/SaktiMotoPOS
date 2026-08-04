@@ -144,6 +144,56 @@ updateStock(kodeBarang, qtyKeluar) {
 
 },
 
+/**
+ * Update stok absolut
+ */
+updateStockAbsolute(kodeBarang, newStock) {
+
+  const row = this.findRowByKode(kodeBarang);
+
+  if (row === 0) {
+
+    throw new Error(
+      "Barang tidak ditemukan : " + kodeBarang
+    );
+
+  }
+
+  const sheet = this.sheet();
+
+  const currentStock = Number(
+
+    sheet.getRange(
+      row,
+      SHEET_COL_BARANG.STOK
+    ).getValue()
+
+  ) || 0;
+
+  sheet.getRange(
+    row,
+    SHEET_COL_BARANG.STOK
+  ).setValue(newStock);
+
+  Logger.log(
+
+    "[STOCK ABSOLUTE] " +
+
+    kodeBarang +
+
+    " : " +
+
+    currentStock +
+
+    " -> " +
+
+    newStock
+
+  );
+
+  return newStock;
+
+},
 getStock(kodeBarang) {
 
   const row = this.findRowByKode(kodeBarang);
@@ -210,5 +260,17 @@ function testGetStock(){
     );
 
   Logger.log(stok);
+
+}
+
+function testUpdateStockAbsolute(){
+
+  const stokBaru =
+      BarangRepository.updateStockAbsolute(
+          "BRG000114",
+          23
+      );
+
+  Logger.log(stokBaru);
 
 }
