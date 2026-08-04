@@ -1,14 +1,19 @@
 /**
  * ============================================
  * Inventory Service
- * Sprint 4C.0
+ * Version : 0.4.4
+ * Sprint  : 4C.2
  * ============================================
  */
 
 const InventoryService = {
 
   /**
-   * Kurangi stok barang
+   * =====================================================
+   * Public API
+   * =====================================================
+   * Dipakai oleh POS saat ini.
+   * Nantinya akan menjadi wrapper ke moveStock().
    */
   reduceStock(items) {
 
@@ -16,10 +21,9 @@ const InventoryService = {
 
     items.forEach(item => {
 
-      // Jasa tidak memiliki stok
+      // Item jasa tidak memiliki stok
       if (item.jenis !== "BARANG") return;
 
-      // Ambil stok saat ini
       const stok = BarangRepository.getStock(item.kode);
 
       // Validasi stok
@@ -48,7 +52,6 @@ const InventoryService = {
         item.qty
       );
 
-      // Update stok
       BarangRepository.updateStock(
         item.kode,
         item.qty
@@ -56,14 +59,80 @@ const InventoryService = {
 
     });
 
+  },
+
+  /**
+   * =====================================================
+   * Inventory Movement Engine
+   * (Belum digunakan oleh POS)
+   * =====================================================
+   */
+  moveStock(movement) {
+
+    this.validateMovement(movement);
+
+    Logger.log("Validation OK");
+
+  },
+
+  /**
+   * =====================================================
+   * Movement Validation
+   * =====================================================
+   */
+  validateMovement(movement) {
+
+    if (!movement) {
+
+      throw new Error(
+        "Movement wajib diisi."
+      );
+
+    }
+
+    if (!movement.kodeBarang) {
+
+      throw new Error(
+        "Kode barang wajib diisi."
+      );
+
+    }
+
+    if (movement.qty == null) {
+
+      throw new Error(
+        "Qty wajib diisi."
+      );
+
+    }
+
+    if (movement.qty <= 0) {
+
+      throw new Error(
+        "Qty harus lebih besar dari 0."
+      );
+
+    }
+
+    if (!movement.movementType) {
+
+      throw new Error(
+        "Movement Type wajib diisi."
+      );
+
+    }
+
+    Logger.log("validateMovement()");
+
   }
 
 };
 
+
 /**
- * ============================================
+ * =====================================================
  * Unit Test
- * ============================================
+ * =====================================================
  */
 
 function testReduceStock() {
@@ -78,6 +147,7 @@ function testReduceStock() {
 
 }
 
+
 function testReduceStockInsufficient() {
 
   InventoryService.reduceStock([
@@ -88,5 +158,26 @@ function testReduceStockInsufficient() {
       qty: 999999
     }
   ]);
+
+}
+
+
+function testMoveStockValidation() {
+
+  InventoryService.moveStock({
+
+    kodeBarang: "BRG000114",
+
+    qty: 1,
+
+    movementType: "SALE",
+
+    reference: "TEST001",
+
+    note: "Unit Test",
+
+    performedBy: "Developer"
+
+  });
 
 }
