@@ -124,7 +124,17 @@ const InventoryService = {
 
     Logger.log("validateMovement()");
 
-  }
+  },
+
+getCurrentStock(kodeBarang){
+
+    return BarangRepository.getStock(
+
+        kodeBarang
+
+    );
+
+}
 
 };
 
@@ -179,5 +189,16 @@ function testMoveStockValidation() {
     performedBy: "Developer"
 
   });
+
+}
+
+function testGetCurrentStock(){
+
+  const stok =
+      InventoryService.getCurrentStock(
+          "BRG000114"
+      );
+
+  Logger.log(stok);
 
 }
