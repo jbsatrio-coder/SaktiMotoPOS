@@ -21,45 +21,28 @@ const InventoryService = {
 
     items.forEach(item => {
 
-      // Item jasa tidak memiliki stok
-      if (item.jenis !== "BARANG") return;
+        // Jasa tidak memiliki stok
+        if (item.jenis !== "BARANG") return;
 
-      const stok = this.getCurrentStock(item.kode);
+        this.moveStock({
 
-      // Validasi stok
-      if (stok < item.qty) {
+            kodeBarang : item.kode,
 
-        throw new Error(
+            movementType : "SALE",
 
-          "Stok tidak mencukupi\n\n" +
+            qty : item.qty,
 
-          "Kode : " + item.kode + "\n" +
+            reference : "",
 
-          "Barang : " + item.nama + "\n" +
+            note : "POS",
 
-          "Stok : " + stok + "\n" +
+            performedBy : "SYSTEM"
 
-          "Diminta : " + item.qty
-
-        );
-
-      }
-
-      Logger.log(
-        "Kurangi stok : " +
-        item.kode +
-        " Qty : " +
-        item.qty
-      );
-
-      BarangRepository.updateStock(
-        item.kode,
-        item.qty
-      );
+        });
 
     });
 
-  },
+},
 
   /**
    * =====================================================
