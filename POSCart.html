@@ -4,6 +4,29 @@ const POSCart = {
 
   cart: [],
 
+  canIncrease(item){
+
+  // Jasa tidak memakai stok
+  if(item.jenis !== "BARANG"){
+    return true;
+  }
+
+  // Qty masih di bawah stok
+  if(item.qty < item.stok){
+    return true;
+  }
+
+  alert(
+    "Stok tidak mencukupi.\n\n" +
+    item.nama +
+    "\n\nStok tersedia : " +
+    item.stok
+  );
+
+  return false;
+
+},
+
   addItem(item){
 
     if (!item) return;
@@ -12,6 +35,9 @@ const POSCart = {
 
     if(existing){
 
+        if(!this.canIncrease(existing)){
+    return;
+    }
       existing.qty++;
       existing.subtotal = existing.qty * existing.harga;
 
@@ -27,11 +53,15 @@ const POSCart = {
 
       harga: parseNumber(item.harga),
 
+      stok: parseNumber(item.stok),
+
       qty:1,
 
       subtotal:parseNumber(item.harga)
 
     });
+
+    console.log(this.cart);
 
   },
 
@@ -40,6 +70,10 @@ const POSCart = {
   const item = this.cart.find(x => x.kode === kode);
 
   if(!item) return;
+
+  if(!this.canIncrease(item)){
+  return;
+}
 
   item.qty++;
   item.subtotal = item.qty * item.harga;

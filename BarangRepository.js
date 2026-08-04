@@ -144,6 +144,33 @@ updateStock(kodeBarang, qtyKeluar) {
 
 },
 
+getStock(kodeBarang) {
+
+  const row = this.findRowByKode(kodeBarang);
+
+  if (row === 0) {
+
+    throw new Error(
+      "Barang tidak ditemukan : " + kodeBarang
+    );
+
+  }
+
+  return Number(
+
+    this.sheet()
+
+      .getRange(
+        row,
+        SHEET_COL_BARANG.STOK
+      )
+
+      .getValue()
+
+  ) || 0;
+
+},
+
 };
 
 
@@ -172,5 +199,16 @@ function testUpdateStock(){
     );
 
   Logger.log(stokBaru);
+
+}
+
+function testGetStock(){
+
+  const stok =
+    BarangRepository.getStock(
+      "BRG000114"
+    );
+
+  Logger.log(stok);
 
 }
