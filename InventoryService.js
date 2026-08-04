@@ -62,18 +62,21 @@ const InventoryService = {
         );
 
     // 3. Hitung stok baru
-    const result =
-        this.calculateNewStock(
-            currentStock,
-            movement
-        );
-Logger.log(result);
+   const movementResult =
+    this.calculateNewStock(
+        currentStock,
+        movement
+    );
 
-    // 4. Update stok master
-    this.updateCurrentStock(result);
+this.updateCurrentStock(
+    movementResult
+);
 
-    // 5. Return hasil
-    return result;
+this.writeLedger(
+    movementResult
+);
+
+return movementResult;
 
 },
 
@@ -207,7 +210,63 @@ updateCurrentStock(result){
         result.newStock
 
     );
+
+    result.updated = true;
     return result;
+
+},
+
+writeLedger(movementResult){
+
+    const now = new Date();
+
+    const ledger = {
+
+        id : Utilities.getUuid(),
+
+        tanggal : Utilities.formatDate(
+            now,
+            Session.getScriptTimeZone(),
+            "yyyy-MM-dd"
+        ),
+
+        jam : Utilities.formatDate(
+            now,
+            Session.getScriptTimeZone(),
+            "HH:mm:ss"
+        ),
+
+        kodeBarang : movementResult.movement.kodeBarang,
+
+        namaBarang : "",
+
+        jenisMutasi : movementResult.movement.movementType,
+
+        referensi : movementResult.movement.reference,
+
+        stokAwal : movementResult.currentStock,
+
+        qtyMasuk : movementResult.qtyIn,
+
+        qtyKeluar : movementResult.qtyOut,
+
+        stokAkhir : movementResult.newStock,
+
+        keterangan : movementResult.movement.note,
+
+        admin : movementResult.movement.performedBy,
+
+        createdAt : now
+
+    };
+
+    StockLedgerRepository.addHistory(ledger);
+
+    movementResult.ledgerWritten = true;
+
+    Logger.log("[LEDGER] OK");
+
+    return movementResult;
 
 },
 
@@ -351,6 +410,47 @@ function testMoveStockSale(){
             performedBy : "Developer"
 
         });
+
+    Logger.log(result);
+
+}
+
+function testWriteLedger(){
+
+    const movementResult = {
+
+        movement : {
+
+            kodeBarang : "BRG000114",
+
+            movementType : "SALE",
+
+            reference : "TEST-LEDGER",
+
+            note : "Unit Test",
+
+            performedBy : "Developer"
+
+        },
+
+        currentStock : 30,
+
+        newStock : 29,
+
+        qty : 1,
+
+        qtyIn : 0,
+
+        qtyOut : 1,
+
+        updated : true
+
+    };
+
+    const result =
+        InventoryService.writeLedger(
+            movementResult
+        );
 
     Logger.log(result);
 
