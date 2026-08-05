@@ -52,31 +52,58 @@ const InventoryService = {
    */
   moveStock(movement) {
 
-    // 1. Validasi input
+    // Validasi
     this.validateMovement(movement);
 
-    // 2. Ambil stok saat ini
+    // Ambil stok saat ini
     const currentStock =
         this.getCurrentStock(
             movement.kodeBarang
         );
 
-    // 3. Hitung stok baru
-   const movementResult =
-    this.calculateNewStock(
-        currentStock,
-        movement
-    );
+    // Hitung stok baru
+    const movementResult =
+        this.calculateNewStock(
+            currentStock,
+            movement
+        );
 
-this.updateCurrentStock(
-    movementResult
-);
+    try {
 
-this.writeLedger(
-    movementResult
-);
+        // Update stok master
+        this.updateCurrentStock(
+            movementResult
+        );
 
-return movementResult;
+        // Tulis ledger
+        this.writeLedger(
+            movementResult
+        );
+
+        return movementResult;
+
+    } catch (error) {
+
+        // Jika stok sudah ter-update,
+        // tetapi ledger gagal,
+        // kembalikan stok.
+
+        if (movementResult.updated) {
+
+            this.rollbackStock(
+                movementResult
+            );
+
+        }
+
+        Logger.log(
+            "[TRANSACTION FAILED] " +
+            error.message
+        );
+
+        throw error;
+
+    }
 
 },
 
@@ -89,41 +116,46 @@ return movementResult;
 
     if (!movement) {
 
-      throw new Error(
-        "Movement wajib diisi."
-      );
+     throw new InventoryException(
+    "INV000",
+    "Movement wajib diisi."
+);
 
     }
 
     if (!movement.kodeBarang) {
 
-      throw new Error(
-        "Kode barang wajib diisi."
-      );
+      throw new InventoryException(
+    "INV001",
+    "Kode barang wajib diisi."
+);
 
     }
 
     if (movement.qty == null) {
 
-      throw new Error(
-        "Qty wajib diisi."
-      );
+      throw new InventoryException(
+    "INV002",
+    "Qty wajib diisi."
+);
 
     }
 
     if (movement.qty <= 0) {
 
-      throw new Error(
-        "Qty harus lebih besar dari 0."
-      );
+      throw new InventoryException(
+    "INV003",
+    "Qty harus lebih besar dari 0."
+);
 
     }
 
     if (!movement.movementType) {
 
-      throw new Error(
-        "Movement Type wajib diisi."
-      );
+     throw new InventoryException(
+    "INV004",
+    "Movement Type wajib diisi."
+);
 
     }
 
@@ -260,6 +292,8 @@ writeLedger(movementResult){
 
     };
 
+    
+
     StockLedgerRepository.addHistory(ledger);
 
     movementResult.ledgerWritten = true;
@@ -270,6 +304,39 @@ writeLedger(movementResult){
 
 },
 
+/**
+ * Rollback perubahan stok
+ */
+rollbackStock(movementResult){
+
+    BarangRepository.updateStockAbsolute(
+      
+
+        movementResult.movement.kodeBarang,
+
+        movementResult.currentStock
+
+    );
+
+    movementResult.updated = false;
+
+    movementResult.rolledBack = true;
+
+    Logger.log(
+
+        "[ROLLBACK] " +
+
+        movementResult.newStock +
+
+        " -> " +
+
+        movementResult.currentStock
+
+    );
+
+    return movementResult;
+
+},
 }
 
 
@@ -453,5 +520,62 @@ function testWriteLedger(){
         );
 
     Logger.log(result);
+
+}
+
+function testRollbackStock(){
+
+    const movementResult = {
+
+        movement : {
+
+            kodeBarang : "BRG000114"
+
+        },
+
+        currentStock : 25,
+
+        newStock : 23,
+
+        updated : true,
+
+        ledgerWritten : false
+
+    };
+
+    const result =
+        InventoryService.rollbackStock(
+            movementResult
+        );
+
+    Logger.log(result);
+
+}
+
+function testInventoryException(){
+
+    try{
+
+        InventoryService.moveStock({
+
+            kodeBarang : "",
+
+            qty : 1,
+
+            movementType : "SALE"
+
+        });
+
+    }catch(error){
+
+        Logger.log(error.name);
+
+        Logger.log(error.code);
+
+        Logger.log(error.message);
+
+        Logger.log(error.toString());
+
+    }
 
 }
