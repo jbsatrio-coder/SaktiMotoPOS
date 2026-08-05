@@ -1,5 +1,15 @@
 # SAKTI MOTO POS
 
+# SaktiMotoPOS Changelog
+
+## v0.6.5
+- Inventory Platform completed
+- Purchase Platform completed
+- Purchase Repository added
+- PurchaseResult added
+- PurchaseStatus added
+- RunningNumberService added
+- RunningNumber integrated into Purchase
 
 # v0.6.0
 

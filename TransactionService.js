@@ -1,166 +1,41 @@
 /**
  * ============================================
  * Transaction Service
- * Sprint 3
+ * Sprint 4D.6
  * ============================================
  */
 
 const TransactionService = {
-  /**
-   * Generate Nomor Transaksi
-   */
-  generateTransactionNo() {
 
-  return generateInvoiceNumber();
+    /**
+     * Generate Nomor Transaksi
+     */
+    generateTransactionNo(){
 
-},
+        return RunningNumberService.generate(
 
-/**
- * Simpan Transaksi
- */
-saveTransaction(payload) {
+            DocumentType.SALES
 
-  const start = new Date();
+        );
 
-function logStep(step){
-  Logger.log(
-    step + " : " + (new Date() - start) + " ms"
-  );
-}
+    },
 
-  if (!payload) {
-    throw new Error("Payload transaksi kosong.");
-  }
+    /**
+     * Save Transaction
+     *
+     * Legacy Facade
+     */
+    saveTransaction(payload){
 
-  const now = new Date();
+        return SalesService.saveSale(
 
-  const noTransaksi =
-  TransactionService.generateTransactionNo();
+            payload
 
-  logStep("Generate No");
+        );
 
-  // --------------------------
-  // HEADER
-  // --------------------------
-
-  const subtotal = payload.items.reduce(
-    (sum, item) => sum + parseNumber(item.subtotal),
-    0
-  );
-
-  const diskonNota =
-    parseNumber(payload.transaksi.diskonNota);
-
-  const grandTotal =
-    subtotal - diskonNota;
-
-  const bayar =
-    parseNumber(payload.transaksi.bayar);
-
-  const kembalian =
-    bayar - grandTotal;
-
-  const header = {
-
-    noTransaksi,
-
-    tanggal: Utilities.formatDate(
-      now,
-      Session.getScriptTimeZone(),
-      "dd/MM/yyyy"
-    ),
-
-    jam: Utilities.formatDate(
-      now,
-      Session.getScriptTimeZone(),
-      "HH:mm:ss"
-    ),
-
-    idPelanggan:
-      payload.pelanggan.id,
-
-    namaPelanggan:
-      payload.pelanggan.nama,
-
-    idKendaraan:
-      payload.kendaraan.id,
-
-    platNomor:
-      payload.kendaraan.platNomor,
-
-    mekanikUtama:
-      payload.transaksi.mekanikUtama,
-
-    subtotal,
-
-    diskonNota,
-
-    grandTotal,
-
-    bayar,
-
-    kembalian,
-
-    metodeBayar:
-      payload.transaksi.metodeBayar,
-
-    admin:
-      payload.transaksi.admin,
-
-    status: "LUNAS",
-
-    createdAt: now,
-
-    workOrder:
-      payload.transaksi.workOrder || "",
-
-    updatedAt: ""
-
-  };
-
-  PenjualanRepository.saveHeader(header);
-
-  logStep("Save Header");
-
-  // --------------------------
-  // DETAIL
-  // --------------------------
-
-  PenjualanRepository.saveDetail({
-
-    noTransaksi,
-
-    createdAt: now,
-
-    items: payload.items
-
-});
-
-logStep("Save Detail");
-
-// Kurangi stok
-
-
-logStep("TOTAL");
-
-  InventoryService.reduceStock(payload.items);
-
-  return {
-
-    success: true,
-
-    noTransaksi,
-
-    totalItem: payload.items.length,
-
-    grandTotal
-
-  };
-
-}
+    }
 
 };
-
 
 /**
  * TEST
