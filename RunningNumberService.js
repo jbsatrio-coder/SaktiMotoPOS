@@ -1,0 +1,34 @@
+/**
+ * ============================================
+ * Running Number Service
+ * Version : 1.0.0
+ * Sprint  : 4D.4
+ * ============================================
+ */
+
+const RunningNumberService = {
+
+    /**
+     * Generate nomor dokumen
+     */
+    generate(documentType){
+
+        return generateRunningNumber_(
+
+            documentType
+
+        );
+
+    }
+
+};
+
+function testRunningNumberService(){
+
+    Logger.log(
+
+        RunningNumberService.generate("PO")
+
+    );
+
+}

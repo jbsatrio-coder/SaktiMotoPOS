@@ -18,19 +18,23 @@ const PurchaseService = {
 
             header : {
 
-                nomor : purchase.nomor,
+    nomor : RunningNumberService.generate(
 
-                tanggal : purchase.tanggal,
+        DocumentType.PURCHASE
 
-                supplier : purchase.supplier,
+    ),
 
-                admin : purchase.admin
+    tanggal : purchase.tanggal,
 
-            },
+    supplier : purchase.supplier,
+
+    admin : purchase.admin
+
+},
 
             items : purchase.items,
 
-            status : "NEW"
+          status : PurchaseStatus.NEW
 
         };
 
@@ -45,7 +49,7 @@ createPurchaseMovement(item, purchaseDocument){
 
         kodeBarang : item.kodeBarang,
 
-        movementType : "PURCHASE",
+        movementType : MovementType.PURCHASE,
 
         qty : item.qty,
 
@@ -81,38 +85,59 @@ createPurchaseMovements(purchaseDocument){
     /**
      * Receive Purchase
      */
- receivePurchase(purchase){
+receivePurchase(purchase){
 
     const purchaseDocument =
         this.createPurchaseDocument(
             purchase
         );
 
+    // Simpan Header
+    PurchaseRepository.saveHeader(
+        purchaseDocument
+    );
+
+    // Simpan Detail
+    PurchaseRepository.saveItems(
+        purchaseDocument
+    );
+
+    // Buat Movement
     const movements =
         this.createPurchaseMovements(
             purchaseDocument
         );
 
-    const batchResult =
-        InventoryService.moveStockBatch(
-            movements
-        );
+    // Update Inventory
+   const batchResult =
+    InventoryService.moveStockBatch(
+        movements
+    );
 
-    Logger.log(
+const purchaseResult =
+    PurchaseResult.create(
 
-        JSON.stringify(
+        batchResult,
 
-            batchResult,
-
-            null,
-
-            2
-
-        )
+        purchaseDocument
 
     );
 
-    return batchResult;
+Logger.log(
+
+    JSON.stringify(
+
+        purchaseResult,
+
+        null,
+
+        2
+
+    )
+
+);
+
+return purchaseResult;
 
 }
 
@@ -122,29 +147,27 @@ function testReceivePurchase(){
 
     PurchaseService.receivePurchase({
 
-        nomor : "PO000001",
+    tanggal : "2026-08-05",
 
-        tanggal : "2026-08-05",
+    supplier : "SUP001",
 
-        supplier : "SUP001",
+    admin : "Developer",
 
-        admin : "Developer",
+    items : [
 
-        items : [
+        {
 
-            {
+            kodeBarang : "BRG000114",
 
-                kodeBarang : "BRG000114",
+            qty : 5,
 
-                qty : 5,
+            hargaBeli : 20000
 
-                hargaBeli : 20000
+        }
 
-            }
+    ]
 
-        ]
-
-    });
+});
     
 
 }

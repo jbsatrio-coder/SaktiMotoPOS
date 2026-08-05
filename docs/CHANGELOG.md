@@ -1,5 +1,41 @@
 # SAKTI MOTO POS
 
+
+# v0.6.0
+
+Date: 2026-08-06
+
+## Added
+
+### Inventory Platform
+
+- Transaction Safety
+- Rollback Engine
+- InventoryException
+- Batch Stock Movement
+- BatchResult
+
+### Purchase Engine
+
+- PurchaseDocument
+- PurchaseMovement
+- Purchase Batch Integration
+
+### Architecture
+
+- Purchase now delegates all inventory operations to InventoryService
+- Unified Batch Processing
+- Clean separation between Business Module and Inventory Platform
+
+## Testing
+
+PASS
+
+- Inventory Engine
+- Rollback
+- Batch Processing
+- Purchase Integration
+- Ledger Writing
 # v0.5.1
 
 Date    : 2026-08-05

@@ -1892,7 +1892,7 @@ function simpanPembelianMulti(data) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
 
   const pembelian =
-    ss.getSheetByName("13_Pembelian");
+    ss.getSheetByName("13_Pembelian_Legacy");
 
   const masterBarang =
     ss.getSheetByName("02_MasterBarang");
