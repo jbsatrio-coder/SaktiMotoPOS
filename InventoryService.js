@@ -107,6 +107,52 @@ const InventoryService = {
 
 },
 
+/**
+ * Batch Stock Movement
+ */
+moveStockBatch(movements){
+
+    const results = [];
+
+    try{
+
+        movements.forEach(movement => {
+
+            const result =
+                this.moveStock(
+                    movement
+                );
+
+            results.push(result);
+
+        });
+
+        return {
+
+    success : true,
+
+    totalMovement : results.length,
+
+    successCount : results.length,
+
+    failedCount : 0,
+
+    results : results
+
+};
+
+    }catch(error){
+
+        Logger.log(
+            "[BATCH FAILED]"
+        );
+
+        throw error;
+
+    }
+
+},
+
   /**
    * =====================================================
    * Movement Validation
@@ -577,5 +623,64 @@ function testInventoryException(){
         Logger.log(error.toString());
 
     }
+
+}
+
+function testMoveStockBatch(){
+
+    const movements = [
+
+        {
+
+            kodeBarang : "BRG000114",
+
+            movementType : "PURCHASE",
+
+            qty : 2,
+
+            reference : "BATCH001",
+
+            note : "Batch Test",
+
+            performedBy : "Developer"
+
+        },
+
+        {
+
+            kodeBarang : "BRG000114",
+
+            movementType : "PURCHASE",
+
+            qty : 3,
+
+            reference : "BATCH001",
+
+            note : "Batch Test",
+
+            performedBy : "Developer"
+
+        }
+
+    ];
+
+    const results =
+        InventoryService.moveStockBatch(
+            movements
+        );
+
+    Logger.log(
+
+    JSON.stringify(
+
+        results,
+
+        null,
+
+        2
+
+    )
+
+);
 
 }
