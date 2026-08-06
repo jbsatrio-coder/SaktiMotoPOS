@@ -10,6 +10,39 @@ const BarangRepository = {
     return getSheet_(CONFIG.SHEET.BARANG);
   },
 
+  /**
+ * Membaca nilai sebuah cell.
+ */
+getCellValue(row, column) {
+
+    return this.sheet()
+
+        .getRange(
+            row,
+            column
+        )
+
+        .getValue();
+
+},
+
+/**
+ * Mengubah nilai sebuah cell.
+ */
+setCellValue(row, column, value) {
+
+    this.sheet()
+
+        .getRange(
+            row,
+            column
+        )
+
+        .setValue(value);
+
+},
+
+
   getAll() {
 
     const sh = this.sheet();
@@ -102,17 +135,35 @@ const BarangRepository = {
   },
 
   /**
+ * Pastikan barang ada.
+ * Return nomor baris.
+ */
+requireRow(kodeBarang) {
+
+  const row = this.findRowByKode(
+    kodeBarang
+  );
+
+  if (row === 0) {
+
+    throw new Error(
+      "Barang tidak ditemukan : " +
+      kodeBarang
+    );
+
+  }
+
+  return row;
+
+},
+
+  /**
  * Kurangi stok barang
  */
 updateStock(kodeBarang, qtyKeluar) {
 
-  const row = this.findRowByKode(kodeBarang);
-
-  if (row === 0) {
-    throw new Error(
-      "Barang tidak ditemukan : " + kodeBarang
-    );
-  }
+  const row =
+    this.requireRow(kodeBarang);
 
   const sheet = this.sheet();
 
@@ -149,15 +200,8 @@ updateStock(kodeBarang, qtyKeluar) {
  */
 updateStockAbsolute(kodeBarang, newStock) {
 
-  const row = this.findRowByKode(kodeBarang);
-
-  if (row === 0) {
-
-    throw new Error(
-      "Barang tidak ditemukan : " + kodeBarang
-    );
-
-  }
+  const row =
+    this.requireRow(kodeBarang);
 
   const sheet = this.sheet();
 
@@ -170,10 +214,15 @@ updateStockAbsolute(kodeBarang, newStock) {
 
   ) || 0;
 
-  sheet.getRange(
+  this.setCellValue(
+
     row,
-    SHEET_COL_BARANG.STOK
-  ).setValue(newStock);
+
+    SHEET_COL_BARANG.STOK,
+
+    newStock
+
+);
 
   Logger.log(
 
@@ -196,28 +245,20 @@ updateStockAbsolute(kodeBarang, newStock) {
 },
 getStock(kodeBarang) {
 
-  const row = this.findRowByKode(kodeBarang);
-
-  if (row === 0) {
-
-    throw new Error(
-      "Barang tidak ditemukan : " + kodeBarang
-    );
-
-  }
+  const row =
+    this.requireRow(kodeBarang);
 
   return Number(
 
-    this.sheet()
+    this.getCellValue(
 
-      .getRange(
         row,
+
         SHEET_COL_BARANG.STOK
-      )
 
-      .getValue()
+    )
 
-  ) || 0;
+) || 0;
 
 },
 

@@ -225,28 +225,28 @@ calculateNewStock(currentStock, movement){
     let qtyOut = 0;
     let newStock = currentStock;
 
-    switch (movement.movementType) {
+   switch (movement.movementType) {
 
-        case "SALE":
+    case MovementType.SALE:
 
-            qtyOut = movement.qty;
-            newStock = currentStock - movement.qty;
-            break;
+        qtyOut = movement.qty;
+        newStock = currentStock - movement.qty;
+        break;
 
-        case "PURCHASE":
+    case MovementType.PURCHASE:
 
-            qtyIn = movement.qty;
-            newStock = currentStock + movement.qty;
-            break;
+        qtyIn = movement.qty;
+        newStock = currentStock + movement.qty;
+        break;
 
-        default:
+    default:
 
-            throw new Error(
-                "Movement Type tidak dikenali : " +
-                movement.movementType
-            );
+        throw new Error(
+            "Movement Type tidak dikenali : " +
+            movement.movementType
+        );
 
-    }
+}
 
     return {
 
@@ -471,7 +471,7 @@ function testCalculateNewStockPurchase(){
         InventoryService.calculateNewStock(
             23,
             {
-                movementType : "PURCHASE",
+                movementType : MovementType.PURCHASE,
                 qty : 5
             }
         );

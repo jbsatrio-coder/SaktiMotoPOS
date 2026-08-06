@@ -186,8 +186,7 @@ function testSavePurchaseHeader(){
 
         ],
 
-        status : "NEW"
-
+       status : PurchaseStatus.NEW
     });
 
 }

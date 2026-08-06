@@ -16,6 +16,8 @@ const DocumentType = {
 
     RETURN : "RT",
 
-    STOCK : "STK"
+    STOCK : "STK",
+
+    SUPPLIER  : "SUP"
 
 };

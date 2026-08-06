@@ -32,3 +32,17 @@ function testRunningNumberService(){
     );
 
 }
+
+function testGenerateSupplierNumber(){
+
+    const supplierId =
+
+        RunningNumberService.generate(
+
+            DocumentType.SUPPLIER
+
+        );
+
+    Logger.log(supplierId);
+
+}

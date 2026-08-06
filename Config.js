@@ -11,6 +11,8 @@ const CONFIG = {
 
     BARANG: "02_MasterBarang",
 
+    SUPPLIER : "05_MasterSupplier",
+
     MASTER_PELANGGAN: "06_MasterPelanggan",
 
     MASTER_KENDARAAN: "07_MasterKendaraan",
