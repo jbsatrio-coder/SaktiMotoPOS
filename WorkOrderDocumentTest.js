@@ -1,0 +1,161 @@
+/**
+ * ============================================
+ * Work Order Document Test
+ * ============================================
+ */
+
+function testWorkOrderDocument(){
+
+    const document =
+
+        WorkOrderDocument.create({
+
+            id : "WO000001",
+
+            customerId : "CUS999999",
+
+            customerName : "Satrio Nugroho",
+
+            vehicleId : "VEH2608060003",
+
+            noPolisi : "B1234XYZ",
+
+            merk : "Honda",
+
+            model : "Beat",
+
+            kilometerMasuk : 15250,
+
+            status :
+
+                WorkOrderStatus.DRAFT,
+
+            prioritas :
+
+                WorkOrderPriority.NORMAL,
+
+            admin : "Admin",
+
+            catatan :
+
+                "Service berkala"
+
+        });
+
+    Logger.log(
+
+        JSON.stringify(
+
+            document,
+
+            null,
+
+            2
+
+        )
+
+    );
+
+}
+
+/**
+ * ============================================
+ * Work Order Item Document Test
+ * ============================================
+ */
+
+function testWorkOrderItemDocument(){
+
+    const document =
+
+        WorkOrderItemDocument.create({
+
+            id : "WOI000001",
+
+            workOrderId : "WO000001",
+
+            urutan : 1,
+
+            jasaId : "JAS000001",
+
+            namaJasa : "Ganti Oli",
+
+            keluhan : "Service berkala",
+
+            diagnosa : "Oli sudah waktunya diganti",
+
+            mekanikId : "MEC000001",
+
+            mekanikName : "Andi",
+
+            qty : 1,
+
+            harga : 85000,
+
+            diskon : 5000,
+
+            subtotal : 80000
+
+        });
+
+    Logger.log(
+
+        JSON.stringify(
+
+            document,
+
+            null,
+
+            2
+
+        )
+
+    );
+
+}
+
+/**
+ * ============================================
+ * Work Order Part Document Test
+ * ============================================
+ */
+
+function testWorkOrderPartDocument(){
+
+    const document =
+
+        WorkOrderPartDocument.create({
+
+            id : "WOP000001",
+
+            workOrderItemId : "WOI000001",
+
+            barangId : "BRG000001",
+
+            kodeBarang : "OLI001",
+
+            namaBarangSnapshot : "Castrol Power1",
+
+            qty : 2,
+
+            harga : 85000,
+
+            diskon : 5000
+
+        });
+
+    Logger.log(
+
+        JSON.stringify(
+
+            document,
+
+            null,
+
+            2
+
+        )
+
+    );
+
+}
