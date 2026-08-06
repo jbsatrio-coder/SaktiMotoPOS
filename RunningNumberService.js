@@ -46,3 +46,31 @@ function testGenerateSupplierNumber(){
     Logger.log(supplierId);
 
 }
+
+function testGenerateCustomerNumber(){
+
+    Logger.log(
+
+        RunningNumberService.generate(
+
+            DocumentType.CUSTOMER
+
+        )
+
+    );
+
+}
+
+function testGenerateCustomerNumber(){
+
+    const customerId =
+
+        RunningNumberService.generate(
+
+            DocumentType.CUSTOMER
+
+        );
+
+    Logger.log(customerId);
+
+}

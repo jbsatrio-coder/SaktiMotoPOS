@@ -11,15 +11,15 @@ const CONFIG = {
 
     BARANG: "02_MasterBarang",
 
-    SUPPLIER : "05_MasterSupplier",
+    SUPPLIER: "05_MasterSupplier",
 
-    MASTER_PELANGGAN: "06_MasterPelanggan",
+    PELANGGAN: "06_MasterPelanggan",
 
-    MASTER_KENDARAAN: "07_MasterKendaraan",
+    KENDARAAN: "07_MasterKendaraan",
 
-    MASTER_JASA: "08_MasterJasa",
+    JASA: "08_MasterJasa",
 
-    MASTER_MEKANIK: "09_MasterMekanik",
+    MEKANIK: "09_MasterMekanik",
 
     POS: "10_POS",
 
@@ -33,7 +33,7 @@ const CONFIG = {
 
     WORK_ORDER: "17_WorkOrder"
 
-  },
+},
 
   POS: {
 

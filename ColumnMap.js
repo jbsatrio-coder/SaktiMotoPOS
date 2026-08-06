@@ -70,17 +70,55 @@ const COL_WO = {
 
 const COL_PELANGGAN = {
 
-  ID: 0,
+    ID : 0,
 
-  NAMA: 1,
+    NAMA : 1,
 
-  NOHP: 2,
+    NOHP : 2,
 
-  ALAMAT: 3,
+    ALAMAT : 3,
 
-  CATATAN: 4,
+    TANGGALLAHIR : 4,
 
-  MEMBERSEJAK: 5
+    JENISKELAMIN : 5,
+
+    STATUS : 6,
+
+    CATATAN : 7,
+
+    CREATEDAT : 8,
+
+    UPDATEDAT : 9
+
+};
+
+/**
+ * ============================================
+ * Sheet Column Master Pelanggan
+ * (1-based index)
+ * ============================================
+ */
+const SHEET_COL_PELANGGAN = {
+
+    ID : 1,
+
+    NAMA : 2,
+
+    NOHP : 3,
+
+    ALAMAT : 4,
+
+    TANGGALLAHIR : 5,
+
+    JENISKELAMIN : 6,
+
+    STATUS : 7,
+
+    CATATAN : 8,
+
+    CREATEDAT : 9,
+
+    UPDATEDAT : 10
 
 };
 

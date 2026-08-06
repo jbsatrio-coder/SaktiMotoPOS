@@ -18,6 +18,8 @@ const DocumentType = {
 
     STOCK : "STK",
 
-    SUPPLIER  : "SUP"
+    SUPPLIER  : "SUP",
+
+    CUSTOMER : "CUS"
 
 };
