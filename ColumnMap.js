@@ -127,25 +127,67 @@ const SHEET_COL_PELANGGAN = {
  * MASTER KENDARAAN
  * ===================================================== */
 
-const COL_KENDARAAN = {
+const COL_VEHICLE = {
 
-  ID: 0,
+    ID : 0,
 
-  IDPELANGGAN: 1,
+    CUSTOMER_ID : 1,
 
-  PLAT: 2,
+    PLATE : 2,
 
-  MERK: 3,
+    BRAND : 3,
 
-  MODEL: 4,
+    MODEL : 4,
 
-  TAHUN: 5,
+    YEAR : 5,
 
-  WARNA: 6,
+    COLOR : 6,
 
-  NOMORMESIN: 7,
+    ENGINE_NO : 7,
 
-  NOMORRANGKA: 8
+    FRAME_NO : 8,
+
+    LAST_KM : 9,
+
+    STATUS : 10,
+
+    NOTE : 11,
+
+    CREATED_AT : 12,
+
+    UPDATED_AT : 13
+
+};
+
+const SHEET_COL_VEHICLE = {
+
+    ID : 1,
+
+    CUSTOMER_ID : 2,
+
+    PLATE : 3,
+
+    BRAND : 4,
+
+    MODEL : 5,
+
+    YEAR : 6,
+
+    COLOR : 7,
+
+    ENGINE_NO : 8,
+
+    FRAME_NO : 9,
+
+    LAST_KM : 10,
+
+    STATUS : 11,
+
+    NOTE : 12,
+
+    CREATED_AT : 13,
+
+    UPDATED_AT : 14
 
 };
 

@@ -15,7 +15,7 @@ const CONFIG = {
 
     PELANGGAN: "06_MasterPelanggan",
 
-    KENDARAAN: "07_MasterKendaraan",
+    VEHICLE : "07_MasterKendaraan",
 
     JASA: "08_MasterJasa",
 
@@ -62,3 +62,11 @@ const CONFIG = {
   }
 
 };
+
+function testVehicleConfig(){
+
+    Logger.log(
+        CONFIG.SHEET.VEHICLE
+    );
+
+}
