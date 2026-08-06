@@ -10,16 +10,24 @@ const DocumentType = {
 
     PURCHASE : "PO",
 
-    SALES : "INV",
+    SALES : "SO",
 
-    WORKORDER : "WO",
+    SUPPLIER : "SUP",
 
-    RETURN : "RT",
+    CUSTOMER : "CUS",
 
-    STOCK : "STK",
-
-    SUPPLIER  : "SUP",
-
-    CUSTOMER : "CUS"
+    VEHICLE : "VEH"
 
 };
+
+function testVehicleRunningNumber(){
+
+    Logger.log(
+
+        RunningNumberService.generate(
+            DocumentType.VEHICLE
+        )
+
+    );
+
+}
