@@ -372,23 +372,27 @@ const SHEET_COL_BARANG = {
 
 const COL_JASA = {
 
-  ID: 0,
+    ID : 0,
 
-  KODE: 1,
+    NAMA : 1,
 
-  NAMA: 2,
+    KATEGORI : 2,
 
-  KATEGORI: 3,
+    HARGA : 3,
 
-  HARGA: 4,
+    KOMISI : 4,
 
-  KOMISI: 5,
+    ESTIMASI : 5,
 
-  ESTIMASI: 6,
+    STATUS : 6,
 
-  STATUS: 7,
+    CATATAN : 7,
 
-  TOTAL: 8
+    CREATED_AT : 8,
+
+    UPDATED_AT : 9,
+
+    TOTAL : 10
 
 };
 

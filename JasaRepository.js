@@ -122,76 +122,62 @@ const JasaRepository = {
 
     },
 
-    getByKode(kode){
-
-        return this.findById(kode);
-
-    },
+    
 
     search(keyword){
 
-        keyword =
+    keyword =
+
+        String(
+
+            keyword || ""
+
+        )
+
+        .toLowerCase()
+
+        .trim();
+
+    return this.findAll()
+
+        .filter(r =>
 
             String(
 
-                keyword || ""
+                r[COL_JASA.ID]
 
             )
 
             .toLowerCase()
 
-            .trim();
+            .includes(keyword)
 
-        return this.findAll()
+            ||
 
-            .filter(r =>
+            String(
 
-                String(
+                r[COL_JASA.NAMA]
 
-                    r[COL_JASA.NAMA]
+            )
 
-                )
+            .toLowerCase()
 
-                .toLowerCase()
+            .includes(keyword)
 
-                .includes(keyword)
+            ||
 
-                ||
+            String(
 
-                String(
+                r[COL_JASA.KATEGORI]
 
-                    r[COL_JASA.KODE]
+            )
 
-                )
+            .toLowerCase()
 
-                .toLowerCase()
+            .includes(keyword)
 
-                .includes(keyword)
+        );
 
-                ||
-
-                String(
-
-                    r[COL_JASA.KATEGORI]
-
-                )
-
-                .toLowerCase()
-
-                .includes(keyword)
-
-            );
-
-    }
-
-};
-
-function testFindAllJasa(){
-
-    Logger.log(
-
-        JasaRepository.findAll()
-
-    );
+},
 
 }
