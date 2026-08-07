@@ -1,17 +1,37 @@
 /**
  * ============================================
- * Work Order Item Document
- * Version : 1.0.0
+ * Work Order Jasa Document
+ * Version : 2.0.0
  * ============================================
  */
 
-const WorkOrderItemDocument = {
+const WorkOrderJasaDocument = {
 
     create(payload){
 
+        const qty = Number(
+            payload.qty || 1
+        );
+
+        const harga = Number(
+            payload.harga || 0
+        );
+
+        const diskon = Number(
+            payload.diskon || 0
+        );
+
+        const subtotal = Math.max(
+
+            0,
+
+            (qty * harga) - diskon
+
+        );
+
         return {
 
-            workOrderItem : {
+            workOrderJasa : {
 
                 id :
 
@@ -31,9 +51,9 @@ const WorkOrderItemDocument = {
 
                     payload.jasaId || "",
 
-                namaJasa :
+                namaJasaSnapshot :
 
-                    payload.namaJasa || "",
+                    payload.namaJasaSnapshot || "",
 
                 keluhan :
 
@@ -47,39 +67,31 @@ const WorkOrderItemDocument = {
 
                     payload.mekanikId || "",
 
-                mekanikName :
+                mekanikNameSnapshot :
 
-                    payload.mekanikName || "",
+                    payload.mekanikNameSnapshot || "",
 
                 qty :
 
-                    Number(
-                        payload.qty || 1
-                    ),
+                    qty,
 
                 harga :
 
-                    Number(
-                        payload.harga || 0
-                    ),
+                    harga,
 
                 diskon :
 
-                    Number(
-                        payload.diskon || 0
-                    ),
+                    diskon,
 
                 subtotal :
 
-                    Number(
-                        payload.subtotal || 0
-                    ),
+                    subtotal,
 
                 status :
 
                     payload.status ||
 
-                    "OPEN",
+                    WorkOrderJasaStatus.OPEN,
 
                 catatan :
 

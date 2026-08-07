@@ -16,7 +16,21 @@ const DocumentType = {
 
     CUSTOMER : "CUS",
 
-    VEHICLE : "VEH"
+    VEHICLE : "VEH",
+
+    WORK_ORDER : "WO",
+
+    WORK_ORDER_JASA : "WOJ",
+
+    WORK_ORDER_PART : "WOP",
+
+    WORK_ORDER_TIMELINE : "WOT",
+
+    PAYMENT : "PAY",
+
+    ATTACHMENT : "ATT",
+
+    ACTIVITY_LOG : "LOG"
 
 };
 

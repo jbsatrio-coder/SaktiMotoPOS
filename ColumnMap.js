@@ -159,6 +159,8 @@ const COL_VEHICLE = {
 
 };
 
+
+
 const SHEET_COL_VEHICLE = {
 
     ID : 1,
@@ -188,6 +190,78 @@ const SHEET_COL_VEHICLE = {
     CREATED_AT : 13,
 
     UPDATED_AT : 14
+
+};
+
+/* =====================================================
+ * MASTER WORK ORDER
+ * ===================================================== */
+
+const COL_WORK_ORDER = {
+
+    ID : 0,
+
+    ID_PELANGGAN : 1,
+
+    NAMA_PELANGGAN : 2,
+
+    ID_KENDARAAN : 3,
+
+    NO_POLISI : 4,
+
+    MERK : 5,
+
+    MODEL : 6,
+
+    KILOMETER_MASUK : 7,
+
+    STATUS : 8,
+
+    PRIORITAS : 9,
+
+    ESTIMASI_SELESAI : 10,
+
+    ADMIN : 11,
+
+    CATATAN : 12,
+
+    DIBUAT_PADA : 13,
+
+    DIUBAH_PADA : 14
+
+};
+
+const SHEET_COL_WORK_ORDER = {
+
+    ID : 1,
+
+    ID_PELANGGAN : 2,
+
+    NAMA_PELANGGAN : 3,
+
+    ID_KENDARAAN : 4,
+
+    NO_POLISI : 5,
+
+    MERK : 6,
+
+    MODEL : 7,
+
+    KILOMETER_MASUK : 8,
+
+    STATUS : 9,
+
+    PRIORITAS : 10,
+
+    ESTIMASI_SELESAI : 11,
+
+    ADMIN : 12,
+
+    CATATAN : 13,
+
+    DIBUAT_PADA : 14,
+
+    DIUBAH_PADA : 15
 
 };
 
@@ -345,5 +419,43 @@ const COL_STOK = {
   ADMIN: 12,
 
   CREATEDAT: 13
+
+};
+
+const COL_WO_JASA = {
+
+    ID : 0,
+
+    WORK_ORDER_ID : 1,
+
+    URUTAN : 2,
+
+    JASA_ID : 3,
+
+    NAMA_JASA : 4,
+
+    KELUHAN : 5,
+
+    DIAGNOSA : 6,
+
+    MEKANIK_ID : 7,
+
+    MEKANIK_NAMA : 8,
+
+    QTY : 9,
+
+    HARGA : 10,
+
+    DISKON : 11,
+
+    SUBTOTAL : 12,
+
+    STATUS : 13,
+
+    CATATAN : 14,
+
+    CREATED_AT : 15,
+
+    UPDATED_AT : 16
 
 };

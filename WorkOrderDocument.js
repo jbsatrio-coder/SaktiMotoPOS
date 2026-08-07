@@ -29,7 +29,7 @@ const WorkOrderDocument = {
 
                 customerNameSnapshot :
 
-                    payload.customerName || "",
+                    payload.customerNameSnapshot || "",
 
                 vehicleId :
 
@@ -37,15 +37,14 @@ const WorkOrderDocument = {
 
                 noPolisiSnapshot :
 
-                    payload.noPolisi || "",
+                    payload.noPolisiSnapshot || "",
 
-                merk :
-
-                    payload.merk || "",
+                merkSnapshot :
+                    payload.merkSnapshot || "",
 
                 modelSnapshot :
 
-                    payload.model || "",
+                 payload.modelSnapshot || "",
 
                 kilometerMasuk :
 

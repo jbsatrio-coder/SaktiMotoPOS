@@ -31,7 +31,9 @@ const CONFIG = {
 
     KOMISI_MEKANIK: "16_KomisiMekanik",
 
-    WORK_ORDER: "17_WorkOrder"
+    WORK_ORDER: "17_WorkOrder",
+
+    WORK_ORDER_JASA : "18_WorkOrderJasa"
 
 },
 
@@ -62,6 +64,7 @@ const CONFIG = {
   }
 
 };
+
 
 function testVehicleConfig(){
 

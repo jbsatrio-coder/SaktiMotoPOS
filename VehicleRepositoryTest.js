@@ -36,3 +36,23 @@ function testVehicleConfig(){
     Logger.log(CONFIG.SHEET.VEHICLE);
 
 }
+
+function testVehicleExists(){
+
+    Logger.log(
+
+        VehicleRepository.exists(
+            "VEH2608070003"
+        )
+
+    );
+
+}
+
+function testFindAllVehicle(){
+
+    Logger.log(
+        VehicleRepository.findAll()
+    );
+
+}

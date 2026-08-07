@@ -20,7 +20,7 @@ function testWorkOrderDocument(){
 
             noPolisi : "B1234XYZ",
 
-            merk : "Honda",
+            merkSnapshot : "Honda",
 
             model : "Beat",
 
@@ -60,17 +60,17 @@ function testWorkOrderDocument(){
 
 /**
  * ============================================
- * Work Order Item Document Test
+ * Work Order Jasa Document Test
  * ============================================
  */
 
-function testWorkOrderItemDocument(){
+function testWorkOrderJasaDocument(){
 
     const document =
 
-        WorkOrderItemDocument.create({
+        WorkOrderJasaDocument.create({
 
-            id : "WOI000001",
+            id : "WOJ000001",
 
             workOrderId : "WO000001",
 
@@ -86,7 +86,7 @@ function testWorkOrderItemDocument(){
 
             mekanikId : "MEC000001",
 
-            mekanikName : "Andi",
+            mekanikNameSnapshot : "Andi",
 
             qty : 1,
 
@@ -94,7 +94,7 @@ function testWorkOrderItemDocument(){
 
             diskon : 5000,
 
-            subtotal : 80000
+            
 
         });
 
@@ -128,7 +128,7 @@ function testWorkOrderPartDocument(){
 
             id : "WOP000001",
 
-            workOrderItemId : "WOI000001",
+            workOrderJasaId : "WOJ000001",
 
             barangId : "BRG000001",
 
