@@ -326,4 +326,48 @@ update(workOrderJasa){
 
 },
 
+existsByWorkOrderAndJasa(
+
+    workOrderId,
+
+    jasaId
+
+){
+
+    const data =
+
+        this.findByWorkOrderId(
+
+            workOrderId
+
+        );
+
+    for(
+
+        let i = 0;
+
+        i < data.length;
+
+        i++
+
+    ){
+
+        if(
+
+            data[i][COL_WO_JASA.JASA_ID] ==
+
+            jasaId
+
+        ){
+
+            return true;
+
+        }
+
+    }
+
+    return false;
+
+},
+
 };

@@ -386,7 +386,9 @@ const COL_JASA = {
 
   ESTIMASI: 6,
 
-  STATUS: 7
+  STATUS: 7,
+
+  TOTAL: 8
 
 };
 
@@ -457,5 +459,33 @@ const COL_WO_JASA = {
     CREATED_AT : 15,
 
     UPDATED_AT : 16
+
+};
+
+const COL_MEKANIK = {
+
+    ID : 0,
+
+    NAMA : 1,
+
+    NO_HP : 2,
+
+    JABATAN : 3,
+
+    TANGGAL_MASUK : 4,
+
+    GAJI_POKOK : 5,
+
+    TIPE_KOMISI : 6,
+
+    PERSENTASE : 7,
+
+    STATUS : 8,
+
+    CREATED_AT : 9,
+
+    UPDATED_AT : 10,
+
+    TOTAL : 11
 
 };
