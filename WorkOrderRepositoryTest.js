@@ -169,3 +169,60 @@ function testCustomerExists(){
     );
 
 }
+
+function testWorkOrderRepositoryFindById(){
+
+    Logger.log(
+
+        WorkOrderRepository.findById(
+            "WO2608070001"
+        )
+
+    );
+
+}
+
+function testSavePartOnlyWorkOrder(){
+
+    const result =
+
+        WorkOrderRepository.save({
+
+            id : "WO-TEST-PART-001",
+
+            customerId : "",
+
+            customerNameSnapshot : "",
+
+            vehicleId : "",
+
+            noPolisiSnapshot : "",
+
+            merkSnapshot : "",
+
+            modelSnapshot : "",
+
+            kilometerMasuk : 0,
+
+            status : "DRAFT",
+
+            prioritas : "NORMAL",
+
+            estimasiSelesai : "",
+
+            admin : "Admin",
+
+            catatan : "Test Part Only",
+
+            createdAt : new Date(),
+
+            updatedAt : "",
+
+            jenisTransaksi :
+                WorkOrderType.PART_ONLY
+
+        });
+
+    Logger.log(result);
+
+}

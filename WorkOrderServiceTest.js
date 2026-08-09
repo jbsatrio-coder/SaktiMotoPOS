@@ -1,20 +1,69 @@
-function testServiceCreateWorkOrder() {
+function testServiceCreateWorkOrder(){
 
     Logger.log(
 
         WorkOrderService.create({
 
-            customerId : "CUS999999",
+            jenisTransaksi :
+                WorkOrderType.SERVICE,
 
-           vehicleId : "VEH2608060003",
+            customerId :
+                "CUS999999",
 
-            kilometerMasuk : 15250,
+            vehicleId :
+                "VEH2608060003",
 
-            prioritas : "NORMAL",
+            kilometerMasuk :
+                15250,
 
-            admin : "Admin",
+            prioritas :
+                WorkOrderPriority.NORMAL,
 
-            catatan : "Service berkala"
+            estimasiSelesai :
+                "",
+
+            admin :
+                "Admin",
+
+            catatan :
+                "Test service"
+
+        })
+
+    );
+
+}
+
+
+function testServiceCreatePartOnlyWorkOrder(){
+
+    Logger.log(
+
+        WorkOrderService.create({
+
+            jenisTransaksi :
+                WorkOrderType.PART_ONLY,
+
+            customerId :
+                "",
+
+            vehicleId :
+                "",
+
+            kilometerMasuk :
+                0,
+
+            prioritas :
+                WorkOrderPriority.NORMAL,
+
+            estimasiSelesai :
+                "",
+
+            admin :
+                "Admin",
+
+            catatan :
+                "Pembelian spare part walk-in"
 
         })
 

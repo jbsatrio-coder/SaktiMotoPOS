@@ -33,7 +33,9 @@ const CONFIG = {
 
     WORK_ORDER: "17_WorkOrder",
 
-    WORK_ORDER_JASA : "18_WorkOrderJasa"
+    WORK_ORDER_JASA : "18_WorkOrderJasa",
+
+    WORK_ORDER_PART : "19_WorkOrderPart"
 
 },
 

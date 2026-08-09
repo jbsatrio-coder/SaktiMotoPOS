@@ -159,3 +159,99 @@ function testWorkOrderPartDocument(){
     );
 
 }
+
+function testCreateWorkOrderService(){
+
+    Logger.log(
+
+        JSON.stringify(
+
+            WorkOrderDocument.create({
+
+                id : "WO-TEST-001",
+
+                jenisTransaksi :
+
+                    WorkOrderType.SERVICE,
+
+                customerId : "CUS000001",
+
+                customerName : "Test Customer",
+
+                vehicleId : "VEH000001",
+
+                noPolisi : "B1234XYZ",
+
+                merkSnapshot : "Honda",
+
+                model : "Beat",
+
+                kilometerMasuk : 15000,
+
+                prioritas :
+
+                    WorkOrderPriority.NORMAL,
+
+                admin : "Admin",
+
+                catatan : "Test Service"
+
+            }),
+
+            null,
+
+            2
+
+        )
+
+    );
+
+}
+
+function testCreateWorkOrderPartOnly(){
+
+    Logger.log(
+
+        JSON.stringify(
+
+            WorkOrderDocument.create({
+
+                id : "WO-TEST-002",
+
+                jenisTransaksi :
+
+                    WorkOrderType.PART_ONLY,
+
+                customerId : "",
+
+                customerName : "",
+
+                vehicleId : "",
+
+                noPolisi : "",
+
+                merkSnapshot : "",
+
+                model : "",
+
+                kilometerMasuk : 0,
+
+                prioritas :
+
+                    WorkOrderPriority.NORMAL,
+
+                admin : "Admin",
+
+                catatan : "Pembelian spare part"
+
+            }),
+
+            null,
+
+            2
+
+        )
+
+    );
+
+}

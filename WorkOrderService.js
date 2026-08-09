@@ -1,7 +1,7 @@
 /**
  * ============================================
  * Work Order Service
- * Version : 1.1.0
+ * Version : 1.2.0
  * ============================================
  */
 
@@ -16,31 +16,44 @@ const WorkOrderService = {
 
         this.validate(request);
 
-        const customer = this.loadCustomer(
-            request.customerId
-        );
+        const customer =
 
-        const vehicle = this.loadVehicle(
+            request.customerId
+
+                ? this.loadCustomer(
+                    request.customerId
+                )
+
+                : null;
+
+        const vehicle =
+
             request.vehicleId
-        );
+
+                ? this.loadVehicle(
+                    request.vehicleId
+                )
+
+                : null;
 
         Logger.log(customer);
 
-Logger.log(vehicle);
+        Logger.log(vehicle);
 
-const workOrderDocument =
+        const workOrderDocument =
 
-    this.buildDocument(
-        request,
-        customer,
-        vehicle
-    );
+            this.buildDocument(
+                request,
+                customer,
+                vehicle
+            );
 
-return this.save(
-    workOrderDocument
-);
+        return this.save(
+            workOrderDocument
+        );
 
     },
+
 
     /**
      * Validasi Request
@@ -55,56 +68,131 @@ return this.save(
 
         }
 
-        if(!request.customerId){
+        const jenisTransaksi =
 
-            throw new Error(
-                "Pelanggan belum dipilih."
-            );
+            request.jenisTransaksi ||
 
-        }
+            WorkOrderType.SERVICE;
 
-        if(!request.vehicleId){
 
-            throw new Error(
-                "Kendaraan belum dipilih."
-            );
-
-        }
-
+        /**
+         * Validasi jenis transaksi
+         */
         if(
 
-            !CustomerRepository.exists(
-                request.customerId
-            )
+            jenisTransaksi !==
+                WorkOrderType.SERVICE
+
+            &&
+
+            jenisTransaksi !==
+                WorkOrderType.PART_ONLY
 
         ){
 
             throw new Error(
-                "Pelanggan tidak ditemukan."
+                "Jenis transaksi tidak valid."
             );
 
         }
 
+
+        /**
+         * ========================================
+         * SERVICE
+         * ========================================
+         */
+
         if(
 
-            !VehicleRepository.exists(
-                request.vehicleId
-            )
+            jenisTransaksi ===
+                WorkOrderType.SERVICE
 
         ){
 
-            throw new Error(
-                "Kendaraan tidak ditemukan."
-            );
+            if(!request.customerId){
+
+                throw new Error(
+                    "Pelanggan belum dipilih."
+                );
+
+            }
+
+            if(!request.vehicleId){
+
+                throw new Error(
+                    "Kendaraan belum dipilih."
+                );
+
+            }
+
+        }
+
+
+        /**
+         * ========================================
+         * Validasi Customer
+         * hanya jika ID diberikan
+         * ========================================
+         */
+
+        if(request.customerId){
+
+            if(
+
+                !CustomerRepository.exists(
+                    request.customerId
+                )
+
+            ){
+
+                throw new Error(
+                    "Pelanggan tidak ditemukan."
+                );
+
+            }
+
+        }
+
+
+        /**
+         * ========================================
+         * Validasi Vehicle
+         * hanya jika ID diberikan
+         * ========================================
+         */
+
+        if(request.vehicleId){
+
+            if(
+
+                !VehicleRepository.exists(
+                    request.vehicleId
+                )
+
+            ){
+
+                throw new Error(
+                    "Kendaraan tidak ditemukan."
+                );
+
+            }
 
         }
 
     },
 
+
     /**
      * Mengambil Customer
      */
     loadCustomer(customerId){
+
+        if(!customerId){
+
+            return null;
+
+        }
 
         return CustomerRepository.findById(
             customerId
@@ -112,98 +200,142 @@ return this.save(
 
     },
 
+
     /**
      * Mengambil Kendaraan
      */
     loadVehicle(vehicleId){
+
+        if(!vehicleId){
+
+            return null;
+
+        }
 
         return VehicleRepository.findById(
             vehicleId
         );
 
     },
+
+
     /**
- * Membuat Work Order Document
- */
-buildDocument(
-    request,
-    customer,
-    vehicle
-){
+     * Membuat Work Order Document
+     */
+    buildDocument(
+        request,
+        customer,
+        vehicle
+    ){
 
-    return WorkOrderDocument.create({
+        return WorkOrderDocument.create({
 
-        id :
+            id :
 
-    RunningNumberService.generate(
+                RunningNumberService.generate(
 
-        DocumentType.WORK_ORDER
+                    DocumentType.WORK_ORDER
 
-    ),
+                ),
 
-        customerId :
+            jenisTransaksi :
 
-            customer[COL_PELANGGAN.ID],
+                request.jenisTransaksi ||
 
-        customerNameSnapshot :
+                WorkOrderType.SERVICE,
 
-            customer[COL_PELANGGAN.NAMA],
 
-        vehicleId :
+            customerId :
 
-            vehicle[COL_VEHICLE.ID],
+                customer
+                    ? customer[COL_PELANGGAN.ID]
+                    : "",
 
-        noPolisiSnapshot :
 
-            vehicle[COL_VEHICLE.PLATE],
+            customerNameSnapshot :
 
-        merkSnapshot :
+                customer
+                    ? customer[COL_PELANGGAN.NAMA]
+                    : "",
 
-            vehicle[COL_VEHICLE.BRAND],
 
-        modelSnapshot :
+            vehicleId :
 
-            vehicle[COL_VEHICLE.MODEL],
+                vehicle
+                    ? vehicle[COL_VEHICLE.ID]
+                    : "",
 
-        kilometerMasuk :
 
-            request.kilometerMasuk,
+            noPolisiSnapshot :
 
-        status :
+                vehicle
+                    ? vehicle[COL_VEHICLE.PLATE]
+                    : "",
 
-            "DRAFT",
 
-        prioritas :
+            merkSnapshot :
 
-            request.prioritas,
+                vehicle
+                    ? vehicle[COL_VEHICLE.BRAND]
+                    : "",
 
-         estimasiSelesai :
 
-             request.estimasiSelesai || "",   
+            modelSnapshot :
 
-        admin :
+                vehicle
+                    ? vehicle[COL_VEHICLE.MODEL]
+                    : "",
 
-            request.admin,
 
-        catatan :
+            kilometerMasuk :
 
-            request.catatan
+                Number(
+                    request.kilometerMasuk || 0
+                ),
 
-    });
 
-},
+            status :
 
-/**
- * Menyimpan Work Order
- */
-save(workOrderDocument){
+                WorkOrderStatus.DRAFT,
 
-    return WorkOrderRepository.save(
 
-        workOrderDocument.workOrder
+            prioritas :
 
-    );
+                request.prioritas ||
 
-},
+                WorkOrderPriority.NORMAL,
+
+
+            estimasiSelesai :
+
+                request.estimasiSelesai || "",
+
+
+            admin :
+
+                request.admin || "",
+
+
+            catatan :
+
+                request.catatan || ""
+
+        });
+
+    },
+
+
+    /**
+     * Menyimpan Work Order
+     */
+    save(workOrderDocument){
+
+        return WorkOrderRepository.save(
+
+            workOrderDocument.workOrder
+
+        );
+
+    }
 
 };

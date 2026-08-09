@@ -22,7 +22,7 @@ const StockLedgerRepository = {
       data.id,
       data.tanggal,
       data.jam,
-      data.kodeBarang,
+      data.barangId,
       data.namaBarang,
       data.jenisMutasi,
       data.referensi,

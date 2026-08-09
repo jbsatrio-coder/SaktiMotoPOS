@@ -227,7 +227,11 @@ const COL_WORK_ORDER = {
 
     DIBUAT_PADA : 13,
 
-    DIUBAH_PADA : 14
+    DIUBAH_PADA : 14,
+
+    JENIS_TRANSAKSI : 15,
+
+    TOTAL : 16
 
 };
 
@@ -273,45 +277,53 @@ const SHEET_COL_WORK_ORDER = {
 
 const COL_BARANG = {
 
-  ID: 0,
+    ID : 0,
 
-  BARCODE: 1,
+    BARCODE : 1,
 
-  KODE: 2,
+    KATAKUNCI : 2,
 
-  KATAKUNCI: 3,
+    NAMAPENDEK : 3,
 
-  NAMAPENDEK: 4,
+    NAMA : 4,
 
-  NAMA: 5,
+    KATEGORI : 5,
 
-  KATEGORI: 6,
+    SUBKATEGORI : 6,
 
-  SUBKATEGORI: 7,
+    MERK : 7,
 
-  MERK: 8,
+    KENDARAAN : 8,
 
-  KENDARAAN: 9,
+    SATUAN : 9,
 
-  SATUAN: 10,
+    HARGAMODAL : 10,
 
-  HARGAMODAL: 11,
+    MARGIN : 11,
 
-  MARGIN: 12,
+    HARGAJUAL : 12,
 
-  HARGAJUAL: 13,
+    STOK : 13,
 
-  STOK: 14,
+    MINSTOK : 14,
 
-  MINSTOK: 15,
+    RAK : 15,
 
-  RAK: 16,
+    SUPPLIER : 16,
 
-  SUPPLIER: 17,
+    STATUS : 17,
 
-  STATUS: 18,
+    CATATAN : 18,
 
-  CATATAN: 19
+    CREATED_AT : 19,
+
+    UPDATED_AT : 20,
+
+    CREATED_BY : 21,
+
+    UPDATED_BY : 22,
+
+    TOTAL : 23
 
 };
 
@@ -493,3 +505,57 @@ const COL_MEKANIK = {
     TOTAL : 11
 
 };
+
+/**
+ * ============================================
+ * WORK ORDER PART COLUMN MAP
+ * ============================================
+ */
+
+const COL_WORK_ORDER_PART = {
+
+    ID : 0,
+
+    WORK_ORDER_ID : 1,
+
+    WORK_ORDER_JASA_ID : 2,
+
+    BARANG_ID : 3,
+
+    NAMA_BARANG_SNAPSHOT : 4,
+
+    QTY : 5,
+
+    HARGA : 6,
+
+    DISKON : 7,
+
+    STATUS : 8,
+
+    CATATAN : 9,
+
+    DIBUAT_PADA : 10,
+
+    DIUBAH_PADA : 11,
+
+    TOTAL : 12
+
+};
+
+function testBarangColumnMap(){
+
+    Logger.log(
+
+        JSON.stringify(
+
+            COL_BARANG,
+
+            null,
+
+            2
+
+        )
+
+    );
+
+}

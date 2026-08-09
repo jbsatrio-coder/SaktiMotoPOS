@@ -1,7 +1,7 @@
 /**
  * ============================================
  * Work Order Document
- * Version : 1.0.0
+ * Version : 1.1.0
  * ============================================
  */
 
@@ -17,6 +17,12 @@ const WorkOrderDocument = {
 
                     payload.id || "",
 
+                jenisTransaksi :
+
+                    payload.jenisTransaksi ||
+
+                    WorkOrderType.SERVICE,
+
                 tanggal :
 
                     payload.tanggal ||
@@ -29,7 +35,7 @@ const WorkOrderDocument = {
 
                 customerNameSnapshot :
 
-                    payload.customerNameSnapshot || "",
+                    payload.customerName || "",
 
                 vehicleId :
 
@@ -37,14 +43,15 @@ const WorkOrderDocument = {
 
                 noPolisiSnapshot :
 
-                    payload.noPolisiSnapshot || "",
+                    payload.noPolisi || "",
 
                 merkSnapshot :
+
                     payload.merkSnapshot || "",
 
                 modelSnapshot :
 
-                 payload.modelSnapshot || "",
+                    payload.model || "",
 
                 kilometerMasuk :
 
