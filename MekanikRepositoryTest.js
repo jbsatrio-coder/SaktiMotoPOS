@@ -71,3 +71,53 @@ function testMekanikFindById(){
     );
 
 }
+
+function testMekanikIsActive(){
+
+    Logger.log(
+        "================================"
+    );
+
+    Logger.log(
+        "MEKANIK IS ACTIVE TEST"
+    );
+
+    Logger.log(
+        "================================"
+    );
+
+    Logger.log(
+        "MEC000001 ACTIVE:"
+    );
+
+    Logger.log(
+        MekanikRepository
+            .isActive(
+                "MEC000001"
+            )
+    );
+
+    Logger.log(
+        "MEC999999 ACTIVE:"
+    );
+
+    Logger.log(
+        MekanikRepository
+            .isActive(
+                "MEC999999"
+            )
+    );
+
+    Logger.log(
+        "================================"
+    );
+
+    Logger.log(
+        "MEKANIK IS ACTIVE TEST SELESAI"
+    );
+
+    Logger.log(
+        "================================"
+    );
+
+}

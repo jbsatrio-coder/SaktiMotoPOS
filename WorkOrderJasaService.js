@@ -526,13 +526,13 @@ validate(request){
     }
 
     if(
+    request.mekanikId
+){
 
-        request.mekanikId &&
-
+    if(
         !MekanikRepository.exists(
             request.mekanikId
         )
-
     ){
 
         throw new Error(
@@ -540,6 +540,21 @@ validate(request){
         );
 
     }
+
+
+    if(
+        !MekanikRepository.isActive(
+            request.mekanikId
+        )
+    ){
+
+        throw new Error(
+            "Mekanik tidak aktif."
+        );
+
+    }
+
+}
 
     if(
 

@@ -87,6 +87,20 @@ const MekanikRepository = {
 
     },
 
+    isActive(id){
+
+    const mekanik = this.findById(id);
+
+    if(!mekanik){
+        return false;
+    }
+
+    return String(
+        mekanik[COL_MEKANIK.STATUS] || ""
+    ).toUpperCase() === "AKTIF";
+
+},
+
     findById(id){
 
         const row =
@@ -171,33 +185,20 @@ const MekanikRepository = {
 
         }
 
-        this.sheet()
-
-            .appendRow([
-
-                mekanik.id,
-
-                mekanik.nama,
-
-                mekanik.noHp,
-
-                mekanik.jabatan,
-
-                mekanik.tanggalMasuk,
-
-                mekanik.gajiPokok,
-
-                mekanik.tipeKomisi,
-
-                mekanik.persentase,
-
-                mekanik.status,
-
-                mekanik.createdAt,
-
-                mekanik.updatedAt
-
-            ]);
+        this.sheet().appendRow([
+    mekanik.id,
+    mekanik.nama,
+    mekanik.noHp,
+    mekanik.jabatan,
+    mekanik.tanggalMasuk,
+    mekanik.gajiPokok,
+    mekanik.tipeKomisi,
+    mekanik.nilaiKomisi,
+    mekanik.status,
+    mekanik.createdAt,
+    mekanik.updatedAt,
+    mekanik.urutanTampilan
+]);
 
         return {
 
@@ -252,34 +253,21 @@ const MekanikRepository = {
             )
 
             .setValues([
-
-                [
-
-                    mekanik.id,
-
-                    mekanik.nama,
-
-                    mekanik.noHp,
-
-                    mekanik.jabatan,
-
-                    mekanik.tanggalMasuk,
-
-                    mekanik.gajiPokok,
-
-                    mekanik.tipeKomisi,
-
-                    mekanik.persentase,
-
-                    mekanik.status,
-
-                    mekanik.createdAt,
-
-                    mekanik.updatedAt
-
-                ]
-
-            ]);
+    [
+        mekanik.id,
+        mekanik.nama,
+        mekanik.noHp,
+        mekanik.jabatan,
+        mekanik.tanggalMasuk,
+        mekanik.gajiPokok,
+        mekanik.tipeKomisi,
+        mekanik.nilaiKomisi,
+        mekanik.status,
+        mekanik.createdAt,
+        mekanik.updatedAt,
+        mekanik.urutanTampilan
+    ]
+]);
 
         return {
 

@@ -494,7 +494,7 @@ const COL_MEKANIK = {
 
     TIPE_KOMISI : 6,
 
-    PERSENTASE : 7,
+    NILAI_KOMISI : 7,
 
     STATUS : 8,
 
@@ -502,7 +502,9 @@ const COL_MEKANIK = {
 
     UPDATED_AT : 10,
 
-    TOTAL : 11
+    URUTAN_TAMPILAN : 11,
+
+    TOTAL : 12
 
 };
 
