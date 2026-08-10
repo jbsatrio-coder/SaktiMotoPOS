@@ -26,6 +26,8 @@ const DocumentType = {
 
     WORK_ORDER_TIMELINE : "WOT",
 
+    STOCK_LEDGER : "STK",
+
     PAYMENT : "PAY",
 
     ATTACHMENT : "ATT",

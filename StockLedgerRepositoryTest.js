@@ -69,3 +69,273 @@ function testStockLedgerReadBackV2(){
     );
 
 }
+
+function testStockLedgerRepositoryFindByReference(){
+
+    const result =
+        StockLedgerRepository.findByReference(
+            "WOP2608100001"
+        );
+
+
+    Logger.log(
+        "LEDGER BY WORK ORDER PART:"
+    );
+
+
+    Logger.log(
+        JSON.stringify(
+            result
+        )
+    );
+
+}
+
+function testStockLedgerRepositoryBarangIdMapping(){
+
+    const testId =
+        "TEST_REPO_BARANG_ID";
+
+
+    StockLedgerRepository.addHistory({
+
+        id :
+            testId,
+
+        tanggal :
+            new Date(),
+
+        jam :
+            new Date(),
+
+        barangId :
+            "BRG000001",
+
+        namaBarang :
+            "TEST BARANG ID",
+
+        jenisMutasi :
+            "TEST",
+
+        referensi :
+            "TEST_REPO_MAPPING",
+
+        stokAwal :
+            100,
+
+        qtyMasuk :
+            0,
+
+        qtyKeluar :
+            1,
+
+        stokAkhir :
+            99,
+
+        keterangan :
+            "Repository Barang ID Mapping Test",
+
+        admin :
+            "Developer",
+
+        createdAt :
+            new Date()
+
+    });
+
+
+    Logger.log(
+        "REPOSITORY TEST SELESAI:"
+    );
+
+    Logger.log(
+        testId
+    );
+
+}
+
+function testStockLedgerRepositoryBarangIdReadBack(){
+
+    const testId =
+        "TEST_REPO_BARANG_ID";
+
+
+    const sh =
+        StockLedgerRepository.sheet();
+
+
+    const lastRow =
+        sh.getLastRow();
+
+
+    if(lastRow < 2){
+
+        throw new Error(
+            "Stock Ledger belum memiliki data."
+        );
+
+    }
+
+
+    const data =
+        sh.getRange(
+            2,
+            1,
+            lastRow - 1,
+            COL_STOK.CREATEDAT + 1
+        ).getValues();
+
+
+    let found = false;
+
+
+    for(
+        let i = 0;
+        i < data.length;
+        i++
+    ){
+
+        const row =
+            data[i];
+
+
+        const id =
+            String(
+                row[
+                    COL_STOK.ID
+                ]
+            ).trim();
+
+
+        if(id === testId){
+
+            found = true;
+
+
+            Logger.log(
+                "TEST ROW:"
+            );
+
+            Logger.log(
+                JSON.stringify(
+                    row
+                )
+            );
+
+
+            Logger.log(
+                "ID:"
+            );
+
+            Logger.log(
+                JSON.stringify(
+                    row[
+                        COL_STOK.ID
+                    ]
+                )
+            );
+
+
+            Logger.log(
+                "BARANG_ID:"
+            );
+
+            Logger.log(
+                JSON.stringify(
+                    row[
+                        COL_STOK.BARANG_ID
+                    ]
+                )
+            );
+
+
+            Logger.log(
+                "BARANG_ID TYPE:"
+            );
+
+            Logger.log(
+                typeof row[
+                    COL_STOK.BARANG_ID
+                ]
+            );
+
+
+            Logger.log(
+                "NAMA BARANG:"
+            );
+
+            Logger.log(
+                JSON.stringify(
+                    row[
+                        COL_STOK.NAMABARANG
+                    ]
+                )
+            );
+
+
+            break;
+
+        }
+
+    }
+
+
+    Logger.log(
+        "FOUND:"
+    );
+
+    Logger.log(
+        found
+    );
+
+
+    if(!found){
+
+        throw new Error(
+            "TEST_REPO_BARANG_ID tidak ditemukan."
+        );
+
+    }
+
+}
+
+function testStockLedgerColumnMapRuntime(){
+
+    Logger.log(
+        "COL_STOK OBJECT:"
+    );
+
+    Logger.log(
+        JSON.stringify(
+            COL_STOK
+        )
+    );
+
+
+    Logger.log(
+        "COL_STOK.BARANG_ID:"
+    );
+
+    Logger.log(
+        COL_STOK.BARANG_ID
+    );
+
+
+    Logger.log(
+        "COL_STOK.BARANG_ID TYPE:"
+    );
+
+    Logger.log(
+        typeof COL_STOK.BARANG_ID
+    );
+
+
+    Logger.log(
+        "INDEX LITERAL 3:"
+    );
+
+    Logger.log(
+        3
+    );
+
+}

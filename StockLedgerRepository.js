@@ -35,7 +35,59 @@ const StockLedgerRepository = {
       data.createdAt
     ]);
 
-  }
+  },
+
+  /**
+ * ============================================
+ * Mencari Stock Ledger berdasarkan Referensi
+ * ============================================
+ */
+findByReference(referensi){
+
+    if(!referensi){
+
+        return [];
+
+    }
+
+
+    const sh =
+        this.sheet();
+
+
+    if(sh.getLastRow() < 2){
+
+        return [];
+
+    }
+
+
+    const data =
+        sh.getRange(
+            2,
+            1,
+            sh.getLastRow() - 1,
+            COL_STOK.CREATEDAT + 1
+        ).getValues();
+
+
+    return data.filter(row =>
+
+        String(
+            row[
+                COL_STOK.REFERENSI
+            ]
+        ).trim()
+
+        ===
+
+        String(
+            referensi
+        ).trim()
+
+    );
+
+},
 
 };
 

@@ -416,7 +416,7 @@ const COL_STOK = {
 
   JAM: 2,
 
-  KODEBARANG: 3,
+  BARANG_ID: 3,
 
   NAMABARANG: 4,
 
