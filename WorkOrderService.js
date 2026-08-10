@@ -343,6 +343,12 @@ const WorkOrderService = {
  * Mengubah Status Work Order
  * ============================================
  */
+/**
+ * ============================================
+ * Mengubah Status Work Order
+ * Version : 1.3.0
+ * ============================================
+ */
 changeStatus(
     workOrderId,
     nextStatus
@@ -414,6 +420,40 @@ changeStatus(
 
     /**
      * ========================================
+     * COMPLETION GATE
+     *
+     * Hanya dijalankan jika target status
+     * adalah SELESAI.
+     * ========================================
+     */
+
+    if(
+        nextStatus ===
+        WorkOrderStatus.SELESAI
+    ){
+
+        const completion =
+            WorkOrderStatusService.canComplete(
+                workOrderId
+            );
+
+
+        if(
+            !completion.canComplete
+        ){
+
+            throw new Error(
+                "Work Order belum dapat diselesaikan: " +
+                completion.reason
+            );
+
+        }
+
+    }
+
+
+    /**
+     * ========================================
      * SIMPAN STATUS BARU
      * ========================================
      */
@@ -453,3 +493,4 @@ changeStatus(
 }
 
 };
+

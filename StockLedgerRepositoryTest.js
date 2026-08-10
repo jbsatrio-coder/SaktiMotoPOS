@@ -339,3 +339,78 @@ function testStockLedgerColumnMapRuntime(){
     );
 
 }
+
+/**
+ * ============================================
+ * TEST
+ * Stock Ledger - Find By Referensi
+ * ============================================
+ */
+
+function testFindStockLedgerByReferensi(){
+
+  Logger.log(
+    "================================"
+  );
+
+  Logger.log(
+    "STOCK LEDGER FIND BY REFERENSI TEST"
+  );
+
+  Logger.log(
+    "================================"
+  );
+
+
+  const referensi =
+    "WOP2608100006";
+
+
+  const result =
+    StockLedgerRepository.findByReferensi(
+      referensi
+    );
+
+
+  Logger.log(
+    "REFERENSI:"
+  );
+
+  Logger.log(
+    referensi
+  );
+
+
+  Logger.log(
+    "JUMLAH LEDGER:"
+  );
+
+  Logger.log(
+    result.length
+  );
+
+
+  Logger.log(
+    "DATA LEDGER:"
+  );
+
+  Logger.log(
+    JSON.stringify(
+      result
+    )
+  );
+
+
+  Logger.log(
+    "================================"
+  );
+
+  Logger.log(
+    "FIND BY REFERENSI TEST SELESAI"
+  );
+
+  Logger.log(
+    "================================"
+  );
+
+}

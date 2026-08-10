@@ -503,3 +503,176 @@ function testWorkOrderStatusServiceValidate(){
     );
 
 }
+
+/**
+ * ============================================
+ * TEST: Work Order Completion Validation
+ * ============================================
+ */
+
+function testWorkOrderStatusServiceCanComplete(){
+
+    Logger.log(
+        "================================"
+    );
+
+    Logger.log(
+        "WORK ORDER CAN COMPLETE TEST"
+    );
+
+    Logger.log(
+        "================================"
+    );
+
+
+    const workOrderId =
+        "WO2608100001";
+
+
+    /**
+     * ========================================
+     * TEST 1
+     * Work Order belum boleh selesai
+     * ========================================
+     */
+
+    let result;
+
+    try{
+
+        result =
+            WorkOrderStatusService.canComplete(
+                workOrderId
+            );
+
+        Logger.log(
+            "CAN COMPLETE RESULT:"
+        );
+
+        Logger.log(
+            JSON.stringify(result)
+        );
+
+    }
+    catch(error){
+
+        Logger.log(
+            "EXPECTED / CURRENT ERROR:"
+        );
+
+        Logger.log(
+            error.message
+        );
+
+    }
+
+
+    Logger.log(
+        "================================"
+    );
+
+    Logger.log(
+        "CAN COMPLETE TEST SELESAI"
+    );
+
+    Logger.log(
+        "================================"
+    );
+
+}
+
+/**
+ * ============================================
+ * TEST: Work Order Can Complete
+ * ============================================
+ */
+
+function testWorkOrderStatusServiceCanComplete(){
+
+    Logger.log(
+        "================================"
+    );
+
+    Logger.log(
+        "WORK ORDER CAN COMPLETE TEST"
+    );
+
+    Logger.log(
+        "================================"
+    );
+
+
+    const workOrderId =
+        "WO2608100001";
+
+
+    const result =
+        WorkOrderStatusService.canComplete(
+            workOrderId
+        );
+
+
+    Logger.log(
+        "CAN COMPLETE:"
+    );
+
+    Logger.log(
+        result.canComplete
+    );
+
+
+    Logger.log(
+        "REASON:"
+    );
+
+    Logger.log(
+        result.reason
+    );
+
+
+    Logger.log(
+        "JASA:"
+    );
+
+    Logger.log(
+        JSON.stringify(
+            result.jasa
+        )
+    );
+
+
+    Logger.log(
+        "PARTS:"
+    );
+
+    Logger.log(
+        JSON.stringify(
+            result.parts
+        )
+    );
+
+
+    Logger.log(
+        "FULL RESULT:"
+    );
+
+    Logger.log(
+        JSON.stringify(
+            result
+        )
+    );
+
+
+    Logger.log(
+        "================================"
+    );
+
+    Logger.log(
+        "CAN COMPLETE TEST SELESAI"
+    );
+
+    Logger.log(
+        "================================"
+    );
+
+}
