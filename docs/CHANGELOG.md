@@ -2,6 +2,88 @@
 
 # SaktiMotoPOS Changelog
 
+# SAKTI MOTO POS
+
+# SaktiMotoPOS Changelog
+
+## v0.7.0
+
+Date    : 2026-08-10
+Sprint  : Work Order & Stock Integration
+Status  : Stable
+
+---
+
+## 🎉 Major Milestone
+
+### Work Order Platform
+
+Work Order Engine mulai terintegrasi dengan Inventory Platform.
+
+Work Order sekarang memiliki lifecycle status yang terkontrol dan completion gate yang memastikan pekerjaan hanya dapat diselesaikan apabila seluruh requirement telah terpenuhi.
+
+---
+
+## 🚀 NEW
+
+### Work Order Engine
+
+- Added `WorkOrderService`
+- Added Work Order creation flow
+- Added Customer validation
+- Added Vehicle validation
+- Added Customer snapshot
+- Added Vehicle snapshot
+- Added Work Order transaction type validation
+- Added Work Order priority
+- Added Work Order status management
+
+---
+
+### Work Order Status Engine
+
+Added centralized Work Order status transition engine.
+
+Supported status:
+
+- `DRAFT`
+- `MENUNGGU_DIAGNOSA`
+- `MENUNGGU_APPROVAL`
+- `DALAM_PENGERJAAN`
+- `MENUNGGU_SPAREPART`
+- `SELESAI`
+- `SUDAH_DIAMBIL`
+- `DIBATALKAN`
+
+Supported transition flow:
+
+```text
+DRAFT
+↓
+MENUNGGU_DIAGNOSA
+↓
+MENUNGGU_APPROVAL
+↓
+DALAM_PENGERJAAN
+↓
+MENUNGGU_SPAREPART
+↓
+DALAM_PENGERJAAN
+↓
+SELESAI
+↓
+SUDAH_DIAMBIL
+
+## CP-0004
+- WorkOrderService Complete
+- WorkOrderJasaRepository Complete
+- Rename WorkOrderItem -> WorkOrderJasa
+- Freeze Struktur 17_WorkOrder
+- Freeze Struktur 18_WorkOrderJasa
+
+## Next
+- WorkOrderJasaService
+
 ## v0.6.5
 - Inventory Platform completed
 - Purchase Platform completed

@@ -27,7 +27,7 @@ function testWorkOrderJasaFindRow(){
 
         WorkOrderJasaRepository
             .findRowById(
-                "WOJ000001"
+                "WOJ2608070001"
             )
 
     );
@@ -53,7 +53,7 @@ function testWorkOrderJasaFindById(){
 
         WorkOrderJasaRepository
             .findById(
-                "WOJ000001"
+                "WOJ2608070001"
             )
 
     );
