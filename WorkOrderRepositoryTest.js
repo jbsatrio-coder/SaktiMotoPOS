@@ -226,3 +226,139 @@ function testSavePartOnlyWorkOrder(){
     Logger.log(result);
 
 }
+
+function testWorkOrderRepositoryUpdateStatus(){
+
+    /**
+     * ========================================
+     * TEST DATA
+     * ========================================
+     */
+
+    const workOrderId =
+        "WO2608100001";
+
+
+    const newStatus =
+        WorkOrderStatus.MENUNGGU_DIAGNOSA;
+
+
+    Logger.log(
+        "================================"
+    );
+
+    Logger.log(
+        "WORK ORDER REPOSITORY STATUS TEST"
+    );
+
+    Logger.log(
+        "================================"
+    );
+
+
+    /**
+     * ========================================
+     * STATUS SEBELUM
+     * ========================================
+     */
+
+    const before =
+        WorkOrderRepository.findById(
+            workOrderId
+        );
+
+
+    Logger.log(
+        "STATUS SEBELUM:"
+    );
+
+    Logger.log(
+        before[
+            COL_WORK_ORDER.STATUS
+        ]
+    );
+
+
+    /**
+     * ========================================
+     * UPDATE STATUS
+     * ========================================
+     */
+
+    const result =
+        WorkOrderRepository.updateStatus(
+
+            workOrderId,
+
+            newStatus
+
+        );
+
+
+    Logger.log(
+        "UPDATE RESULT:"
+    );
+
+    Logger.log(
+        result
+    );
+
+
+    /**
+     * ========================================
+     * BACA ULANG
+     * ========================================
+     */
+
+    const after =
+        WorkOrderRepository.findById(
+            workOrderId
+        );
+
+
+    Logger.log(
+        "STATUS SESUDAH:"
+    );
+
+    Logger.log(
+        after[
+            COL_WORK_ORDER.STATUS
+        ]
+    );
+
+
+    /**
+     * ========================================
+     * VALIDASI
+     * ========================================
+     */
+
+    const statusMatch =
+
+        after[
+            COL_WORK_ORDER.STATUS
+        ] === newStatus;
+
+
+    Logger.log(
+        "STATUS MATCH:"
+    );
+
+    Logger.log(
+        statusMatch
+    );
+
+
+    Logger.log(
+        "================================"
+    );
+
+    Logger.log(
+        "REPOSITORY STATUS TEST SELESAI"
+    );
+
+    Logger.log(
+        "================================"
+    );
+
+}

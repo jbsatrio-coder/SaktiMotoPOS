@@ -232,3 +232,294 @@ function testWorkOrderPartServiceConsumeStockBatch(){
     );
 
 }
+
+function testWorkOrderServiceChangeStatus(){
+
+    const workOrderId =
+        "WO2608100001";
+
+
+    const nextStatus =
+        WorkOrderStatus.MENUNGGU_APPROVAL;
+
+
+    Logger.log(
+        "================================"
+    );
+
+    Logger.log(
+        "WORK ORDER SERVICE CHANGE STATUS TEST"
+    );
+
+    Logger.log(
+        "================================"
+    );
+
+
+    /**
+     * ========================================
+     * STATUS SEBELUM
+     * ========================================
+     */
+
+    const before =
+        WorkOrderRepository.findById(
+            workOrderId
+        );
+
+
+    Logger.log(
+        "STATUS SEBELUM:"
+    );
+
+    Logger.log(
+        before[
+            COL_WORK_ORDER.STATUS
+        ]
+    );
+
+
+    /**
+     * ========================================
+     * CHANGE STATUS
+     * ========================================
+     */
+
+    const result =
+        WorkOrderService.changeStatus(
+
+            workOrderId,
+
+            nextStatus
+
+        );
+
+
+    Logger.log(
+        "CHANGE STATUS RESULT:"
+    );
+
+    Logger.log(
+        result
+    );
+
+
+    /**
+     * ========================================
+     * BACA ULANG
+     * ========================================
+     */
+
+    const after =
+        WorkOrderRepository.findById(
+            workOrderId
+        );
+
+
+    Logger.log(
+        "STATUS SESUDAH:"
+    );
+
+    Logger.log(
+        after[
+            COL_WORK_ORDER.STATUS
+        ]
+    );
+
+
+    /**
+     * ========================================
+     * VALIDASI
+     * ========================================
+     */
+
+    const statusMatch =
+
+        after[
+            COL_WORK_ORDER.STATUS
+        ] === nextStatus;
+
+
+    Logger.log(
+        "STATUS MATCH:"
+    );
+
+    Logger.log(
+        statusMatch
+    );
+
+
+    Logger.log(
+        "================================"
+    );
+
+    Logger.log(
+        "CHANGE STATUS TEST SELESAI"
+    );
+
+    Logger.log(
+        "================================"
+    );
+
+}
+
+function testWorkOrderServiceChangeStatusInvalid(){
+
+    const workOrderId =
+        "WO2608100001";
+
+
+    const invalidStatus =
+        WorkOrderStatus.DRAFT;
+
+
+    Logger.log(
+        "================================"
+    );
+
+    Logger.log(
+        "INVALID CHANGE STATUS TEST"
+    );
+
+    Logger.log(
+        "================================"
+    );
+
+
+    /**
+     * ========================================
+     * STATUS SEBELUM
+     * ========================================
+     */
+
+    const before =
+        WorkOrderRepository.findById(
+            workOrderId
+        );
+
+
+    const statusBefore =
+        before[
+            COL_WORK_ORDER.STATUS
+        ];
+
+
+    Logger.log(
+        "STATUS SEBELUM:"
+    );
+
+    Logger.log(
+        statusBefore
+    );
+
+
+    /**
+     * ========================================
+     * COBA TRANSITION INVALID
+     * ========================================
+     */
+
+    let errorDetected = false;
+
+
+    try{
+
+        WorkOrderService.changeStatus(
+
+            workOrderId,
+
+            invalidStatus
+
+        );
+
+    }
+    catch(error){
+
+        errorDetected = true;
+
+
+        Logger.log(
+            "EXPECTED ERROR:"
+        );
+
+        Logger.log(
+            error.message
+        );
+
+    }
+
+
+    /**
+     * ========================================
+     * BACA ULANG
+     * ========================================
+     */
+
+    const after =
+        WorkOrderRepository.findById(
+            workOrderId
+        );
+
+
+    const statusAfter =
+        after[
+            COL_WORK_ORDER.STATUS
+        ];
+
+
+    Logger.log(
+        "STATUS SESUDAH:"
+    );
+
+    Logger.log(
+        statusAfter
+    );
+
+
+    /**
+     * ========================================
+     * VALIDASI ERROR
+     * ========================================
+     */
+
+    Logger.log(
+        "ERROR TERDETEKSI:"
+    );
+
+    Logger.log(
+        errorDetected
+    );
+
+
+    /**
+     * ========================================
+     * VALIDASI STATUS TIDAK BERUBAH
+     * ========================================
+     */
+
+    const statusUnchanged =
+        statusAfter === statusBefore;
+
+
+    Logger.log(
+        "STATUS TETAP:"
+    );
+
+    Logger.log(
+        statusUnchanged
+    );
+
+
+    Logger.log(
+        "================================"
+    );
+
+    Logger.log(
+        "INVALID CHANGE STATUS TEST SELESAI"
+    );
+
+    Logger.log(
+        "================================"
+    );
+
+}

@@ -209,6 +209,80 @@ const WorkOrderRepository = {
 
         };
 
-    }
+    },
+/**
+ * ============================================
+ * Mengubah Status Work Order
+ * ============================================
+ */
+updateStatus(
+    workOrderId,
+    status
+){
 
+    /**
+     * ========================================
+     * Pastikan Work Order ada
+     * ========================================
+     */
+
+    const row =
+        this.requireRow(
+            workOrderId
+        );
+
+
+    const sh =
+        this.sheet();
+
+
+    /**
+     * ========================================
+     * UPDATE STATUS
+     * ========================================
+     */
+
+    sh.getRange(
+        row,
+        COL_WORK_ORDER.STATUS + 1
+    ).setValue(
+        status
+    );
+
+
+    /**
+     * ========================================
+     * UPDATE WAKTU PERUBAHAN
+     * ========================================
+     */
+
+    sh.getRange(
+        row,
+        COL_WORK_ORDER.DIUBAH_PADA + 1
+    ).setValue(
+        new Date()
+    );
+
+
+    /**
+     * ========================================
+     * RETURN
+     * ========================================
+     */
+
+    return {
+
+        success :
+            true,
+
+        workOrderId :
+            workOrderId,
+
+        status :
+            status
+
+    };
+
+}
+   
 };

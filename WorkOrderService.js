@@ -336,6 +336,120 @@ const WorkOrderService = {
 
         );
 
+    },
+
+    /**
+ * ============================================
+ * Mengubah Status Work Order
+ * ============================================
+ */
+changeStatus(
+    workOrderId,
+    nextStatus
+){
+
+    /**
+     * ========================================
+     * VALIDASI ID
+     * ========================================
+     */
+
+    if(!workOrderId){
+
+        throw new Error(
+            "Work Order ID wajib diisi."
+        );
+
     }
+
+
+    /**
+     * ========================================
+     * AMBIL WORK ORDER
+     * ========================================
+     */
+
+    const workOrder =
+        WorkOrderRepository.findById(
+            workOrderId
+        );
+
+
+    if(!workOrder){
+
+        throw new Error(
+            "Work Order tidak ditemukan : " +
+            workOrderId
+        );
+
+    }
+
+
+    /**
+     * ========================================
+     * STATUS SAAT INI
+     * ========================================
+     */
+
+    const currentStatus =
+        workOrder[
+            COL_WORK_ORDER.STATUS
+        ];
+
+
+    /**
+     * ========================================
+     * VALIDASI TRANSITION
+     * ========================================
+     */
+
+    WorkOrderStatusService.validateTransition(
+
+        currentStatus,
+
+        nextStatus
+
+    );
+
+
+    /**
+     * ========================================
+     * SIMPAN STATUS BARU
+     * ========================================
+     */
+
+    const result =
+        WorkOrderRepository.updateStatus(
+
+            workOrderId,
+
+            nextStatus
+
+        );
+
+
+    /**
+     * ========================================
+     * RETURN
+     * ========================================
+     */
+
+    return {
+
+        success :
+            true,
+
+        workOrderId :
+            workOrderId,
+
+        previousStatus :
+            currentStatus,
+
+        status :
+            nextStatus
+
+    };
+
+}
 
 };
