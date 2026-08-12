@@ -6,6 +6,63 @@
 
 # SaktiMotoPOS Changelog
 
+## CP-0005
+
+### WorkOrderJasaService Complete
+
+- WorkOrderJasaService create flow completed
+- WorkOrderJasaService update/edit lifecycle completed
+- Work Order Jasa can be edited only while status is `OPEN`
+- Added update for:
+  - Keluhan
+  - Diagnosa
+  - Catatan
+  - Qty
+  - Diskon
+- Added subtotal recalculation
+- Added diskon validation
+- Added mechanic assignment lifecycle:
+  - Assign mechanic
+  - Reassign mechanic
+  - Unassign mechanic
+- Added mechanic prerequisite validation:
+  - Mechanic must exist
+  - Mechanic must be `AKTIF`
+- Added edit lock for:
+  - `PROGRESS`
+  - `DONE`
+  - `CANCEL`
+
+### Testing
+
+PASS
+
+- WorkOrderJasa create
+- WorkOrderJasa update
+- Qty update
+- Diskon update
+- Diskon exceeds total validation
+- Mechanic assignment
+- Mechanic reassignment
+- Mechanic unassignment
+- Invalid mechanic validation
+- Inactive mechanic validation
+- `OPEN` edit lifecycle
+- `PROGRESS` edit lock
+- `DONE` edit lock
+- `CANCEL` edit lock
+
+### Architecture
+
+- WorkOrderJasa now has a controlled update/edit lifecycle.
+- Mechanic assignment is validated through `MekanikRepository`.
+- Mechanic status is enforced before assignment.
+- WorkOrderJasa status controls whether editing is permitted.
+
+## Next
+
+- WorkOrderJasa Part integration
+
 ## v0.7.0
 
 Date    : 2026-08-10
