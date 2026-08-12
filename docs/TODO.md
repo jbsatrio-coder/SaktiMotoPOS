@@ -3,7 +3,7 @@
 ## Repository
 
 - [ ] WorkOrderRepository
-- [ ] WorkOrderItemRepository
+- [ ] WorkOrderJasaRepository
 - [ ] WorkOrderPartRepository
 
 ## Validator

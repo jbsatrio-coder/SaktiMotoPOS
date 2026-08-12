@@ -14,17 +14,17 @@ function testWorkOrderAggregate(){
 
             items : [
 
-                WorkOrderItemDocument.create({
+                WorkOrderJasaDocument.create({
 
-                    id : "WOI000001"
+                    id : "WOJ000001"
 
-                }).workOrderItem,
+                }).workOrderJasa,
 
-                WorkOrderItemDocument.create({
+                WorkOrderJasaDocument.create({
 
-                    id : "WOI000002"
+                    id : "WOJ000002"
 
-                }).workOrderItem
+                }).workOrderJasa
 
             ],
 
