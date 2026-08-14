@@ -1,164 +1,306 @@
 /**
  * ======================================================
  * DASHBOARD WORK ORDER
+ * Version : 2.0.0
  * ======================================================
  */
 
+
 /**
- * Membuka Dashboard WO
+ * ======================================================
+ * MEMBUKA DASHBOARD WORK ORDER
+ * ======================================================
  */
+
 function showDashboardWO(){
 
-  const template = HtmlService.createTemplateFromFile("DashboardWO");
+  const template =
+    HtmlService
+      .createTemplateFromFile(
+        "DashboardWO"
+      );
 
-const html = template
-  .evaluate()
-  .setWidth(1200)
-  .setHeight(700);
+  const html =
+    template
+      .evaluate()
+      .setWidth(1200)
+      .setHeight(700);
 
-SpreadsheetApp
-  .getUi()
-  .showModalDialog(html, "Dashboard Work Order");
+  SpreadsheetApp
+    .getUi()
+    .showModalDialog(
+      html,
+      "Dashboard Work Order"
+    );
 
 }
 
 
 /**
- * Mengambil seluruh Work Order
+ * ======================================================
+ * MENGAMBIL SELURUH WORK ORDER
+ *
+ * Menggunakan schema baru 17_WorkOrder
+ * melalui COL_WORK_ORDER.
+ * ======================================================
  */
-function getAllWorkOrder() {
 
-  const shWO = getSheet_(CONFIG.SHEET.WORK_ORDER);
-  const shCust = getSheet_(CONFIG.SHEET.MASTER_PELANGGAN);
+function getAllWorkOrder(){
 
-  if (shWO.getLastRow() < 2) return [];
+  const shWO =
+    getSheet_(
+      CONFIG.SHEET.WORK_ORDER
+    );
 
-  const wo = shWO.getDataRange().getDisplayValues();
-  const cust = shCust.getDataRange().getDisplayValues();
+  if(!shWO){
 
-  // Index pelanggan -> No HP
+    throw new Error(
+      "Sheet Work Order tidak ditemukan: " +
+      CONFIG.SHEET.WORK_ORDER
+    );
+
+  }
+
+
+  const shCust =
+    getSheet_(
+      CONFIG.SHEET.PELANGGAN
+    );
+
+  if(!shCust){
+
+    throw new Error(
+      "Sheet Pelanggan tidak ditemukan: " +
+      CONFIG.SHEET.PELANGGAN
+    );
+
+  }
+
+
+  if(
+    shWO.getLastRow() < 2
+  ){
+
+    return [];
+
+  }
+
+
+  const wo =
+    shWO
+      .getDataRange()
+      .getDisplayValues();
+
+
+  const cust =
+    shCust
+      .getDataRange()
+      .getDisplayValues();
+
+
+  /**
+   * ============================================
+   * INDEX PELANGGAN → NO HP
+   * ============================================
+   */
+
   const hpMap = {};
 
-  for (let i = 1; i < cust.length; i++) {
 
-    hpMap[cust[i][COL_PELANGGAN.ID]] =
-      cust[i][COL_PELANGGAN.NOHP];
+  for(
+    let i = 1;
+    i < cust.length;
+    i++
+  ){
+
+    const customerId =
+      cust[i][
+        COL_PELANGGAN.ID
+      ];
+
+
+    hpMap[customerId] =
+      cust[i][
+        COL_PELANGGAN.NOHP
+      ] || "";
 
   }
 
-  return wo.slice(1).map(row => ({
 
-    noWO: row[COL_WO.NOWO],
+  /**
+   * ============================================
+   * MAPPING WORK ORDER
+   * ============================================
+   */
 
-    tanggal: row[COL_WO.TANGGAL],
+  return wo
+    .slice(1)
+    .map(
+      function(row){
 
-    jam: row[COL_WO.JAM],
+        const customerId =
+          row[
+            COL_WORK_ORDER.ID_PELANGGAN
+          ];
 
-    status: row[COL_WO.STATUS],
 
-    prioritas: row[COL_WO.PRIORITAS],
+        return {
 
-    approval: row[COL_WO.APPROVAL],
+          noWO :
+            row[
+              COL_WORK_ORDER.ID
+            ],
 
-    idPelanggan: row[COL_WO.IDPELANGGAN],
+          idPelanggan :
+            customerId,
 
-    nama: row[COL_WO.NAMAPELANGGAN],
+          nama :
+            row[
+              COL_WORK_ORDER.NAMA_PELANGGAN
+            ],
 
-    hp: hpMap[row[COL_WO.IDPELANGGAN]] || "",
+          hp :
+            hpMap[customerId] || "",
 
-    idKendaraan: row[COL_WO.IDKENDARAAN],
+          idKendaraan :
+            row[
+              COL_WORK_ORDER.ID_KENDARAAN
+            ],
 
-    plat: row[COL_WO.PLAT],
+          plat :
+            row[
+              COL_WORK_ORDER.NO_POLISI
+            ],
 
-    merk: row[COL_WO.MERK],
+          merk :
+            row[
+              COL_WORK_ORDER.MERK
+            ],
 
-    model: row[COL_WO.MODEL],
+          model :
+            row[
+              COL_WORK_ORDER.MODEL
+            ],
 
-    km: row[COL_WO.KM],
+          km :
+            row[
+              COL_WORK_ORDER.KILOMETER_MASUK
+            ],
 
-    keluhan: row[COL_WO.KELUHAN],
+          status :
+            row[
+              COL_WORK_ORDER.STATUS
+            ],
 
-    diagnosa: row[COL_WO.DIAGNOSA],
+          prioritas :
+            row[
+              COL_WORK_ORDER.PRIORITAS
+            ],
 
-    estimasi: row[COL_WO.ESTIMASI],
+          estimasiSelesai :
+            row[
+              COL_WORK_ORDER.ESTIMASI_SELESAI
+            ],
 
-    estimasiSelesai: row[COL_WO.ESTIMASISELESAI],
+          admin :
+            row[
+              COL_WORK_ORDER.ADMIN
+            ],
 
-    mekanik: row[COL_WO.MEKANIK],
+          catatan :
+            row[
+              COL_WORK_ORDER.CATATAN
+            ],
 
-    admin: row[COL_WO.ADMIN],
+          dibuatPada :
+            row[
+              COL_WORK_ORDER.DIBUAT_PADA
+            ],
 
-    catatan: row[COL_WO.CATATAN]
+          diubahPada :
+            row[
+              COL_WORK_ORDER.DIUBAH_PADA
+            ]
 
-  }));
+        };
+
+      }
+    );
 
 }
+
 
 /**
- * Mengambil 1 Work Order
+ * ======================================================
+ * MENGAMBIL SATU WORK ORDER
+ * ======================================================
  */
-function getWorkOrder(noWO){
 
-  const sh = getSheet_(CONFIG.SHEET.WORK_ORDER);
 
-  if(sh.getLastRow()<2) return null;
 
-  const data = sh.getDataRange().getDisplayValues();
+/**
+ * ======================================================
+ * MEMBUKA DETAIL WORK ORDER
+ * ======================================================
+ */
 
-  for(let i=1;i<data.length;i++){
 
-    if(data[i][0]==noWO){
-
-      return {
-
-        noWO:data[i][0],
-        tanggal:data[i][1],
-        jam:data[i][2],
-        status:data[i][3],
-        prioritas:data[i][4],
-        approval:data[i][5],
-
-        idPelanggan:data[i][6],
-        nama:data[i][7],
-
-        idKendaraan:data[i][8],
-        plat:data[i][9],
-
-        merk:data[i][10],
-        model:data[i][11],
-
-        km:data[i][12],
-
-        keluhan:data[i][13],
-
-        diagnosa:data[i][14],
-
-        estimasi:data[i][15],
-
-        estimasiSelesai:data[i][16],
-
-        mekanik:data[i][17],
-
-        admin:data[i][18],
-
-        catatan:data[i][19]
-
-      };
-
-    }
-
-  }
-
-  return null;
-
-}
+/**
+ * ======================================================
+ * TEST
+ * ======================================================
+ */
 
 function testGetAllWorkOrder(){
 
-  const data = getAllWorkOrder();
+  const data =
+    getAllWorkOrder();
 
-  Logger.log("Jumlah WO = " + data.length);
+  Logger.log(
+    "Jumlah WO = " +
+    data.length
+  );
 
-  Logger.log(data);
+  Logger.log(
+    data
+  );
+
+}
+
+function testDashboardSheets(){
+
+  const ss =
+    SpreadsheetApp
+      .getActiveSpreadsheet();
+
+  Logger.log(
+    "WORK_ORDER CONFIG = " +
+    CONFIG.SHEET.WORK_ORDER
+  );
+
+  Logger.log(
+    "PELANGGAN CONFIG = " +
+    CONFIG.SHEET.PELANGGAN
+  );
+
+  const shWO =
+    ss.getSheetByName(
+      CONFIG.SHEET.WORK_ORDER
+    );
+
+  const shCust =
+    ss.getSheetByName(
+      CONFIG.SHEET.PELANGGAN
+    );
+
+  Logger.log(
+    "shWO = " +
+    (shWO ? shWO.getName() : "NULL")
+  );
+
+  Logger.log(
+    "shCust = " +
+    (shCust ? shCust.getName() : "NULL")
+  );
 
 }

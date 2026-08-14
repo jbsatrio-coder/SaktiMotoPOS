@@ -19,18 +19,19 @@
 
 <h2>WORK ORDER BARU</h2>
 
-<label>Nomor Polisi</label>
+<label>Cari Pelanggan / Kendaraan</label>
 
 <div class="row">
 
 <input
 id="platNomor"
-class="flex1">
+class="flex1"
+placeholder="Nomor Polisi, No HP, atau Nama Pelanggan">
 
 <button
 type="button"
 class="searchBtn"
-onclick="cariPlat()">
+onclick="cariKendaraan()">
 
 🔍 Cari
 
@@ -107,6 +108,7 @@ id="catatan"></textarea>
 
 <button
 type="button"
+id="btnSimpanWO"
 class="btn-full"
 onclick="simpanWorkOrder()">
 
@@ -116,91 +118,214 @@ SIMPAN WORK ORDER
 </div>
 
 <script>
+
 function cariPlat() {
 
-  const plat = document.getElementById("platNomor").value;
+  const plat =
+    document.getElementById("platNomor").value.trim();
+
+  if(!plat){
+
+    alert("Nomor polisi belum diisi.");
+
+    return;
+
+  }
 
   google.script.run
+
     .withSuccessHandler(function(data){
 
-      if (!data) {
+      if(!data){
+
         alert("Plat nomor tidak ditemukan.");
+
         return;
+
       }
 
-      document.getElementById("namaPelanggan").value = data.nama;
-      document.getElementById("kendaraan").value = data.merk + " " + data.model;
+      document.getElementById("namaPelanggan").value =
+        data.nama || "";
 
-      document.getElementById("idPelanggan").value = data.idPelanggan;
+      document.getElementById("nohp").value = data.nohp || "";
 
-document.getElementById("idKendaraan").value = data.idKendaraan;
+      document.getElementById("kendaraan").value =
+        (data.merk || "") +
+        " " +
+        (data.model || "");
 
+      document.getElementById("idPelanggan").value =
+        data.idPelanggan || "";
 
+      document.getElementById("idKendaraan").value =
+        data.idKendaraan || "";
 
-      // Tambahkan jika field ini sudah ada di HTML
-      if (document.getElementById("km")) {
-        document.getElementById("km").value = data.kilometer || "";
+      document.getElementById("platNomor").value =
+        data.plat || plat;
+
+      if(document.getElementById("km")){
+
+        document.getElementById("km").value =
+          data.kilometer || "";
+
       }
 
     })
+
     .withFailureHandler(function(err){
-      alert("ERROR: " + err.message);
+
+      alert(
+        "ERROR: " +
+        (err.message || err)
+      );
+
     })
+
     .findKendaraanByPlat(plat);
 
 }
-document.addEventListener("DOMContentLoaded", function () {
 
-  loadMekanik();
 
-  document
-    .getElementById("platNomor")
-    .addEventListener("input", function(){
+/**
+ * ============================================
+ * INIT FORM
+ * ============================================
+ */
 
-      const keyword = this.value.trim();
+document.addEventListener(
+  "DOMContentLoaded",
+  function(){
 
-      if(keyword.length < 2){
+    loadMekanik();
 
-        document.getElementById("hasilCari").style.display = "none";
+    document
+      .getElementById("platNomor")
+      .addEventListener(
+        "input",
+        function(){
 
-        return;
+          const keyword =
+            this.value.trim();
 
-      }
+          if(keyword.length < 2){
 
-      cariKendaraan();
+            document
+              .getElementById("hasilCari")
+              .style.display = "none";
 
-    });
+            return;
 
-});
+          }
 
+          cariKendaraan();
+
+        }
+      );
+
+  }
+);
+
+
+/**
+ * ============================================
+ * SEARCH KENDARAAN
+ * ============================================
+ */
+
+let searchKendaraanRequest = 0;
 function cariKendaraan(){
 
   const keyword =
-    document.getElementById("platNomor").value;
+    document
+      .getElementById("platNomor")
+      .value
+      .trim();
 
-  if(keyword.trim()=="") return;
+  if(keyword === ""){
+
+    return;
+
+  }
+
+  const requestId =
+    ++searchKendaraanRequest;
+
 
   google.script.run
-    .withSuccessHandler(renderHasilCari)
+
+    .withSuccessHandler(
+      function(list){
+
+        /*
+         * Abaikan response pencarian
+         * yang sudah tidak relevan.
+         */
+        if(
+          requestId !==
+          searchKendaraanRequest
+        ){
+
+          return;
+
+        }
+
+        renderHasilCari(list);
+
+      }
+    )
+
+    .withFailureHandler(
+      function(err){
+
+        console.error(err);
+
+      }
+    )
+
     .searchKendaraan(keyword);
 
 }
-function loadMekanik() {
+
+
+/**
+ * ============================================
+ * LOAD MEKANIK
+ * ============================================
+ *
+ * Untuk tahap ini mekanik masih ditampilkan
+ * di form, tetapi BELUM disimpan ke header WO.
+ *
+ * Mekanik nantinya disimpan pada
+ * WorkOrderJasa.
+ * ============================================
+ */
+
+function loadMekanik(){
 
   google.script.run
-    .withSuccessHandler(function(data){
 
-      renderMekanik(data);
+    .withSuccessHandler(
+      function(data){
 
-    })
-    .withFailureHandler(function(err){
+        renderMekanik(data);
 
-      alert(err.message);
+      }
+    )
 
-    })
+    .withFailureHandler(
+      function(err){
+
+        alert(
+          err.message || err
+        );
+
+      }
+    )
+
     .getMasterMekanik();
 
 }
+
 
 function renderMekanik(data){
 
@@ -219,165 +344,439 @@ function renderMekanik(data){
 
   select.appendChild(kosong);
 
-  data.forEach(function(row){
+  data.forEach(
+    function(row){
 
-    const option =
-      document.createElement("option");
+      const option =
+        document.createElement("option");
 
-    option.value = row[0];      // ID Mekanik
+      option.value =
+        row[0];
 
-    option.textContent = row[1]; // Nama Mekanik
+      option.textContent =
+        row[1];
 
-    select.appendChild(option);
+      select.appendChild(option);
 
-  });
+    }
+  );
 
 }
 
+
+/**
+ * ============================================
+ * RENDER HASIL PENCARIAN
+ * ============================================
+ */
+
 function renderHasilCari(list){
 
-  const box = document.getElementById("hasilCari");
+  const box =
+    document.getElementById(
+      "hasilCari"
+    );
 
   box.innerHTML = "";
 
-  if(list.length === 0){
+  if(!list || list.length === 0){
 
-    box.style.display = "none";
+    box.style.display =
+      "none";
 
     return;
 
   }
 
-  box.style.display = "block";
+  box.style.display =
+    "block";
 
-  list.forEach(function(item){
+  list.forEach(
+    function(item){
 
-    const div = document.createElement("div");
+      const div =
+        document.createElement("div");
 
-    div.style.padding = "10px";
-    div.style.cursor = "pointer";
-    div.style.borderBottom = "1px solid #eeeeee";
+      div.style.padding =
+        "10px";
 
-    div.innerHTML =
-      "<div style='font-weight:bold'>" + item.nama + "</div>" +
-      "<div style='font-size:13px;color:#666'>" +
-      item.plat +
-      " • " +
-      item.merk +
-      " " +
-      item.model +
-      "</div>";
+      div.style.cursor =
+        "pointer";
 
-    div.onmouseover = function(){
-      div.style.background = "#f5f5f5";
-    };
+      div.style.borderBottom =
+        "1px solid #eeeeee";
 
-    div.onmouseout = function(){
-      div.style.background = "white";
-    };
+      div.innerHTML =
 
-    div.onclick = function(){
+        "<div style='font-weight:bold'>" +
+        (item.nama || "") +
+        "</div>" +
 
-      pilihKendaraan(item);
+        "<div style='font-size:13px;color:#666'>" +
 
-    };
+        (item.plat || "") +
 
-    box.appendChild(div);
+        " • " +
 
-  });
+        (item.merk || "") +
+
+        " " +
+
+        (item.model || "") +
+
+        "</div>";
+
+      div.onmouseover =
+        function(){
+
+          div.style.background =
+            "#f5f5f5";
+
+        };
+
+      div.onmouseout =
+        function(){
+
+          div.style.background =
+            "white";
+
+        };
+
+      div.onclick =
+        function(){
+
+          pilihKendaraan(item);
+
+        };
+
+      box.appendChild(div);
+
+    }
+  );
 
 }
 
-function pilihKendaraan(item){
+
+/**
+ * ============================================
+ * PILIH KENDARAAN
+ * ============================================
+ */
+
+function pilihKendaraan(data){
+
+  /*
+
+   * Membatalkan response pencarian
+
+   * yang masih berjalan.
+
+   */
+
+  searchKendaraanRequest++;
 
   document.getElementById("platNomor").value =
-    item.plat;
+    data.plat || "";
+
+  document.getElementById("idPelanggan").value =
+    data.idPelanggan || "";
+
+  document.getElementById("idKendaraan").value =
+    data.idKendaraan || "";
+
+  document.getElementById("namaPelanggan").value =
+    data.nama || "";
+
+  document.getElementById("nohp").value =
+    data.noHp || ""; 
+
+  document.getElementById("kendaraan").value =
+    (
+      (data.merk || "") +
+      " " +
+      (data.model || "")
+    ).trim();
+
+  document.getElementById("km").value =
+    data.kilometer || "";
 
   document.getElementById("hasilCari").style.display =
     "none";
 
-  cariPlat();
-
 }
 
-function pilihKendaraan(data){
 
-  document.getElementById("platNomor").value=data.plat;
+/**
+ * ============================================
+ * SIMPAN WORK ORDER
+ * ============================================
+ *
+ * MENGGUNAKAN ARSITEKTUR BARU:
+ *
+ * Form
+ *   ↓
+ * WorkOrderService.create()
+ *   ↓
+ * WorkOrderDocument
+ *   ↓
+ * WorkOrderRepository
+ *   ↓
+ * 17_WorkOrder
+ *
+ * TIDAK LAGI:
+ *
+ * saveWorkOrder()
+ *
+ * ============================================
+ */
 
-  document.getElementById("hasilCari").style.display="none";
-
-  cariPlat();
-
-}
-
-function testData(){
-
-  alert("Belum dibuat.");
-
-}
+let isSavingWorkOrder = false;
 
 function simpanWorkOrder(){
 
-  const data = {
+  // ============================================
+  // CEGAH DOUBLE CLICK
+  // ============================================
 
-    idPelanggan :
-      document.getElementById("idPelanggan").value,
+  if(isSavingWorkOrder){
 
-    namaPelanggan :
-      document.getElementById("namaPelanggan").value,
+    return;
 
-    idKendaraan :
-      document.getElementById("idKendaraan").value,
+  }
 
-    plat :
-      document.getElementById("platNomor").value,
 
-    merk :
-      document.getElementById("kendaraan").value.split(" ")[0],
+  // ============================================
+  // AMBIL DATA FORM
+  // ============================================
 
-    model :
-      document.getElementById("kendaraan").value.split(" ").slice(1).join(" "),
+  const customerId =
+    document
+      .getElementById("idPelanggan")
+      .value
+      .trim();
 
-    km :
-      document.getElementById("km").value,
 
-    keluhan :
-      document.getElementById("keluhan").value,
+  const vehicleId =
+    document
+      .getElementById("idKendaraan")
+      .value
+      .trim();
 
-    catatan :
-      document.getElementById("catatan").value,
 
-    idMekanik :
-      document.getElementById("mekanik").value,
+  const km =
+    document
+      .getElementById("km")
+      .value;
+
+
+  const prioritas =
+    document
+      .getElementById("prioritas")
+      .value;
+
+
+  const catatan =
+    document
+      .getElementById("catatan")
+      .value
+      .trim();
+
+
+  const keluhan =
+    document
+      .getElementById("keluhan")
+      .value
+      .trim();
+
+
+  // ============================================
+  // VALIDASI FORM
+  // ============================================
+
+  if(!customerId){
+
+    alert(
+      "Pelanggan belum dipilih."
+    );
+
+    return;
+
+  }
+
+
+  if(!vehicleId){
+
+    alert(
+      "Kendaraan belum dipilih."
+    );
+
+    return;
+
+  }
+
+
+  // ============================================
+  // MULAI PROSES SIMPAN
+  // ============================================
+
+  isSavingWorkOrder = true;
+
+
+  const btn =
+    document.getElementById("btnSimpanWO");
+
+
+  if(btn){
+
+    btn.disabled = true;
+
+    btn.dataset.originalText =
+      btn.innerHTML;
+
+    btn.innerHTML =
+      "⏳ MENYIMPAN...";
+
+  }
+
+
+  /**
+   * ========================================
+   * CATATAN SEMENTARA
+   * ========================================
+   *
+   * Schema 17_WorkOrder baru tidak mempunyai
+   * kolom Keluhan.
+   *
+   * Keluhan secara arsitektur akan disimpan
+   * pada 18_WorkOrderJasa.
+   *
+   * Karena form jasa belum menjadi bagian
+   * dari tahap ini, keluhan kita pertahankan
+   * sementara di Catatan agar TIDAK HILANG.
+   *
+   * Nanti saat Detail WO sudah menggunakan
+   * WorkOrderJasa, bagian ini akan dipindahkan
+   * ke mekanisme yang benar.
+   * ========================================
+   */
+
+  let finalCatatan =
+    catatan;
+
+
+  if(keluhan){
+
+    finalCatatan =
+
+      "Keluhan: " +
+      keluhan +
+      (
+        catatan
+          ? "\nCatatan: " + catatan
+          : ""
+      );
+
+  }
+
+
+  /**
+   * ========================================
+   * REQUEST CANONICAL
+   * ========================================
+   */
+
+  const request = {
+
+    customerId :
+      customerId,
+
+    vehicleId :
+      vehicleId,
+
+    kilometerMasuk :
+      Number(km || 0),
 
     prioritas :
-      document.getElementById("prioritas").value
+      prioritas,
+
+    catatan :
+      finalCatatan,
+
+    jenisTransaksi :
+      "SERVICE",
+
+    admin :
+      ""
 
   };
 
+
+  /**
+   * ========================================
+   * SIMPAN
+   * ========================================
+   */
+
   google.script.run
 
-    .withSuccessHandler(function(noWO){
+   .withSuccessHandler(
+  function(result){
 
-      alert(
+    google.script.run
+      .withSuccessHandler(
+        function(){
 
-        "✅ Work Order berhasil dibuat\n\n" +
+          google.script.host.close();
 
-        noWO
+        }
+      )
+      .withFailureHandler(
+        function(){
 
+          /*
+           * Jika notifikasi gagal dicatat,
+           * WO tetap sudah berhasil dibuat.
+           * Jadi form tetap ditutup.
+           */
+
+          google.script.host.close();
+
+        }
+      )
+      .setPendingWorkOrderToast(
+        result.workOrderId
       );
 
-      google.script.host.close();
+  }
+)
 
-    })
+    .withFailureHandler(
+  function(err){
 
-    .withFailureHandler(function(err){
+    isSavingWorkOrder = false;
 
-      alert(err.message);
+    const btn =
+      document.getElementById("btnSimpanWO");
 
-    })
+    btn.disabled = false;
 
-    .saveWorkOrder(data);
+    btn.textContent =
+      "SIMPAN WORK ORDER";
+
+    alert(
+      "❌ Gagal membuat Work Order\n\n" +
+      (
+        err.message ||
+        err
+      )
+    );
+
+  }
+)
+
+   .createWorkOrder(
+  request
+);
 
 }
 

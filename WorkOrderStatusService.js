@@ -361,8 +361,8 @@ canComplete(workOrderId){
 
 
         if(
-            status &&
-            status !== "AKTIF"
+            status ===
+            WorkOrderPartStatus.CANCEL
         ){
 
             continue;

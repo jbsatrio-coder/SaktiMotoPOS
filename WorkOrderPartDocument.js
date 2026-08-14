@@ -113,7 +113,7 @@ const WorkOrderPartDocument = {
 
 
                 status :
-                    payload.status || "AKTIF",
+                     payload.status || WorkOrderPartStatus.OPEN,
 
 
                 catatan :

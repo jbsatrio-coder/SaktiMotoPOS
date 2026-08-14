@@ -1,6 +1,3 @@
-# SAKTI MOTO POS
-
-# SaktiMotoPOS Changelog
 
 # SAKTI MOTO POS
 

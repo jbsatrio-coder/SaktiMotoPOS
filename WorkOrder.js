@@ -60,7 +60,16 @@ function getMasterMekanik() {
     .getRange(2, 1, sh.getLastRow() - 1, 9)
     .getDisplayValues();
 
-  return data.filter(row => row[0] !== "");
+  return data.filter(function(row){
+
+    return (
+      row[COL_MEKANIK.ID] !== "" &&
+      String(
+        row[COL_MEKANIK.STATUS] || ""
+      ).toUpperCase() === "AKTIF"
+    );
+
+  });
 
 }
 
@@ -74,103 +83,6 @@ function testGetMasterMekanik() {
 
 }
 
-/**
- * Cari kendaraan berdasarkan nomor polisi
- */
-function findKendaraanByPlat(platNomor) {
-
-  const sh = getSheet_(SHEET.MASTER_KENDARAAN);
-
-  if (sh.getLastRow() < 2) return null;
-
-  const data = sh.getDataRange().getDisplayValues();
-
-  const keyword = String(platNomor)
-    .replace(/\s+/g, "")
-    .toUpperCase();
-
-  for (let i = 1; i < data.length; i++) {
-
-    const row = data[i];
-
-    const plat = String(row[3])   // Kolom D = Plat Nomor
-      .replace(/\s+/g, "")
-      .toUpperCase();
-
-    if (plat === keyword) {
-
-      return {
-        idKendaraan : row[0],
-        idPelanggan : row[1],
-        nama        : row[2],
-        plat        : row[3],
-        merk        : row[4],
-        model       : row[5],
-        tahun       : row[6],
-        warna       : row[7],
-        kilometer   : row[10]
-      };
-
-    }
-
-  }
-
-  return null;
-
-}
-
-function saveWorkOrder(data){
-
-  const sh = getSheet_(CONFIG.SHEET.WORK_ORDER);
-
-  const noWO = generateRunningNumber_("WO");
-
-  const sekarang = new Date();
-
-  sh.appendRow([
-
-    noWO,                              // A No WO
-    sekarang,                          // B Tanggal
-    Utilities.formatDate(
-      sekarang,
-      Session.getScriptTimeZone(),
-      "HH:mm:ss"
-    ),                                 // C Jam
-
-    STATUS_WO.MENUNGGU,                // D Status
-    data.prioritas,                    // E Prioritas
-    APPROVAL.BELUM,                    // F Approval
-
-    data.idPelanggan,                  // G ID Pelanggan
-    data.namaPelanggan,                // H Nama Pelanggan
-
-    data.idKendaraan,                  // I ID Kendaraan
-    data.plat,                         // J Plat
-
-    data.merk,                         // K Merk
-    data.model,                        // L Model
-
-    data.km,                           // M KM
-    data.keluhan,                      // N Keluhan
-
-    "",                                // O Diagnosa
-    "",                                // P Estimasi
-    "",                                // Q Estimasi Selesai
-
-    data.idMekanik,                    // R Mekanik
-
-    Session.getActiveUser().getEmail(),// S Admin
-
-    data.catatan,                      // T Catatan
-
-    sekarang,                          // U Created At
-    sekarang                           // V Updated At
-
-  ]);
-
-  return noWO;
-
-}
 
 /**
  * ======================================================
@@ -332,5 +244,209 @@ function updateWorkOrder(data){
   }
 
   throw new Error("Work Order tidak ditemukan.");
+
+}
+
+/**
+ * ============================================
+ * WEB ENTRY POINT
+ * CREATE WORK ORDER
+ * ============================================
+ */
+
+function createWorkOrder(request){
+
+  const result =
+    WorkOrderService.create(
+      request
+    );
+
+
+  if(
+    result &&
+    result.success &&
+    result.workOrderId
+  ){
+
+    setPendingWorkOrderToast(
+      result.workOrderId
+    );
+
+  }
+
+
+  return result;
+
+}
+
+/**
+ * ============================================
+ * WORK ORDER TOAST
+ * ============================================
+ */
+
+function setPendingWorkOrderToast(
+  workOrderId
+){
+
+  if(!workOrderId){
+
+    return false;
+
+  }
+
+  Logger.log(
+
+    "SET PENDING TOAST: " +
+
+    workOrderId
+  );
+
+  const props =
+    PropertiesService
+      .getUserProperties();
+
+
+  props.setProperty(
+    "PENDING_WO_TOAST",
+    JSON.stringify({
+
+      workOrderId :
+        String(workOrderId),
+
+      readyAt :
+        Date.now() + 1500
+
+    })
+  );
+
+  Logger.log(
+
+    "PENDING_WO_TOAST SAVED"
+
+  );
+
+  return true;
+
+}
+
+
+/**
+ * Ambil notifikasi WO yang pending
+ */
+
+function getPendingWorkOrderToast(){
+
+  const props =
+    PropertiesService
+      .getUserProperties();
+
+
+  const raw =
+    props.getProperty(
+      "PENDING_WO_TOAST"
+    );
+
+     Logger.log(
+
+    "GET PENDING TOAST RAW: " +
+
+    raw
+
+  );
+
+
+  if(!raw){
+
+    Logger.log(
+
+      "GET PENDING TOAST: NULL"
+
+    );
+
+    return null;
+
+  }
+
+
+  let data;
+
+  try{
+
+    data =
+      JSON.parse(raw);
+
+  }catch(e){
+
+     Logger.log(
+
+      "GET PENDING TOAST JSON ERROR: " +
+
+      e.message
+
+    );
+
+    props.deleteProperty(
+      "PENDING_WO_TOAST"
+    );
+
+    return null;
+
+  }
+
+   Logger.log(
+
+    "GET PENDING TOAST DATA: " +
+
+    JSON.stringify(data)
+
+  );
+
+
+  /*
+   * Beri waktu agar FormWorkOrder
+   * benar-benar selesai ditutup.
+   */
+
+  if(
+    Date.now() <
+    Number(data.readyAt || 0)
+  ){
+
+     Logger.log(
+
+      "GET PENDING TOAST: BELUM READY"
+
+    );
+    return null;
+
+  }
+
+
+  /*
+   * Hapus setelah diambil.
+   * Dengan demikian toast tidak
+   * muncul berulang-ulang.
+   */
+
+  props.deleteProperty(
+    "PENDING_WO_TOAST"
+  );
+
+
+   Logger.log(
+
+    "GET PENDING TOAST: RETURN " +
+
+    data.workOrderId
+
+  );
+  
+  return {
+
+    workOrderId :
+      data.workOrderId
+
+  };
 
 }

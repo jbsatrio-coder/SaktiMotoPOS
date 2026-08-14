@@ -64,6 +64,127 @@ const WorkOrderPartService = {
     },
 
 
+        /**
+     * ========================================
+     * CHANGE STATUS
+     * ========================================
+     *
+     * Mengubah status WorkOrderPart melalui
+     * WorkOrderPartStatusService.
+     *
+     * Method ini:
+     * - tidak mengubah data part lainnya
+     * - tidak melakukan stock-out
+     * - hanya mengatur lifecycle status
+     * ========================================
+     */
+    changeStatus(
+        workOrderPartId,
+        nextStatus
+    ){
+
+        /**
+         * ====================================
+         * VALIDASI ID
+         * ====================================
+         */
+
+        if(!workOrderPartId){
+
+            throw new Error(
+                "Work Order Part ID wajib diisi."
+            );
+
+        }
+
+
+        /**
+         * ====================================
+         * LOAD WORK ORDER PART
+         * ====================================
+         */
+
+        const workOrderPart =
+            WorkOrderPartRepository.findById(
+                workOrderPartId
+            );
+
+
+        if(!workOrderPart){
+
+            throw new Error(
+                "WorkOrderPart tidak ditemukan : " +
+                workOrderPartId
+            );
+
+        }
+
+
+        /**
+         * ====================================
+         * CURRENT STATUS
+         * ====================================
+         */
+
+        const currentStatus =
+            workOrderPart[
+                COL_WORK_ORDER_PART.STATUS
+            ];
+
+
+        /**
+         * ====================================
+         * VALIDATE TRANSITION
+         * ====================================
+         */
+
+        WorkOrderPartStatusService.validateTransition(
+            currentStatus,
+            nextStatus
+        );
+
+
+                /**
+         * ====================================
+         * UPDATE STATUS
+         * ====================================
+         */
+
+        WorkOrderPartRepository.update({
+
+            id :
+                workOrderPartId,
+
+            status :
+                nextStatus
+
+        });
+
+
+        /**
+         * ====================================
+         * RETURN
+         * ====================================
+         */
+
+        return {
+
+            success :
+                true,
+
+            workOrderPartId :
+                workOrderPartId,
+
+            previousStatus :
+                currentStatus,
+
+            status :
+                nextStatus
+
+        };
+
+    },
+
     /**
      * ========================================
      * VALIDASI REQUEST
@@ -265,7 +386,7 @@ const WorkOrderPartService = {
 
             status :
 
-                "AKTIF",
+                WorkOrderPartStatus.OPEN,
 
 
             catatan :
@@ -370,15 +491,15 @@ buildStockOutRequest(workOrderPart){
 
 
     if(
-        status &&
-        status !== "AKTIF"
-    ){
+    status &&
+    status !== WorkOrderPartStatus.PROGRESS
+){
 
-        throw new Error(
-            "WorkOrderPart tidak aktif."
-        );
+    throw new Error(
+        "WorkOrderPart harus berstatus PROGRESS untuk stock out."
+    );
 
-    }
+}
 
 
     /**
@@ -451,11 +572,11 @@ isStockOutRecorded(workOrderPartId){
     }
 
 
-    const ledgerRows =
-        StockLedgerRepository
-            .findByReference(
-                workOrderPartId
-            );
+   const ledgerRows =
+    StockLedgerRepository
+        .findByReferensi(
+            workOrderPartId
+        );
 
 
     return ledgerRows.length > 0;
@@ -593,6 +714,177 @@ consumeStock(workOrderPartId){
 
 /**
  * ========================================
+ * CANCEL WORK ORDER PART
+ * ========================================
+ *
+ * Membatalkan WorkOrderPart.
+ *
+ * Jika belum Stock OUT:
+ * - langsung CANCEL
+ *
+ * Jika sudah Stock OUT:
+ * - lakukan reversal
+ * - stock dikembalikan
+ * - Ledger OUT tetap dipertahankan
+ * - Ledger REVERSAL dibuat
+ * - kemudian status menjadi CANCEL
+ *
+ * Jika reversal gagal:
+ * - status tetap PROGRESS
+ * ========================================
+ */
+cancel(workOrderPartId){
+
+    /**
+     * ====================================
+     * 1. VALIDASI ID
+     * ====================================
+     */
+
+    if(!workOrderPartId){
+
+        throw new Error(
+            "Work Order Part ID wajib diisi."
+        );
+
+    }
+
+
+    /**
+     * ====================================
+     * 2. LOAD WORK ORDER PART
+     * ====================================
+     */
+
+    const workOrderPart =
+        WorkOrderPartRepository.findById(
+            workOrderPartId
+        );
+
+
+    if(!workOrderPart){
+
+        throw new Error(
+            "WorkOrderPart tidak ditemukan : " +
+            workOrderPartId
+        );
+
+    }
+
+
+    /**
+     * ====================================
+     * 3. CURRENT STATUS
+     * ====================================
+     */
+
+    const currentStatus =
+        workOrderPart[
+            COL_WORK_ORDER_PART.STATUS
+        ];
+
+
+    /**
+     * ====================================
+     * 4. VALIDATE TRANSITION
+     * ====================================
+     */
+
+    WorkOrderPartStatusService.validateTransition(
+
+        currentStatus,
+
+        WorkOrderPartStatus.CANCEL
+
+    );
+
+
+    /**
+     * ====================================
+     * 5. CEK STOCK OUT
+     * ====================================
+     */
+
+    const stockOutRecorded =
+        this.isStockOutRecorded(
+            workOrderPartId
+        );
+
+
+    /**
+     * ====================================
+     * 6. REVERSAL
+     * ====================================
+     *
+     * Reversal harus berhasil terlebih
+     * dahulu sebelum status diubah.
+     */
+
+    let reversalResult = null;
+
+
+    if(
+        stockOutRecorded
+    ){
+
+        reversalResult =
+            StockLedgerReversalService
+                .reverseByWorkOrderPartId(
+                    workOrderPartId
+                );
+
+    }
+
+
+    /**
+     * ====================================
+     * 7. UPDATE STATUS → CANCEL
+     * ====================================
+     */
+
+    WorkOrderPartRepository.update({
+
+        id :
+            workOrderPartId,
+
+        status :
+            WorkOrderPartStatus.CANCEL
+
+    });
+
+
+    /**
+     * ====================================
+     * 8. RETURN
+     * ====================================
+     */
+
+    return {
+
+        success :
+            true,
+
+        workOrderPartId :
+            workOrderPartId,
+
+        previousStatus :
+            currentStatus,
+
+        status :
+            WorkOrderPartStatus.CANCEL,
+
+        stockOutRecorded :
+            stockOutRecorded,
+
+        reversal :
+            reversalResult
+
+    };
+
+},
+
+/**
+ * ========================================
  * CONSUME STOCK BATCH
  * ========================================
  *
@@ -628,6 +920,26 @@ consumeStockBatch(workOrderId){
             .findByWorkOrderId(
                 workOrderId
             );
+
+    Logger.log(
+    "=== CONSUME STOCK BATCH DEBUG ==="
+);
+
+Logger.log(
+    "WORK ORDER ID:"
+);
+
+Logger.log(
+    workOrderId
+);
+
+Logger.log(
+    "TOTAL WORK ORDER PART:"
+);
+
+Logger.log(
+    workOrderParts.length
+);
 
 
     if(
@@ -684,15 +996,50 @@ consumeStockBatch(workOrderId){
                     .STATUS
             ];
 
+            Logger.log(
+    "WOP BATCH CHECK:"
+);
+
+Logger.log(
+    part[
+        COL_WORK_ORDER_PART.ID
+    ]
+);
+
+Logger.log(
+    "STATUS:"
+);
+
+Logger.log(
+    status
+);
+
+Logger.log(
+    "EXPECTED:"
+);
+
+Logger.log(
+    WorkOrderPartStatus.PROGRESS
+);
+
+Logger.log(
+    "STATUS MATCH:"
+);
+
+Logger.log(
+    status ===
+    WorkOrderPartStatus.PROGRESS
+);
+
 
         if(
-            status &&
-            status !== "AKTIF"
-        ){
+    status !==
+    WorkOrderPartStatus.PROGRESS
+){
 
-            continue;
+    continue;
 
-        }
+}
 
 
         /**
@@ -774,6 +1121,30 @@ consumeStockBatch(workOrderId){
     if(
         stockItems.length === 0
     ){
+
+        Logger.log(
+    "FINAL STOCK ITEMS BEFORE ATOMIC:"
+);
+
+Logger.log(
+    stockItems.length
+);
+
+Logger.log(
+    JSON.stringify(
+        stockItems
+    )
+);
+
+Logger.log(
+    "FINAL SKIPPED ITEMS:"
+);
+
+Logger.log(
+    JSON.stringify(
+        skippedItems
+    )
+);
 
         return {
 

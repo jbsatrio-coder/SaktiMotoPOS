@@ -376,3 +376,232 @@ function testFindWorkOrderPartByWorkOrderJasaId(){
     );
 
 }
+
+/**
+ * ============================================
+ * TEST WORK ORDER PART REPOSITORY UPDATE
+ * ============================================
+ */
+function testWorkOrderPartRepositoryUpdate(){
+
+    Logger.log(
+        "================================"
+    );
+
+    Logger.log(
+        "WORK ORDER PART REPOSITORY UPDATE TEST"
+    );
+
+    Logger.log(
+        "================================"
+    );
+
+
+    const workOrderPartId =
+        "WOP2608100001";
+
+
+    /**
+     * ========================================
+     * LOAD ORIGINAL
+     * ========================================
+     */
+
+    const before =
+        WorkOrderPartRepository.findById(
+            workOrderPartId
+        );
+
+
+    if(!before){
+
+        throw new Error(
+            "WorkOrderPart tidak ditemukan : " +
+            workOrderPartId
+        );
+
+    }
+
+
+    Logger.log(
+        "STATUS SEBELUM:"
+    );
+
+    Logger.log(
+        before[
+            COL_WORK_ORDER_PART.STATUS
+        ]
+    );
+
+
+    Logger.log(
+        "CATATAN SEBELUM:"
+    );
+
+    Logger.log(
+        before[
+            COL_WORK_ORDER_PART.CATATAN
+        ]
+    );
+
+
+    /**
+     * ========================================
+     * UPDATE STATUS
+     * ========================================
+     */
+
+    const result =
+        WorkOrderPartRepository.update({
+
+            id :
+                workOrderPartId,
+
+            status :
+                WorkOrderPartStatus.PROGRESS
+
+        });
+
+
+    Logger.log(
+        "UPDATE RESULT:"
+    );
+
+    Logger.log(
+        result
+    );
+
+
+    /**
+     * ========================================
+     * VERIFY
+     * ========================================
+     */
+
+    const after =
+        WorkOrderPartRepository.findById(
+            workOrderPartId
+        );
+
+
+    Logger.log(
+        "STATUS SESUDAH:"
+    );
+
+    Logger.log(
+        after[
+            COL_WORK_ORDER_PART.STATUS
+        ]
+    );
+
+
+    Logger.log(
+        "CATATAN SESUDAH:"
+    );
+
+    Logger.log(
+        after[
+            COL_WORK_ORDER_PART.CATATAN
+        ]
+    );
+
+
+    /**
+     * ========================================
+     * VERIFY OTHER DATA UNCHANGED
+     * ========================================
+     */
+
+    Logger.log(
+        "BARANG ID:"
+    );
+
+    Logger.log(
+        after[
+            COL_WORK_ORDER_PART.BARANG_ID
+        ]
+    );
+
+
+    Logger.log(
+        "QTY:"
+    );
+
+    Logger.log(
+        after[
+            COL_WORK_ORDER_PART.QTY
+        ]
+    );
+
+
+    Logger.log(
+        "HARGA:"
+    );
+
+    Logger.log(
+        after[
+            COL_WORK_ORDER_PART.HARGA
+        ]
+    );
+
+
+    Logger.log(
+        "DISKON:"
+    );
+
+    Logger.log(
+        after[
+            COL_WORK_ORDER_PART.DISKON
+        ]
+    );
+
+
+    /**
+     * ========================================
+     * RESTORE ORIGINAL STATUS
+     * ========================================
+     */
+
+    WorkOrderPartRepository.update({
+
+        id :
+            workOrderPartId,
+
+        status :
+            before[
+                COL_WORK_ORDER_PART.STATUS
+            ]
+
+    });
+
+
+    const final =
+        WorkOrderPartRepository.findById(
+            workOrderPartId
+        );
+
+
+    Logger.log(
+        "STATUS FINAL:"
+    );
+
+    Logger.log(
+        final[
+            COL_WORK_ORDER_PART.STATUS
+        ]
+    );
+
+
+    Logger.log(
+        "================================"
+    );
+
+    Logger.log(
+        "WORK ORDER PART REPOSITORY UPDATE TEST SELESAI"
+    );
+
+    Logger.log(
+        "================================"
+    );
+
+}

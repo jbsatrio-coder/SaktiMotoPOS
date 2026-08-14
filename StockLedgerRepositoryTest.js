@@ -363,7 +363,7 @@ function testFindStockLedgerByReferensi(){
 
 
   const referensi =
-    "WOP2608100006";
+    "WOP2608100002";
 
 
   const result =
@@ -411,6 +411,24 @@ function testFindStockLedgerByReferensi(){
 
   Logger.log(
     "================================"
+  );
+
+}
+
+function testStockLedgerFindByReference() {
+
+  const reference =
+    "MASUKKAN_WOP_ID_TEST_DI_SINI";
+
+  const result =
+    StockLedgerRepository.findByReference(
+      reference
+    );
+
+  Logger.log(
+    JSON.stringify(
+      result
+    )
   );
 
 }

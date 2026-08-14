@@ -47,14 +47,6 @@ function generateInvoiceNumber() {
 
 }
 
-function getSheet_(name){
-
-  return SpreadsheetApp
-    .getActiveSpreadsheet()
-    .getSheetByName(name);
-
-}
-
 
 function toast_(message){
 

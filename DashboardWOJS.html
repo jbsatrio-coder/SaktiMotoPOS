@@ -1,61 +1,309 @@
 <script>
-alert("VERSI BARU DashboardWOJS");
+
+
 let allWO = [];
 
 /**
- * Load Dashboard
+ * ============================================
+ * LOAD DASHBOARD
+ * ============================================
  */
-window.onload = function () {
+
+window.onload = function(){
+
+  loadWorkOrder();
+
+  // Cek langsung
+  checkPendingWorkOrderToast();
+
+  // Kemudian cek berkala
+  setInterval(
+    checkPendingWorkOrderToast,
+    1000
+  );
+
+};
+
+
+/**
+ * ============================================
+ * LOAD WORK ORDER
+ * ============================================
+ */
+
+function loadWorkOrder(){
 
   google.script.run
-    .withSuccessHandler(function (data) {
 
-      console.log(data);
+    .withSuccessHandler(
+  function(data){
 
-      alert("Jumlah WO = " + data.length);
+    allWO =
+      data || [];
 
-      allWO = data || [];
+    updateSummary(
+      allWO
+    );
 
-      try{
+    renderWO(
+      allWO
+    );
 
-        try{
+  }
+)
 
-  renderWO(allWO);
+    .withFailureHandler(
+      function(err){
 
-}catch(e){
+        console.error(
+          "Gagal memuat Work Order:",
+          err
+        );
 
-  alert(
-    "renderWO ERROR:\n\n" +
-    e.name +
-    "\n\n" +
-    e.message
-  );
+      }
+    )
+
+    .getAllWorkOrder();
 
 }
 
-      }catch(e){
+function updateSummary(data){
 
-        alert(e);
+  let menunggu = 0;
+  let proses = 0;
+  let qc = 0;
+  let selesai = 0;
+
+  (data || []).forEach(function(wo){
+
+    const status =
+      String(wo.status || "")
+        .trim()
+        .toUpperCase();
+
+    if(
+      status === "DRAFT" ||
+      status === "MENUNGGU" ||
+      status === "DIAGNOSA" ||
+      status === "MENUNGGU APPROVAL"
+    ){
+
+      menunggu++;
+
+    }
+
+    else if(
+      status === "DALAM_PENGERJAAN" ||
+      status === "PROSES"
+    ){
+
+      proses++;
+
+    }
+
+    else if(
+      status === "QC"
+    ){
+
+      qc++;
+
+    }
+
+    else if(
+      status === "SELESAI" ||
+      status === "SIAP DIAMBIL"
+    ){
+
+      selesai++;
+
+    }
+
+  });
+
+
+  document.getElementById("sumMenunggu").textContent =
+    menunggu;
+
+  document.getElementById("sumProses").textContent =
+    proses;
+
+  document.getElementById("sumQC").textContent =
+    qc;
+
+  document.getElementById("sumSelesai").textContent =
+    selesai;
+
+}
+
+
+/**
+ * ============================================
+ * CEK NOTIFIKASI WO BARU
+ * ============================================
+ */
+
+function checkPendingWorkOrderToast(){
+
+  console.log(
+    "CHECK PENDING TOAST"
+  );
+
+  google.script.run
+
+    .withSuccessHandler(
+      function(data){
+
+        console.log(
+          "PENDING TOAST RESULT:",
+          data
+        );
+
+        if(
+          data &&
+          data.workOrderId
+        ){
+
+          console.log(
+            "TOAST DITEMUKAN:",
+            data.workOrderId
+          );
+
+          tampilkanToastWO(
+            data.workOrderId
+          );
+
+        }
 
       }
+    )
 
-    })
-    .withFailureHandler(function(err){
+    .withFailureHandler(
+      function(err){
 
-      alert(err.message);
+        console.error(
+          "GAGAL GET PENDING TOAST:",
+          err
+        );
 
-    })
-    .getAllWorkOrder();
+      }
+    )
 
-};
-    .withFailureHandler(function (err) {
+    .getPendingWorkOrderToast();
 
-      alert(err.message);
+}
 
-    })
-    .getAllWorkOrder();
 
-};
+/**
+ * ============================================
+ * TOAST WORK ORDER
+ * ============================================
+ */
+
+function tampilkanToastWO(
+  workOrderId
+){
+
+  /*
+   * Jangan buat toast jika ID kosong.
+   */
+
+  if(!workOrderId){
+
+    return;
+
+  }
+
+
+  /*
+   * Hapus toast lama jika ada.
+   */
+
+  const oldToast =
+    document.getElementById(
+      "woSuccessToast"
+    );
+
+  if(oldToast){
+
+    oldToast.remove();
+
+  }
+
+
+  const toast =
+    document.createElement(
+      "div"
+    );
+
+  toast.id =
+    "woSuccessToast";
+
+  toast.innerHTML =
+
+    `
+      <div class="wo-toast-icon">
+        ✓
+      </div>
+
+      <div>
+
+        <div class="wo-toast-title">
+          Work Order berhasil dibuat
+        </div>
+
+        <div class="wo-toast-id">
+          ${workOrderId}
+        </div>
+
+      </div>
+    `;
+
+
+  document.body.appendChild(
+    toast
+  );
+
+
+  /*
+   * Tampilkan
+   */
+
+  requestAnimationFrame(
+    function(){
+
+      toast.classList.add(
+        "show"
+      );
+
+    }
+  );
+
+
+  /*
+   * Hilangkan otomatis
+   */
+
+  setTimeout(
+    function(){
+
+      toast.classList.remove(
+        "show"
+      );
+
+      setTimeout(
+        function(){
+
+          toast.remove();
+
+        },
+        300
+      );
+
+    },
+    3500
+  );
+
+}
 
 
 /**
@@ -216,7 +464,7 @@ function renderWO(data) {
 
         <button
           class="btn btn-danger btn-detail mt-2"
-          onclick="bukaDetail('${wo.noWO}')">
+          onclick="bukaDetailWO('${wo.noWO}')">
 
           DETAIL
 
@@ -267,7 +515,870 @@ function getStatusClass(status){
 
 }
 
-  google.script.run.openDetailWO(noWO);
+
+/**
+ * ============================================
+ * BUKA DETAIL WORK ORDER
+ * ============================================
+ */
+
+function bukaDetailWO(noWO){
+
+  google.script.run
+
+    .withSuccessHandler(function(data){
+
+      if(!data){
+
+        alert("Work Order tidak ditemukan.");
+        return;
+
+      }
+
+      const masterMekanikWO =
+        data.masterMekanik || [];
+
+      // ============================================
+      // HAPUS DETAIL LAMA JIKA ADA
+      // ============================================
+
+      const old =
+        document.getElementById("detailWOOverlay");
+
+      if(old){
+        old.remove();
+      }
+
+
+      // ============================================
+      // BUAT OVERLAY
+      // ============================================
+
+      const overlay =
+        document.createElement("div");
+
+      overlay.id =
+        "detailWOOverlay";
+
+      overlay.style.cssText = `
+        position:fixed;
+        inset:0;
+        background:rgba(0,0,0,.55);
+        z-index:99999;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        padding:30px;
+      `;
+
+
+      // ============================================
+      // DATA JASA
+      // ============================================
+
+      let jasaHTML = "";
+
+      if(
+        data.jasa &&
+        data.jasa.length
+      ){
+
+        data.jasa.forEach(function(item,index){
+
+          const status =
+            String(
+              item.status || ""
+            ).toUpperCase();
+
+
+          let statusClass =
+            "background:#ffc107;color:#111;";
+
+          if(status === "DONE"){
+            statusClass =
+              "background:#198754;color:white;";
+          }
+
+          if(status === "CANCEL"){
+            statusClass =
+              "background:#6c757d;color:white;";
+          }
+
+
+          jasaHTML += `
+
+            <div style="
+              background:white;
+              border:1px solid #e5e5e5;
+              border-radius:14px;
+              padding:18px;
+              margin-bottom:14px;
+            ">
+
+              <div style="
+                display:flex;
+                justify-content:space-between;
+                align-items:center;
+                margin-bottom:10px;
+              ">
+
+                <div style="
+                  font-size:18px;
+                  font-weight:700;
+                  color:#dc3545;
+                ">
+
+                  ${index + 1}.
+                  ${escapeHtmlWO(
+                    item.namaJasa || "-"
+                  )}
+
+                </div>
+
+                <span style="
+                  padding:6px 12px;
+                  border-radius:20px;
+                  font-size:11px;
+                  font-weight:700;
+                  ${statusClass}
+                ">
+
+                  ${escapeHtmlWO(status || "-")}
+
+                </span>
+
+              </div>
+
+
+              <div style="
+                color:#777;
+                font-size:13px;
+                margin-bottom:15px;
+              ">
+
+                Qty:
+                ${escapeHtmlWO(
+                  item.qty || "0"
+                )}
+
+              </div>
+
+
+              <hr>
+
+
+              <div style="
+                margin-top:15px;
+              ">
+
+                <div style="
+                  font-size:12px;
+                  font-weight:700;
+                  color:#777;
+                  margin-bottom:5px;
+                ">
+
+                  KELUHAN
+
+                </div>
+
+                ${
+                  status === "OPEN"
+
+                    ? `
+                      <textarea
+                        id="wojKeluhan_${escapeHtmlWO(item.id)}"
+                        style="
+                          width:100%;
+                          min-height:70px;
+                          border:1px solid #ced4da;
+                          border-radius:8px;
+                          padding:10px;
+                          resize:vertical;
+                          font-size:14px;
+                          box-sizing:border-box;
+                        "
+                      >${escapeHtmlWO(item.keluhan || "")}</textarea>
+                    `
+
+                    : `
+                      <div style="
+                        background:#f8f9fa;
+                        border-radius:8px;
+                        padding:12px;
+                        white-space:pre-wrap;
+                      ">
+                        ${escapeHtmlWO(item.keluhan || "-")}
+                      </div>
+                    `
+                }
+
+              </div>
+
+
+              <div style="
+                margin-top:15px;
+              ">
+
+                <div style="
+                  font-size:12px;
+                  font-weight:700;
+                  color:#777;
+                  margin-bottom:5px;
+                ">
+
+                  DIAGNOSA
+
+                </div>
+
+                ${
+                  status === "OPEN"
+
+                    ? `
+                      <textarea
+                        id="wojDiagnosa_${escapeHtmlWO(item.id)}"
+                        style="
+                          width:100%;
+                          min-height:70px;
+                          border:1px solid #ced4da;
+                          border-radius:8px;
+                          padding:10px;
+                          resize:vertical;
+                          font-size:14px;
+                          box-sizing:border-box;
+                        "
+                      >${escapeHtmlWO(item.diagnosa || "")}</textarea>
+                    `
+
+                    : `
+                      <div style="
+                        background:#f8f9fa;
+                        border-radius:8px;
+                        padding:12px;
+                        white-space:pre-wrap;
+                      ">
+                        ${escapeHtmlWO(item.diagnosa || "-")}
+                      </div>
+                    `
+                }
+
+              </div>
+
+
+              <div style="
+                margin-top:15px;
+              ">
+
+                <div style="
+                  font-size:12px;
+                  font-weight:700;
+                  color:#777;
+                  margin-bottom:5px;
+                ">
+
+                  MEKANIK
+
+                </div>
+
+                ${
+                  status === "OPEN"
+
+                    ? `
+                      <select
+                        id="wojMekanik_${escapeHtmlWO(item.id)}"
+                        style="
+                          width:100%;
+                          border:1px solid #ced4da;
+                          border-radius:8px;
+                          padding:10px;
+                          font-size:14px;
+                          box-sizing:border-box;
+                          background:white;
+                        "
+                      >
+
+                        ${buildMekanikOptionsWO(
+                          masterMekanikWO,
+                          item.mekanikId
+                        )}
+
+                      </select>
+                    `
+
+                    : `
+                      <div style="
+                        background:#f8f9fa;
+                        border-radius:8px;
+                        padding:12px;
+                      ">
+                        ${escapeHtmlWO(
+                          item.mekanik || "-"
+                        )}
+                      </div>
+                    `
+                }
+
+              </div>
+
+            </div>
+
+          `;
+
+        });
+
+      }else{
+
+        jasaHTML = `
+
+          <div style="
+            background:#fff3cd;
+            color:#664d03;
+            padding:15px;
+            border-radius:10px;
+          ">
+
+            Belum ada pekerjaan / jasa.
+
+          </div>
+
+        `;
+
+      }
+
+
+      // ============================================
+      // HTML DETAIL
+      // ============================================
+
+      overlay.innerHTML = `
+
+        <div style="
+          background:white;
+          width:min(900px,95vw);
+          max-height:90vh;
+          border-radius:20px;
+          overflow:hidden;
+          box-shadow:0 20px 60px rgba(0,0,0,.3);
+          display:flex;
+          flex-direction:column;
+        ">
+
+
+          <!-- HEADER -->
+
+          <div style="
+            background:#dc3545;
+            color:white;
+            padding:20px 24px;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+          ">
+
+            <div style="
+              font-size:24px;
+              font-weight:700;
+            ">
+
+              🔧 DETAIL WORK ORDER
+
+            </div>
+
+
+            <button
+              id="closeDetailWO"
+              style="
+                border:0;
+                background:transparent;
+                color:white;
+                font-size:32px;
+                line-height:1;
+                cursor:pointer;
+              "
+            >
+
+              ×
+
+            </button>
+
+          </div>
+
+
+          <!-- CONTENT -->
+
+          <div style="
+            padding:24px;
+            overflow-y:auto;
+          ">
+
+
+            <div style="
+              font-size:26px;
+              font-weight:700;
+              color:#dc3545;
+              margin-bottom:20px;
+            ">
+
+              ${escapeHtmlWO(
+                data.noWO || noWO
+              )}
+
+            </div>
+
+
+            <div style="
+              display:grid;
+              grid-template-columns:1fr 1fr;
+              gap:18px;
+              margin-bottom:20px;
+            ">
+
+
+              <div>
+
+                <div style="
+                  font-size:12px;
+                  color:#888;
+                ">
+
+                  Pelanggan
+
+                </div>
+
+                <div style="
+                  font-weight:600;
+                  font-size:16px;
+                ">
+
+                  ${escapeHtmlWO(
+                    data.nama || "-"
+                  )}
+
+                </div>
+
+              </div>
+
+
+              <div>
+
+                <div style="
+                  font-size:12px;
+                  color:#888;
+                ">
+
+                  Plat Nomor
+
+                </div>
+
+                <div style="
+                  font-weight:600;
+                  font-size:16px;
+                ">
+
+                  ${escapeHtmlWO(
+                    data.plat || "-"
+                  )}
+
+                </div>
+
+              </div>
+
+
+              <div>
+
+                <div style="
+                  font-size:12px;
+                  color:#888;
+                ">
+
+                  Kendaraan
+
+                </div>
+
+                <div style="
+                  font-weight:600;
+                  font-size:16px;
+                ">
+
+                  ${escapeHtmlWO(
+                    (
+                      (data.merk || "") +
+                      " " +
+                      (data.model || "")
+                    ).trim() || "-"
+                  )}
+
+                </div>
+
+              </div>
+
+
+              <div>
+
+                <div style="
+                  font-size:12px;
+                  color:#888;
+                ">
+
+                  Status WO
+
+                </div>
+
+                <div style="
+                  font-weight:700;
+                  font-size:16px;
+                ">
+
+                  ${escapeHtmlWO(
+                    data.status || "-"
+                  )}
+
+                </div>
+
+              </div>
+
+
+            </div>
+
+
+            <hr>
+
+
+            <div style="
+              font-size:20px;
+              font-weight:700;
+              margin:20px 0 15px;
+            ">
+
+              PEKERJAAN / JASA
+
+            </div>
+
+
+            ${jasaHTML}
+
+
+          </div>
+
+
+          <!-- FOOTER -->
+
+          <div style="
+            padding:15px 24px;
+            border-top:1px solid #eee;
+            background:#fafafa;
+          ">
+
+            <button
+              id="saveDetailWOButton"
+              style="
+                flex:1;
+                border:0;
+                background:#198754;
+                color:white;
+                padding:13px;
+                border-radius:8px;
+                font-size:16px;
+                font-weight:600;
+                cursor:pointer;
+              "
+            >
+
+              💾 SIMPAN PERUBAHAN
+
+            </button>
+
+
+            <button
+              id="closeDetailWOButton"
+              style="
+                flex:1;
+                border:0;
+                background:#dc3545;
+                color:white;
+                padding:13px;
+                border-radius:8px;
+                font-size:16px;
+                font-weight:600;
+                cursor:pointer;
+              "
+            >
+
+              TUTUP DETAIL
+
+            </button>
+
+          </div>
+
+
+        </div>
+
+      `;
+
+
+      document.body.appendChild(
+        overlay
+      );
+
+
+      // ============================================
+      // CLOSE DETAIL
+      // ============================================
+
+      function tutupDetail(){
+
+        overlay.remove();
+
+      }
+
+
+      document
+        .getElementById("closeDetailWO")
+        .onclick =
+          tutupDetail;
+
+
+      document
+        .getElementById("closeDetailWOButton")
+        .onclick =
+          tutupDetail;
+
+      // ============================================
+      // SIMPAN PERUBAHAN WORK ORDER JASA
+      // ============================================
+
+      document
+        .getElementById("saveDetailWOButton")
+        .onclick = function(){
+
+          const button =
+            document.getElementById(
+              "saveDetailWOButton"
+            );
+
+          const openJasa =
+            (data.jasa || []).filter(function(item){
+
+              return String(
+                item.status || ""
+              ).toUpperCase() === "OPEN";
+
+            });
+
+
+          if(openJasa.length === 0){
+
+            alert(
+              "Tidak ada pekerjaan / jasa OPEN yang dapat disimpan."
+            );
+
+            return;
+
+          }
+
+
+          const payloads =
+            openJasa.map(function(item){
+
+              const keluhanEl =
+                document.getElementById(
+                  "wojKeluhan_" +
+                  item.id
+                );
+
+
+              const diagnosaEl =
+                document.getElementById(
+                  "wojDiagnosa_" +
+                  item.id
+                );
+
+
+              const mekanikEl =
+                document.getElementById(
+                  "wojMekanik_" +
+                  item.id
+                );
+
+
+              return {
+
+                workOrderJasaId:
+                  item.id,
+
+                keluhan:
+                  keluhanEl
+                    ? keluhanEl.value
+                    : (
+                        item.keluhan || ""
+                      ),
+
+                diagnosa:
+                  diagnosaEl
+                    ? diagnosaEl.value
+                    : (
+                        item.diagnosa || ""
+                      ),
+
+                mekanikId:
+                  mekanikEl
+                    ? mekanikEl.value
+                    : (
+                        item.mekanikId || ""
+                      )
+
+              };
+
+            });
+
+
+          button.disabled = true;
+
+          button.innerText =
+            "⏳ MENYIMPAN...";
+
+
+          const saveOne =
+            function(index){
+
+              if(
+                index >= payloads.length
+              ){
+
+                button.disabled = false;
+
+                button.innerText =
+                  "💾 SIMPAN PERUBAHAN";
+
+
+                alert(
+                  "✅ Perubahan berhasil disimpan."
+                );
+
+
+                // Reload detail agar data terbaru
+                // langsung terlihat di popup.
+                bukaDetailWO(
+                  data.noWO || noWO
+                );
+
+                return;
+
+              }
+
+
+              google.script.run
+
+                .withSuccessHandler(
+                  function(){
+
+                    saveOne(
+                      index + 1
+                    );
+
+                  }
+                )
+
+                .withFailureHandler(
+                  function(err){
+
+                    button.disabled = false;
+
+                    button.innerText =
+                      "💾 SIMPAN PERUBAHAN";
+
+
+                    alert(
+                      "Gagal menyimpan jasa ke-" +
+                      (index + 1) +
+                      ":\n\n" +
+                      (
+                        err &&
+                        err.message
+                          ? err.message
+                          : err
+                      )
+                    );
+
+                  }
+                )
+
+                .updateWorkOrderJasaFromDashboard(
+                  payloads[index]
+                );
+
+            };
+
+
+          saveOne(0);
+
+        };
+
+
+
+    })
+
+    .withFailureHandler(function(err){
+
+      alert(
+        "Gagal mengambil detail WO:\n" +
+        err.message
+      );
+
+    })
+
+    .getWorkOrder(noWO);
+
+}
+
+
+function buildMekanikOptionsWO(
+  mekanikList,
+  selectedId
+){
+
+  let html = `
+    <option value="">
+      -- Pilih Mekanik --
+    </option>
+  `;
+
+  (mekanikList || []).forEach(function(row){
+
+    const id =
+      String(row[0] || "");
+
+    const nama =
+      String(row[1] || "");
+
+    if(!id || !nama){
+      return;
+    }
+
+    html += `
+      <option
+        value="${escapeHtmlWO(id)}"
+        ${id === String(selectedId || "") ? "selected" : ""}
+      >
+        ${escapeHtmlWO(nama)}
+      </option>
+    `;
+
+  });
+
+  return html;
+
+}
+
+
+function escapeHtmlWO(value){
+
+  return String(value ?? "")
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
 
 }
 

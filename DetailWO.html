@@ -1,247 +1,777 @@
+
 <!DOCTYPE html>
 <html>
 
 <head>
 
-<base target="_top">
+  <base target="_top">
 
-<meta charset="UTF-8">
+  <meta charset="UTF-8">
 
-<?!= include("Bootstrap"); ?>
+  <?!= include("Bootstrap"); ?>
+
+  <style>
+
+    body{
+      background:#f5f6fa;
+    }
+
+    .card{
+      border:0;
+      border-radius:16px;
+    }
+
+    .card-header{
+      border-radius:16px 16px 0 0 !important;
+    }
+
+    .info-label{
+      font-size:12px;
+      color:#888;
+      margin-bottom:3px;
+    }
+
+    .info-value{
+      font-weight:600;
+      font-size:15px;
+    }
+
+    .jasa-card{
+      border:1px solid #e5e5e5;
+      border-radius:14px;
+      padding:16px;
+      margin-bottom:12px;
+      background:#fff;
+    }
+
+    .jasa-title{
+      font-weight:700;
+      font-size:16px;
+      color:#dc3545;
+    }
+
+    .jasa-meta{
+      font-size:12px;
+      color:#777;
+    }
+
+    .field-label{
+      font-size:12px;
+      font-weight:600;
+      color:#777;
+      margin-bottom:4px;
+    }
+
+    .field-value{
+      background:#f8f9fa;
+      border-radius:8px;
+      padding:10px;
+      min-height:42px;
+      white-space:pre-wrap;
+    }
+
+    .status-badge{
+      display:inline-block;
+      padding:5px 10px;
+      border-radius:20px;
+      font-size:11px;
+      font-weight:700;
+    }
+
+  </style>
 
 </head>
 
+
 <body class="p-4">
+
 
 <div class="card shadow">
 
-<div class="card-header bg-danger text-white">
 
-<h4 class="mb-0">
+  <!-- HEADER -->
 
-<i class="bi bi-tools"></i>
+  <div class="card-header bg-danger text-white">
 
-DETAIL WORK ORDER
+    <h4 class="mb-0">
 
-</h4>
+      <i class="bi bi-tools"></i>
+
+      DETAIL WORK ORDER
+
+    </h4>
+
+  </div>
+
+
+  <div class="card-body">
+
+
+    <!-- =========================
+         IDENTITAS WO
+    ========================== -->
+
+    <h3
+      id="noWO"
+      class="fw-bold text-danger">
+    </h3>
+
+    <hr>
+
+
+    <div class="row g-3">
+
+
+      <div class="col-md-6">
+
+        <div class="info-label">
+          Pelanggan
+        </div>
+
+        <div
+          id="nama"
+          class="info-value">
+        </div>
+
+      </div>
+
+
+      <div class="col-md-6">
+
+        <div class="info-label">
+          Plat Nomor
+        </div>
+
+        <div
+          id="plat"
+          class="info-value">
+        </div>
+
+      </div>
+
+
+      <div class="col-md-6">
+
+        <div class="info-label">
+          Kendaraan
+        </div>
+
+        <div
+          id="kendaraan"
+          class="info-value">
+        </div>
+
+      </div>
+
+
+      <div class="col-md-6">
+
+        <div class="info-label">
+          Status WO
+        </div>
+
+        <div
+          id="status"
+          class="info-value">
+        </div>
+
+      </div>
+
+
+    </div>
+
+
+    <hr>
+
+
+    <!-- =========================
+         JASA
+    ========================== -->
+
+    <h5 class="fw-bold mb-3">
+
+      PEKERJAAN / JASA
+
+    </h5>
+
+
+    <div id="listJasa">
+
+      <div class="text-muted">
+        Memuat pekerjaan...
+      </div>
+
+    </div>
+
+
+    <hr>
+
+
+    <!-- =========================
+         STATUS WO
+    ========================== -->
+
+    <div class="mb-3">
+
+      <label class="form-label fw-semibold">
+        Status Work Order
+      </label>
+
+      <select
+        id="statusWO"
+        class="form-select">
+
+        <option value="MENUNGGU">
+          MENUNGGU
+        </option>
+
+        <option value="DIAGNOSA">
+          DIAGNOSA
+        </option>
+
+        <option value="MENUNGGU APPROVAL">
+          MENUNGGU APPROVAL
+        </option>
+
+        <option value="PROSES">
+          PROSES
+        </option>
+
+        <option value="QC">
+          QC
+        </option>
+
+        <option value="SIAP DIAMBIL">
+          SIAP DIAMBIL
+        </option>
+
+        <option value="SELESAI">
+          SELESAI
+        </option>
+
+      </select>
+
+    </div>
+
+
+    <!-- =========================
+         MEKANIK
+    ========================== -->
+
+    <div class="mb-3">
+
+      <label class="form-label fw-semibold">
+        Mekanik
+      </label>
+
+      <select
+        id="mekanik"
+        class="form-select">
+
+      </select>
+
+    </div>
+
+
+    <!-- =========================
+         BUTTON
+    ========================== -->
+
+    <button
+      class="btn btn-danger w-100"
+      onclick="simpanPerubahan()">
+
+      <i class="bi bi-floppy"></i>
+
+      SIMPAN PERUBAHAN
+
+    </button>
+
+
+  </div>
 
 </div>
 
-<div class="card-body">
-
-<h3 id="noWO"></h3>
-
-<hr>
-
-<div class="mb-3">
-
-<b>Pelanggan</b>
-
-<div id="nama"></div>
-
-</div>
-
-<div class="mb-3">
-
-<b>Plat Nomor</b>
-
-<div id="plat"></div>
-
-</div>
-
-<div class="mb-3">
-
-<b>Kendaraan</b>
-
-<div id="kendaraan"></div>
-
-</div>
-
-<div class="mb-3">
-
-<b>Status</b>
-
-<div id="status"></div>
-
-</div>
-
-<hr>
-
-<div class="mb-3">
-
-  <div class="mb-3">
-
-<label class="form-label">
-Keluhan Pelanggan
-</label>
-
-<textarea
-id="keluhan"
-class="form-control"
-rows="4"
-readonly></textarea>
-
-</div>
-
-<label class="form-label">
-Diagnosa
-</label>
-
-<textarea
-id="diagnosa"
-class="form-control"
-rows="4"></textarea>
-
-</div>
-
-<div class="mb-3">
-
-<label class="form-label">
-Status
-</label>
-
-<select
-id="statusWO"
-class="form-select">
-
-<option>MENUNGGU</option>
-<option>DIAGNOSA</option>
-<option>MENUNGGU APPROVAL</option>
-<option>PROSES</option>
-<option>QC</option>
-<option>SIAP DIAMBIL</option>
-<option>SELESAI</option>
-
-</select>
-
-</div>
-
-<div class="mb-3">
-
-<label class="form-label">
-Mekanik
-</label>
-
-<select
-id="mekanik"
-class="form-select">
-</select>
-
-</div>
-
-<button
-class="btn btn-danger w-100"
-onclick="simpanPerubahan()">
-
-<i class="bi bi-floppy"></i>
-
-SIMPAN PERUBAHAN
-
-</button>
-
-</div>
-
-</div>
 
 <script>
 
-const noWO = "<?= noWO ?>";
 
-google.script.run
-
-.withSuccessHandler(function(data){
-
-document.getElementById("noWO").innerHTML = data.noWO;
-document.getElementById("nama").innerHTML = data.nama;
-document.getElementById("plat").innerHTML = data.plat;
-document.getElementById("kendaraan").innerHTML =
-    data.merk + " " + data.model;
-
-document.getElementById("status").innerHTML = data.status;
-
-// isi form edit
-
-document.getElementById("keluhan").value =
-    data.keluhan || "";
-
-alert("Keluhan dari server = " + data.keluhan);
-
-document.getElementById("diagnosa").value =
-    data.diagnosa || "";
-
-document.getElementById("statusWO").value =
-    data.status;
-
-loadMekanik(data.mekanik);
-
-})
-
-.getWorkOrder(noWO);
+const noWO =
+  "<?= noWO ?>";
 
 
-function loadMekanik(selected){
+/**
+ * ============================================
+ * LOAD DETAIL WO
+ * ============================================
+ */
+
+function loadDetailWO(){
 
   google.script.run
-    .withSuccessHandler(function(data){
 
-      const select =
-        document.getElementById("mekanik");
+    .withSuccessHandler(
+      function(data){
 
-      select.innerHTML="";
+        if(!data){
 
-      data.forEach(function(r){
+          alert(
+            "Work Order tidak ditemukan."
+          );
 
-        const opt =
-          document.createElement("option");
+          return;
 
-        opt.value = r[0];
-        opt.textContent = r[1];
-
-        if(r[0]==selected){
-          opt.selected=true;
         }
 
-        select.appendChild(opt);
 
-      });
+        // =========================
+        // IDENTITAS WO
+        // =========================
 
-    })
+        document
+          .getElementById("noWO")
+          .innerText =
+            data.noWO || "";
+
+
+        document
+          .getElementById("nama")
+          .innerText =
+            data.nama || "-";
+
+
+        document
+          .getElementById("plat")
+          .innerText =
+            data.plat || "-";
+
+
+        document
+          .getElementById("kendaraan")
+          .innerText =
+            (
+              (data.merk || "") +
+              " " +
+              (data.model || "")
+            ).trim() || "-";
+
+
+        document
+          .getElementById("status")
+          .innerText =
+            data.status || "-";
+
+
+        document
+          .getElementById("statusWO")
+          .value =
+            data.status || "";
+
+
+        // =========================
+        // JASA
+        // =========================
+
+        renderJasa(
+          data.jasa || []
+        );
+
+
+        // =========================
+        // MEKANIK
+        // =========================
+
+        loadMekanik(
+          data.jasa || []
+        );
+
+      }
+    )
+
+    .withFailureHandler(
+      function(err){
+
+        alert(
+          "Gagal mengambil Work Order:\n" +
+          err.message
+        );
+
+      }
+    )
+
+    .getWorkOrder(noWO);
+
+}
+
+
+/**
+ * ============================================
+ * RENDER JASA
+ * ============================================
+ */
+
+function renderJasa(jasa){
+
+  const container =
+    document.getElementById(
+      "listJasa"
+    );
+
+
+  container.innerHTML = "";
+
+
+  if(
+    !jasa ||
+    jasa.length === 0
+  ){
+
+    container.innerHTML = `
+
+      <div class="alert alert-warning">
+
+        Belum ada pekerjaan / jasa.
+
+      </div>
+
+    `;
+
+    return;
+
+  }
+
+
+  jasa.forEach(
+    function(item, index){
+
+      const status =
+        String(
+          item.status || ""
+        ).toUpperCase();
+
+
+      const statusClass =
+        status === "DONE"
+          ? "bg-success text-white"
+          :
+        status === "CANCEL"
+          ? "bg-secondary text-white"
+          :
+        "bg-warning text-dark";
+
+
+      container.innerHTML += `
+
+        <div class="jasa-card">
+
+          <div class="d-flex justify-content-between align-items-start">
+
+            <div>
+
+              <div class="jasa-title">
+
+                ${index + 1}.
+                ${escapeHtml(
+                  item.namaJasa || "-"
+                )}
+
+              </div>
+
+              <div class="jasa-meta">
+
+                Qty:
+                ${escapeHtml(
+                  item.qty || "0"
+                )}
+
+              </div>
+
+            </div>
+
+            <span
+              class="status-badge ${statusClass}">
+
+              ${escapeHtml(
+                status || "-"
+              )}
+
+            </span>
+
+          </div>
+
+
+          <hr>
+
+
+          <div class="mb-3">
+
+            <div class="field-label">
+              KELUHAN
+            </div>
+
+            <div class="field-value">
+
+              ${escapeHtml(
+                item.keluhan || "-"
+              )}
+
+            </div>
+
+          </div>
+
+
+          <div class="mb-3">
+
+            <div class="field-label">
+              DIAGNOSA
+            </div>
+
+            <div class="field-value">
+
+              ${escapeHtml(
+                item.diagnosa || "-"
+              )}
+
+            </div>
+
+          </div>
+
+
+          <div>
+
+            <div class="field-label">
+              MEKANIK
+            </div>
+
+            <div class="field-value">
+
+              ${escapeHtml(
+                item.mekanik || "-"
+              )}
+
+            </div>
+
+          </div>
+
+        </div>
+
+      `;
+
+    }
+  );
+
+}
+
+
+/**
+ * ============================================
+ * LOAD MEKANIK
+ * ============================================
+ */
+
+function loadMekanik(jasa){
+
+  google.script.run
+
+    .withSuccessHandler(
+      function(data){
+
+        const select =
+          document.getElementById(
+            "mekanik"
+          );
+
+
+        select.innerHTML = "";
+
+
+        const kosong =
+          document.createElement(
+            "option"
+          );
+
+        kosong.value = "";
+
+        kosong.textContent =
+          "-- Pilih Mekanik --";
+
+        select.appendChild(
+          kosong
+        );
+
+
+        data.forEach(
+          function(r){
+
+            const opt =
+              document.createElement(
+                "option"
+              );
+
+            opt.value =
+              r[0];
+
+            opt.textContent =
+              r[1];
+
+            select.appendChild(
+              opt
+            );
+
+          }
+        );
+
+
+        /*
+         * Jika ada satu mekanik
+         * pada jasa aktif, pilih otomatis.
+         */
+
+        const active =
+          jasa.find(
+            function(x){
+
+              return (
+                x.status !== "CANCEL" &&
+                x.mekanikId
+              );
+
+            }
+          );
+
+
+        if(active){
+
+          select.value =
+            active.mekanikId;
+
+        }
+
+      }
+    )
+
+    .withFailureHandler(
+      function(err){
+
+        console.error(
+          "Gagal memuat mekanik:",
+          err
+        );
+
+      }
+    )
+
     .getMasterMekanik();
 
 }
+
+
+/**
+ * ============================================
+ * SIMPAN PERUBAHAN
+ * ============================================
+ */
 
 function simpanPerubahan(){
 
   const data = {
 
-    noWO : document.getElementById("noWO").innerText,
+    noWO:
+      document
+        .getElementById("noWO")
+        .innerText,
 
-    diagnosa : document.getElementById("diagnosa").value,
+    diagnosa:
+      "",
 
-    status : document.getElementById("statusWO").value,
+    status:
+      document
+        .getElementById("statusWO")
+        .value,
 
-    idMekanik : document.getElementById("mekanik").value
+    idMekanik:
+      document
+        .getElementById("mekanik")
+        .value
 
   };
 
+
   google.script.run
-    .withSuccessHandler(function(){
 
-      alert("✅ Perubahan berhasil disimpan.");
+    .withSuccessHandler(
+      function(){
 
-      google.script.host.close();
+        alert(
+          "✅ Perubahan berhasil disimpan."
+        );
 
-    })
-    .withFailureHandler(function(err){
+        google.script.host.close();
 
-      alert(err.message);
+      }
+    )
 
-    })
-    .updateWorkOrder(data);
+    .withFailureHandler(
+      function(err){
+
+        alert(
+          err.message
+        );
+
+      }
+    )
+
+    .updateWorkOrder(
+      data
+    );
 
 }
 
+
+/**
+ * ============================================
+ * ESCAPE HTML
+ * ============================================
+ */
+
+function escapeHtml(value){
+
+  return String(value)
+    .replace(
+      /&/g,
+      "&amp;"
+    )
+    .replace(
+      /</g,
+      "&lt;"
+    )
+    .replace(
+      />/g,
+      "&gt;"
+    )
+    .replace(
+      /"/g,
+      "&quot;"
+    )
+    .replace(
+      /'/g,
+      "&#039;"
+    );
+
+}
+
+
+/**
+ * ============================================
+ * START
+ * ============================================
+ */
+
+loadDetailWO();
+
+
 </script>
+
 
 </body>
 

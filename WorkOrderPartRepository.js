@@ -270,6 +270,195 @@ const WorkOrderPartRepository = {
 
         };
 
-    }
+    },
+
+        /**
+     * ========================================
+     * UPDATE WORK ORDER PART
+     * ========================================
+     */
+    update(workOrderPart){
+
+        if(!workOrderPart){
+
+            throw new Error(
+                "WorkOrderPart wajib diisi."
+            );
+
+        }
+
+
+        if(!workOrderPart.id){
+
+            throw new Error(
+                "ID WorkOrderPart wajib diisi."
+            );
+
+        }
+
+
+        const row =
+            this.findRowById(
+                workOrderPart.id
+            );
+
+
+        if(row === 0){
+
+            throw new Error(
+                "WorkOrderPart tidak ditemukan : " +
+                workOrderPart.id
+            );
+
+        }
+
+
+        const current =
+            this.findById(
+                workOrderPart.id
+            );
+
+
+        /**
+         * ====================================
+         * BUILD UPDATED ROW
+         * ====================================
+         *
+         * Field yang tidak diberikan oleh
+         * caller dipertahankan dari row lama.
+         * ====================================
+         */
+
+        const updatedRow = [
+
+            workOrderPart.id,
+
+            workOrderPart.workOrderId !== undefined
+                ?
+            workOrderPart.workOrderId
+                :
+            current[
+                COL_WORK_ORDER_PART.WORK_ORDER_ID
+            ],
+
+
+            workOrderPart.workOrderJasaId !== undefined
+                ?
+            workOrderPart.workOrderJasaId
+                :
+            current[
+                COL_WORK_ORDER_PART.WORK_ORDER_JASA_ID
+            ],
+
+
+            workOrderPart.barangId !== undefined
+                ?
+            workOrderPart.barangId
+                :
+            current[
+                COL_WORK_ORDER_PART.BARANG_ID
+            ],
+
+
+            workOrderPart.namaBarangSnapshot !== undefined
+                ?
+            workOrderPart.namaBarangSnapshot
+                :
+            current[
+                COL_WORK_ORDER_PART.NAMA_BARANG_SNAPSHOT
+            ],
+
+
+            workOrderPart.qty !== undefined
+                ?
+            workOrderPart.qty
+                :
+            current[
+                COL_WORK_ORDER_PART.QTY
+            ],
+
+
+            workOrderPart.harga !== undefined
+                ?
+            workOrderPart.harga
+                :
+            current[
+                COL_WORK_ORDER_PART.HARGA
+            ],
+
+
+            workOrderPart.diskon !== undefined
+                ?
+            workOrderPart.diskon
+                :
+            current[
+                COL_WORK_ORDER_PART.DISKON
+            ],
+
+
+            workOrderPart.status !== undefined
+                ?
+            workOrderPart.status
+                :
+            current[
+                COL_WORK_ORDER_PART.STATUS
+            ],
+
+
+            workOrderPart.catatan !== undefined
+                ?
+            workOrderPart.catatan
+                :
+            current[
+                COL_WORK_ORDER_PART.CATATAN
+            ],
+
+
+            current[
+                COL_WORK_ORDER_PART.DIBUAT_PADA
+            ],
+
+
+            workOrderPart.updatedAt !== undefined
+                ?
+            workOrderPart.updatedAt
+                :
+            new Date(),
+
+
+            workOrderPart.total !== undefined
+                ?
+            workOrderPart.total
+                :
+            current[
+                COL_WORK_ORDER_PART.TOTAL
+            ]
+
+        ];
+
+
+        this.sheet()
+            .getRange(
+                row,
+                1,
+                1,
+                COL_WORK_ORDER_PART.TOTAL + 1
+            )
+            .setValues([
+                updatedRow
+            ]);
+
+
+        return {
+
+            success :
+                true,
+
+            workOrderPartId :
+                workOrderPart.id
+
+        };
+
+    },
 
 };
