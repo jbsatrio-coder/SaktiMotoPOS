@@ -461,13 +461,3 @@ function testGetWorkOrderDetail() {
 
 }
 
-function testGetWorkOrderDetail() {
-
-  const data =
-    getWorkOrder("WO2608070001");
-
-  Logger.log(
-    JSON.stringify(data, null, 2)
-  );
-
-}

@@ -190,28 +190,6 @@ function saveWorkOrder(data) {
 
 }
 
-function showDetailWO(noWO){
-
-  const template =
-    HtmlService.createTemplateFromFile("DetailWO");
-
-  template.noWO = noWO;
-
-  const html =
-    template
-      .evaluate()
-      .setWidth(800)
-      .setHeight(700);
-
-  SpreadsheetApp
-    .getUi()
-    .showModalDialog(
-      html,
-      "Detail Work Order"
-    );
-
-}
-
 /**
  * Update Detail Work Order
  */
