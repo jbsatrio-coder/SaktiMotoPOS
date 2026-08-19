@@ -21,12 +21,14 @@
       margin-bottom: 4px;
     }
 
-    input {
+    input,
+    select {
       width: 100%;
       box-sizing: border-box;
       padding: 9px;
       border: 1px solid #bbb;
       border-radius: 4px;
+      background: white;
     }
 
     button {
@@ -36,6 +38,11 @@
       border-radius: 4px;
       cursor: pointer;
       font-weight: bold;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: default;
     }
 
     #simpan {
@@ -51,6 +58,16 @@
       margin-top: 14px;
       font-size: 13px;
     }
+
+    .required {
+      color: #c00;
+    }
+
+    .optional {
+      color: #777;
+      font-size: 11px;
+      font-weight: normal;
+    }
   </style>
 </head>
 
@@ -58,39 +75,79 @@
 
 <h2>Tambah Kendaraan</h2>
 
-<label>Plat Nomor *</label>
+<label>
+  Plat Nomor <span class="required">*</span>
+</label>
+
 <input
   id="plat"
   placeholder="B 1234 ABC"
   autocomplete="off"
 >
 
-<label>Merk</label>
-<input
-  id="merk"
-  placeholder="Honda"
->
+<label>
+  Merk <span class="required">*</span>
+</label>
 
-<label>Model</label>
-<input
-  id="model"
-  placeholder="Vario 125"
->
+<select id="merk" onchange="loadModel()">
+  <option value="">Memuat Merk...</option>
+</select>
 
-<label>Tahun</label>
+<label>
+  Model <span class="required">*</span>
+</label>
+
+<select id="model" disabled>
+  <option value="">Pilih Merk terlebih dahulu</option>
+</select>
+
+<label>
+  Tahun
+  <span class="optional">(optional)</span>
+</label>
+
 <input
   id="tahun"
   type="number"
   placeholder="2022"
 >
 
-<label>Warna</label>
+<label>
+  Warna
+  <span class="optional">(optional)</span>
+</label>
+
 <input
   id="warna"
   placeholder="Hitam"
 >
 
-<button id="simpan" onclick="simpan()">
+<label>
+  Nomor Mesin
+  <span class="optional">(optional)</span>
+</label>
+
+<input
+  id="noMesin"
+  placeholder="Boleh dikosongkan"
+  autocomplete="off"
+>
+
+<label>
+  Nomor Rangka
+  <span class="optional">(optional)</span>
+</label>
+
+<input
+  id="noRangka"
+  placeholder="Boleh dikosongkan"
+  autocomplete="off"
+>
+
+<button
+  id="simpan"
+  onclick="simpan()"
+>
   SIMPAN
 </button>
 
@@ -105,6 +162,187 @@
 
 <script>
 
+let daftarMerk = [];
+
+/**
+ * ============================================
+ * WORK ORDER VEHICLE CONTEXT
+ * ============================================
+ */
+
+let workOrderCustomerId = "";
+
+function loadWorkOrderVehicleContext() {
+
+  google.script.run
+
+    .withSuccessHandler(function(data) {
+
+      if(data && data.customerId) {
+
+        workOrderCustomerId =
+          String(data.customerId).trim();
+
+      }
+
+    })
+
+    .withFailureHandler(function(error) {
+
+      console.error(
+        "Gagal mengambil context Work Order:",
+        error
+      );
+
+    })
+
+    .getPendingWorkOrderVehicle();
+
+}
+
+
+/**
+ * ============================================
+ * LOAD MASTER MERK
+ * ============================================
+ */
+
+function loadMerk() {
+
+  const select =
+    document.getElementById("merk");
+
+  select.innerHTML =
+    '<option value="">Memuat Merk...</option>';
+
+  google.script.run
+
+    .withSuccessHandler(function(data) {
+
+      daftarMerk =
+        data || [];
+
+      select.innerHTML =
+        '<option value="">-- Pilih Merk --</option>';
+
+      daftarMerk.forEach(function(item) {
+
+        const option =
+          document.createElement("option");
+
+        option.value =
+          item.id || "";
+
+        option.textContent =
+          item.nama || "";
+
+        select.appendChild(option);
+
+      });
+
+    })
+
+    .withFailureHandler(function(error) {
+
+      select.innerHTML =
+        '<option value="">Gagal memuat Merk</option>';
+
+      document.getElementById("status").innerHTML =
+        "Gagal memuat Master Merk: " +
+        (error.message || error);
+
+    })
+
+    .getMasterMerkKendaraan();
+
+}
+
+
+/**
+ * ============================================
+ * LOAD MODEL BERDASARKAN MERK
+ * ============================================
+ */
+
+function loadModel() {
+
+  const merkId =
+    document
+      .getElementById("merk")
+      .value;
+
+  const select =
+    document.getElementById("model");
+
+  select.innerHTML =
+    '<option value="">Memuat Model...</option>';
+
+  select.disabled = true;
+
+  if(!merkId) {
+
+    select.innerHTML =
+      '<option value="">Pilih Merk terlebih dahulu</option>';
+
+    return;
+
+  }
+
+  google.script.run
+
+    .withSuccessHandler(function(data) {
+
+      const models =
+        data || [];
+
+      select.innerHTML =
+        '<option value="">-- Pilih Model --</option>';
+
+      models.forEach(function(item) {
+
+        const option =
+          document.createElement("option");
+
+        option.value =
+          item.id || "";
+
+        option.textContent =
+          item.nama || "";
+
+        select.appendChild(option);
+
+      });
+
+      select.disabled =
+        false;
+
+    })
+
+    .withFailureHandler(function(error) {
+
+      select.innerHTML =
+        '<option value="">Gagal memuat Model</option>';
+
+      select.disabled =
+        true;
+
+      document.getElementById("status").innerHTML =
+        "Gagal memuat Master Model: " +
+        (error.message || error);
+
+    })
+
+    .getMasterModelKendaraan(merkId);
+
+}
+
+
+/**
+ * ============================================
+ * SIMPAN
+ * ============================================
+ */
+
 function simpan() {
 
   const tombol =
@@ -114,31 +352,97 @@ function simpan() {
     document.getElementById("status");
 
   const data = {
+
+    customerId:
+      workOrderCustomerId,
+
     plat:
       document.getElementById("plat").value,
 
+    /*
+     * Backend sekarang mengharapkan
+     * nama merk/model untuk resolve.
+     * ID tetap dikirim juga agar struktur
+     * form siap untuk evolusi berikutnya.
+     */
+
     merk:
-      document.getElementById("merk").value,
+      document
+        .getElementById("merk")
+        .selectedOptions[0]
+        ?.textContent || "",
+
+    merkId:
+      document
+        .getElementById("merk")
+        .value,
 
     model:
-      document.getElementById("model").value,
+      document
+        .getElementById("model")
+        .selectedOptions[0]
+        ?.textContent || "",
+
+    modelId:
+      document
+        .getElementById("model")
+        .value,
 
     tahun:
       document.getElementById("tahun").value,
 
     warna:
-      document.getElementById("warna").value
+      document.getElementById("warna").value,
+
+    noMesin:
+      document.getElementById("noMesin").value,
+
+    noRangka:
+      document.getElementById("noRangka").value
+
   };
 
-  if (!data.plat.trim()) {
+
+  /**
+   * ==========================================
+   * VALIDASI
+   * ==========================================
+   */
+
+  if(!data.plat.trim()) {
+
     status.innerHTML =
       "Plat nomor wajib diisi.";
+
     return;
+
   }
 
-  tombol.disabled = true;
+  if(!data.merkId) {
+
+    status.innerHTML =
+      "Merk wajib dipilih.";
+
+    return;
+
+  }
+
+  if(!data.modelId) {
+
+    status.innerHTML =
+      "Model wajib dipilih.";
+
+    return;
+
+  }
+
+
+  tombol.disabled =
+    true;
+
   status.innerHTML =
     "Menyimpan kendaraan...";
+
 
   google.script.run
 
@@ -149,8 +453,29 @@ function simpan() {
         result.plat +
         " berhasil ditambahkan.";
 
+      /*
+       * Jika FormKendaraan dibuka dari Work Order,
+       * kirim kendaraan baru kembali ke Work Order.
+       */
+      if(workOrderCustomerId) {
+
+        google.script.run
+          .withFailureHandler(function(error) {
+
+            console.error(
+              "Gagal mengirim kendaraan baru ke Work Order:",
+              error
+            );
+
+          })
+          .setPendingWorkOrderVehicle(result);
+
+      }
+
       setTimeout(function() {
+
         google.script.host.close();
+
       }, 700);
 
     })
@@ -158,14 +483,35 @@ function simpan() {
     .withFailureHandler(function(error) {
 
       status.innerHTML =
-        "Gagal: " + error.message;
+        "Gagal: " +
+        (error.message || error);
 
-      tombol.disabled = false;
+      tombol.disabled =
+        false;
 
     })
 
     .simpanKendaraanBaru(data);
+
 }
+
+
+/**
+ * ============================================
+ * INITIALIZE
+ * ============================================
+ */
+
+document.addEventListener(
+  "DOMContentLoaded",
+  function() {
+
+    loadWorkOrderVehicleContext();
+
+    loadMerk();
+
+  }
+);
 
 </script>
 

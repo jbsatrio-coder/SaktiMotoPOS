@@ -40,9 +40,9 @@ function testBarcode(){
 
 function tambahItem() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const pos = ss.getSheetByName("10_POS");
-  const masterBarang = ss.getSheetByName("02_MasterBarang");
-  const masterJasa = ss.getSheetByName("08_MasterJasa");
+  const pos = ss.getSheetByName(CONFIG.SHEET.POS);
+  const masterBarang = ss.getSheetByName(CONFIG.SHEET.BARANG);
+  const masterJasa = ss.getSheetByName(CONFIG.SHEET.JASA);
 
   const pilihan = String(pos.getRange("B8").getValue()).trim();
   const qtyTambah = Number(pos.getRange("G7").getValue());
@@ -274,15 +274,15 @@ function tambahItem() {
 
 function hapusItem() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const pos = ss.getSheetByName("10_POS");
+  const pos = ss.getSheetByName(CONFIG.SHEET.POS);
   const ui = SpreadsheetApp.getUi();
 
   const activeSheet = ss.getActiveSheet();
   const activeRange = activeSheet.getActiveRange();
 
   // Pastikan sedang berada di sheet POS
-  if (activeSheet.getName() !== "10_POS") {
-    ui.alert("Silakan pilih item pada sheet 10_POS.");
+  if (activeSheet.getName() !== CONFIG.SHEET.POS) {
+    ui.alert("Silakan pilih item pada sheet " + CONFIG.SHEET.POS + ".");
     return;
   }
 
@@ -351,15 +351,15 @@ function simpanTransaksi() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const ui = SpreadsheetApp.getUi();
 
-  const pos = ss.getSheetByName("10_POS");
-  const penjualan = ss.getSheetByName("11_Penjualan");
-  const detail = ss.getSheetByName("12_DetailPenjualan");
-  const masterBarang = ss.getSheetByName("02_MasterBarang");
-  const masterJasa = ss.getSheetByName("08_MasterJasa");
-  const masterMekanik = ss.getSheetByName("09_MasterMekanik");
-  const pelanggan = ss.getSheetByName("06_MasterPelanggan");
-  const kendaraan = ss.getSheetByName("07_MasterKendaraan");
-  const stokSheet = ss.getSheetByName("14_Stok");
+  const pos = ss.getSheetByName(CONFIG.SHEET.POS);
+  const penjualan = ss.getSheetByName(CONFIG.SHEET.PENJUALAN);
+  const detail = ss.getSheetByName(CONFIG.SHEET.DETAIL_PENJUALAN);
+  const masterBarang = ss.getSheetByName(CONFIG.SHEET.BARANG);
+  const masterJasa = ss.getSheetByName(CONFIG.SHEET.JASA);
+  const masterMekanik = ss.getSheetByName(CONFIG.SHEET.MEKANIK);
+  const pelanggan = ss.getSheetByName(CONFIG.SHEET.PELANGGAN);
+  const kendaraan = ss.getSheetByName(CONFIG.SHEET.VEHICLE);
+  const stokSheet = ss.getSheetByName(CONFIG.SHEET.STOK);
 
   // ==========================================
   // AMBIL DATA HEADER POS
@@ -845,7 +845,7 @@ function onEdit(e) {
   const range = e.range;
   const sheet = range.getSheet();
 
-  if (sheet.getName() !== "10_POS") return;
+  if (sheet.getName() !== CONFIG.SHEET.POS) return;
 
   const cell = range.getA1Notation();
 
@@ -928,25 +928,321 @@ function onEdit(e) {
   }
 }
 
-function bukaFormPelanggan() {
-  const html = HtmlService
-    .createHtmlOutputFromFile("FormPelanggan")
-    .setWidth(480)
-    .setHeight(650);
+/**
+ * ============================================
+ * BUKA FORM PELANGGAN BARU
+ * DARI MENU UTAMA
+ * ============================================
+ */
+function bukaFormPelanggan(){
 
-  SpreadsheetApp.getUi().showModalDialog(
-    html,
-    "Tambah Pelanggan Baru"
-  );
+  PropertiesService
+    .getUserProperties()
+    .setProperty(
+      "FORM_PELANGGAN_SOURCE",
+      "MENU"
+    );
+
+  const html =
+    HtmlService
+      .createHtmlOutputFromFile(
+        "FormPelanggan"
+      )
+      .setWidth(480)
+      .setHeight(650);
+
+  SpreadsheetApp
+    .getUi()
+    .showModalDialog(
+      html,
+      "Tambah Pelanggan Baru"
+    );
+
 }
 
+
+/**
+ * ============================================
+ * BUKA FORM PELANGGAN
+ * DARI WORK ORDER
+ * ============================================
+ */
+function bukaFormPelangganDariWorkOrder(){
+
+  PropertiesService
+    .getUserProperties()
+    .setProperty(
+      "FORM_PELANGGAN_SOURCE",
+      "WORK_ORDER"
+    );
+
+  const html =
+    HtmlService
+      .createHtmlOutputFromFile(
+        "FormPelanggan"
+      )
+      .setWidth(480)
+      .setHeight(650);
+
+  SpreadsheetApp
+    .getUi()
+    .showModalDialog(
+      html,
+      "Tambah Pelanggan Baru"
+    );
+
+}
+
+
+/**
+ * ============================================
+ * AMBIL SOURCE FORM PELANGGAN
+ * ============================================
+ */
+function getFormPelangganSource(){
+
+  const props =
+    PropertiesService
+      .getUserProperties();
+
+  const source =
+    props.getProperty(
+      "FORM_PELANGGAN_SOURCE"
+    ) || "MENU";
+
+  return source;
+
+}
+
+/**
+ * ============================================
+ * SIMPAN HASIL CREATE CUSTOMER + VEHICLE
+ * UNTUK WORK ORDER
+ * ============================================
+ */
+
+function setPendingWorkOrderCustomer(result){
+
+  if(!result){
+
+    throw new Error(
+      "Hasil Customer + Vehicle tidak tersedia."
+    );
+
+  }
+
+
+  if(!result.customerId){
+
+    throw new Error(
+      "Customer ID tidak tersedia."
+    );
+
+  }
+
+
+  if(!result.vehicleId){
+
+    throw new Error(
+      "Vehicle ID tidak tersedia."
+    );
+
+  }
+
+
+  PropertiesService
+    .getUserProperties()
+    .setProperty(
+
+      "PENDING_WORK_ORDER_CUSTOMER",
+
+      JSON.stringify({
+
+        customerId :
+          result.customerId,
+
+        vehicleId :
+          result.vehicleId,
+
+        nama :
+          result.nama || "",
+
+        noHP :
+          result.noHP || "",
+
+        plat :
+          result.plat || "",
+
+        merk :
+          result.merk || "",
+
+        model :
+          result.model || ""
+
+      })
+
+    );
+
+
+  return true;
+
+}
+
+
+/**
+ * ============================================
+ * AMBIL HASIL CREATE CUSTOMER + VEHICLE
+ * UNTUK WORK ORDER
+ * ============================================
+ *
+ * Setelah berhasil diambil, property langsung
+ * dihapus agar tidak digunakan kembali.
+ * ============================================
+ */
+
+function getPendingWorkOrderCustomer(){
+
+  const properties =
+    PropertiesService
+      .getUserProperties();
+
+
+  const raw =
+    properties.getProperty(
+      "PENDING_WORK_ORDER_CUSTOMER"
+    );
+
+
+  if(!raw){
+
+    return null;
+
+  }
+
+
+  properties.deleteProperty(
+    "PENDING_WORK_ORDER_CUSTOMER"
+  );
+
+
+  try {
+
+    return JSON.parse(raw);
+
+  } catch(error){
+
+    return null;
+
+  }
+
+}
+/**
+ * ============================================
+ * CREATE CUSTOMER + VEHICLE
+ * CANONICAL ENDPOINT
+ * ============================================
+ *
+ * FormPelanggan
+ *      ↓
+ * createCustomerWithVehicle()
+ *      ↓
+ * CustomerVehicleService
+ *
+ * Tidak melakukan perubahan langsung
+ * ke sheet Master Customer / Vehicle.
+ *
+ * Tidak melakukan side effect ke POS.
+ * ============================================
+ */
+
+function createCustomerWithVehicle(data){
+
+  if(!data){
+
+    throw new Error(
+      "Data customer dan kendaraan wajib diisi."
+    );
+
+  }
+
+  return CustomerVehicleService
+    .createCustomerWithVehicle({
+
+      // =========================
+      // CUSTOMER
+      // =========================
+
+      nama :
+        data.nama,
+
+      noHP :
+        data.noHP || "",
+
+      alamat :
+        data.alamat || "",
+
+      tanggalLahir :
+        data.tanggalLahir || "",
+
+      jenisKelamin :
+        data.jenisKelamin ||
+        CustomerGender.PRIA,
+
+      status :
+        data.status ||
+        CustomerStatus.AKTIF,
+
+      catatan :
+        data.catatan || "",
+
+
+      // =========================
+      // VEHICLE
+      // =========================
+
+      noPolisi :
+        data.plat,
+
+      merk :
+        data.merk,
+
+      model :
+        data.model,
+
+      tahun :
+        data.tahun || "",
+
+      warna :
+        data.warna || "",
+
+      noMesin :
+        data.noMesin || "",
+
+      noRangka :
+        data.noRangka || "",
+
+      lastKilometer :
+        Number(
+          data.lastKilometer || 0
+        ),
+
+      vehicleStatus :
+        data.vehicleStatus ||
+        VehicleStatus.AKTIF,
+
+      vehicleCatatan :
+        data.vehicleCatatan || ""
+
+    });
+
+}
 
 function simpanPelangganBaru(data) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
 
-  const pelanggan = ss.getSheetByName("06_MasterPelanggan");
-  const kendaraan = ss.getSheetByName("07_MasterKendaraan");
-  const pos = ss.getSheetByName("10_POS");
+  const pelanggan = ss.getSheetByName(CONFIG.SHEET.PELANGGAN);
+  const kendaraan = ss.getSheetByName(CONFIG.SHEET.VEHICLE);
+  const pos = ss.getSheetByName(CONFIG.SHEET.POS);
 
   // =========================
   // BERSIHKAN INPUT
@@ -1043,28 +1339,23 @@ function simpanPelangganBaru(data) {
   const now = new Date();
 
   // =========================
-  // SIMPAN MASTER PELANGGAN
-  //
-  // B Nama
-  // C NoHP
-  // D TanggalLahir
-  // E Alamat
-  // F MemberSejak
-  // G Status
-  //
-  // A TIDAK DISENTUH
-  // karena ARRAYFORMULA
-  // =========================
-  pelanggan
-    .getRange(rowPelanggan, 2, 1, 6)
-    .setValues([[
-      nama,
-      noHP,
-      tanggalLahir,
-      alamat,
-      now,
-      "AKTIF"
-    ]]);
+// SIMPAN MASTER PELANGGAN
+// =========================
+
+pelanggan
+  .getRange(rowPelanggan, 3)
+  .setNumberFormat("@");
+
+pelanggan
+  .getRange(rowPelanggan, 2, 1, 6)
+  .setValues([[
+    nama,
+    noHP,
+    tanggalLahir,
+    alamat,
+    now,
+    "AKTIF"
+  ]]);
 
   SpreadsheetApp.flush();
 
@@ -1167,9 +1458,254 @@ return {
 } 
 
 
+
+/**
+ * ============================================
+ * FORM KENDARAAN - MASTER MERK / MODEL
+ * ============================================
+ */
+
+function getMasterMerkKendaraan() {
+
+  return MerkService.getAll();
+
+}
+
+
+function getMasterModelKendaraan(merkId) {
+
+  const models =
+    ModelService.getByMerkId(
+      merkId
+    );
+
+  /*
+   * API khusus untuk HTML FormKendaraan.
+   *
+   * Jangan kirim createdAt / updatedAt
+   * karena field tersebut berasal dari
+   * Google Sheets sebagai Date object.
+   *
+   * Form hanya membutuhkan:
+   * - id
+   * - merkId
+   * - nama
+   * - status
+   */
+
+  return models.map(function(model) {
+
+    return {
+
+      id:
+        String(
+          model.id || ""
+        ).trim(),
+
+      merkId:
+        String(
+          model.merkId || ""
+        ).trim(),
+
+      nama:
+        String(
+          model.nama || ""
+        ).trim(),
+
+      status:
+        String(
+          model.status || ""
+        ).trim()
+
+    };
+
+  });
+
+}
+
+
+
+/**
+ * ============================================
+ * KENDARAAN BARU DARI WORK ORDER
+ * ============================================
+ */
+
+function bukaFormKendaraanDariWorkOrder(customerId){
+
+  customerId =
+    String(customerId || "").trim();
+
+  if(!customerId){
+
+    throw new Error(
+      "Customer ID wajib tersedia."
+    );
+
+  }
+
+  if(
+    !CustomerRepository.exists(
+      customerId
+    )
+  ){
+
+    throw new Error(
+      "Customer tidak ditemukan : " +
+      customerId
+    );
+
+  }
+
+  PropertiesService
+    .getUserProperties()
+    .setProperty(
+      "FORM_KENDARAAN_SOURCE",
+      "WORK_ORDER"
+    );
+
+  PropertiesService
+    .getUserProperties()
+    .setProperty(
+      "PENDING_WORK_ORDER_VEHICLE",
+      JSON.stringify({
+        customerId : customerId
+      })
+    );
+
+  const html =
+    HtmlService
+      .createHtmlOutputFromFile(
+        "FormKendaraan"
+      )
+      .setWidth(480)
+      .setHeight(650);
+
+  SpreadsheetApp
+  .getUi()
+  .showModelessDialog(
+    html,
+    "Tambah Kendaraan"
+  );
+
+}
+
+
+function getPendingWorkOrderVehicle(){
+
+  const properties =
+    PropertiesService
+      .getUserProperties();
+
+  const raw =
+    properties.getProperty(
+      "PENDING_WORK_ORDER_VEHICLE"
+    );
+
+  if(!raw){
+
+    return null;
+
+  }
+
+  properties.deleteProperty(
+    "PENDING_WORK_ORDER_VEHICLE"
+  );
+
+  return JSON.parse(raw);
+
+}
+
+
+/**
+ * ============================================
+ * SIMPAN HASIL KENDARAAN BARU
+ * UNTUK WORK ORDER
+ * ============================================
+ */
+
+function setPendingWorkOrderVehicle(result){
+
+  if(!result){
+
+    throw new Error(
+      "Hasil kendaraan baru tidak tersedia."
+    );
+
+  }
+
+  const customerId =
+    String(
+      result.customerId || ""
+    ).trim();
+
+  const vehicleId =
+    String(
+      result.idKendaraan ||
+      result.vehicleId ||
+      ""
+    ).trim();
+
+  if(!customerId){
+
+    throw new Error(
+      "Customer ID kendaraan baru tidak tersedia."
+    );
+
+  }
+
+  if(!vehicleId){
+
+    throw new Error(
+      "Vehicle ID kendaraan baru tidak tersedia."
+    );
+
+  }
+
+  PropertiesService
+    .getUserProperties()
+    .setProperty(
+
+      "PENDING_WORK_ORDER_VEHICLE",
+
+      JSON.stringify({
+
+        customerId :
+          customerId,
+
+        vehicleId :
+          vehicleId,
+
+        plat :
+          result.plat || "",
+
+        merk :
+          result.merk || "",
+
+        model :
+          result.model || ""
+
+      })
+
+    );
+
+  Logger.log(
+    "[PENDING WO VEHICLE] " +
+    customerId +
+    " | " +
+    vehicleId +
+    " | " +
+    result.plat
+  );
+
+  return true;
+
+}
+
+
 function bukaFormKendaraan() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const pos = ss.getSheetByName("10_POS");
+  const pos = ss.getSheetByName(CONFIG.SHEET.POS);
 
   const namaPelanggan = String(
     pos.getRange("B4").getValue()
@@ -1196,171 +1732,402 @@ function bukaFormKendaraan() {
 
 
 function simpanKendaraanBaru(data) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
 
-  const pos = ss.getSheetByName("10_POS");
-  const kendaraan = ss.getSheetByName("07_MasterKendaraan");
+  const ss =
+    SpreadsheetApp.getActiveSpreadsheet();
 
-  // =========================
-  // AMBIL PELANGGAN DARI POS
-  // =========================
-  const namaPelanggan = String(
-    pos.getRange("B4").getValue()
-  ).trim();
-
-  if (!namaPelanggan) {
-    throw new Error(
-      "Pelanggan belum dipilih di POS."
+  const pos =
+    ss.getSheetByName(
+      CONFIG.SHEET.POS
     );
+
+  data =
+    data || {};
+
+  // ============================================
+  // 1. RESOLVE CUSTOMER
+  //
+  // WORK ORDER V2:
+  //   customerId dikirim langsung dari FormWorkOrder
+  //
+  // LEGACY:
+  //   sementara masih menggunakan 10_POS!B4
+  // ============================================
+
+  let customerId =
+    String(
+      data.customerId || ""
+    ).trim();
+
+  let namaPelanggan = "";
+
+  if(customerId){
+
+    const customer =
+      CustomerRepository.findById(
+        customerId
+      );
+
+    if(!customer){
+
+      throw new Error(
+        "Customer tidak ditemukan : " +
+        customerId
+      );
+
+    }
+
+    namaPelanggan =
+      String(
+        customer[COL_PELANGGAN.NAMA] || ""
+      ).trim();
+
+  } else {
+
+    namaPelanggan =
+      String(
+        pos.getRange("B4").getValue()
+      ).trim();
+
+    if(!namaPelanggan){
+
+      throw new Error(
+        "Pelanggan belum dipilih."
+      );
+
+    }
+
+    const customers =
+      CustomerRepository.findByName(
+        namaPelanggan
+      );
+
+    if(
+      !customers ||
+      customers.length === 0
+    ){
+
+      throw new Error(
+        "Customer tidak ditemukan : " +
+        namaPelanggan
+      );
+
+    }
+
+    if(customers.length > 1){
+
+      throw new Error(
+        "Nama Customer tidak unik : " +
+        namaPelanggan +
+        ". Gunakan Customer ID."
+      );
+
+    }
+
+    customerId =
+      String(
+        customers[0][COL_PELANGGAN.ID] || ""
+      ).trim();
+
   }
 
-  // =========================
-  // BERSIHKAN INPUT
-  // =========================
-  const plat = String(data.plat || "")
+  // ============================================
+  // 2. NORMALISASI INPUT
+  // ============================================
+
+  data = data || {};
+
+  const plat =
+    String(
+      data.plat || ""
+    )
     .trim()
+    .replace(/\s+/g, " ")
     .toUpperCase();
 
-  const merk = String(data.merk || "").trim();
-  const model = String(data.model || "").trim();
-  const tahun = String(data.tahun || "").trim();
-  const warna = String(data.warna || "").trim();
+  const merkNama =
+    String(
+      data.merk || ""
+    ).trim();
+
+  const modelNama =
+    String(
+      data.model || ""
+    ).trim();
+
+  const tahun =
+    String(
+      data.tahun || ""
+    ).trim();
+
+  const warna =
+    String(
+      data.warna || ""
+    ).trim();
+
+
+  // ============================================
+  // 3. VALIDASI INPUT DASAR
+  // ============================================
 
   if (!plat) {
+
     throw new Error(
       "Plat nomor wajib diisi."
     );
+
   }
 
-  // =========================
-  // CARI BARIS KOSONG
-  // berdasarkan D = PlatNomor
-  // =========================
-  let rowKendaraan = 2;
+  if (!merkNama) {
 
-  while (
-    kendaraan.getRange(rowKendaraan, 4).getValue() !== ""
-  ) {
-    rowKendaraan++;
+    throw new Error(
+      "Merk kendaraan wajib dipilih."
+    );
+
   }
 
-  // =========================
-  // CEK PLAT DUPLIKAT
-  // =========================
-  if (rowKendaraan > 2) {
+  if (!modelNama) {
 
-    const daftarPlat = kendaraan
-      .getRange(
-        2,
-        4,
-        rowKendaraan - 2,
-        1
+    throw new Error(
+      "Model kendaraan wajib dipilih."
+    );
+
+  }
+
+
+  // ============================================
+  // 5. RESOLVE MERK → MERK ID
+  // ============================================
+
+  const daftarMerk =
+    MerkRepository.findAll();
+
+  const merk =
+    daftarMerk.find(function(item) {
+
+      return String(
+        item.nama || ""
       )
-      .getDisplayValues()
-      .flat()
-      .map(v =>
-        String(v).trim().toUpperCase()
-      );
+      .trim()
+      .toLowerCase() ===
+      merkNama.toLowerCase();
 
-    if (daftarPlat.includes(plat)) {
-      throw new Error(
-        "Plat nomor " + plat +
-        " sudah terdaftar."
-      );
-    }
+    });
+
+
+  if (!merk) {
+
+    throw new Error(
+      "Merk tidak ditemukan di MasterMerk : " +
+      merkNama
+    );
+
   }
 
-  // =========================
-  // SIMPAN KENDARAAN
-  //
-  // A IDKendaraan    = ARRAYFORMULA
-  // B IDPelanggan    = ARRAYFORMULA
-  // C NamaPelanggan  = script
-  // D PlatNomor      = script
-  // E Merk
-  // F Model
-  // G Tahun
-  // H Warna
-  // =========================
-  kendaraan
-    .getRange(rowKendaraan, 3, 1, 6)
-    .setValues([[
-      namaPelanggan,
-      plat,
-      merk,
-      model,
-      tahun,
-      warna
-    ]]);
+  const merkId =
+    String(
+      merk.id || ""
+    ).trim();
+
+  if (!merkId) {
+
+    throw new Error(
+      "Merk ID tidak terbentuk untuk : " +
+      merkNama
+    );
+
+  }
+
+
+  // ============================================
+  // 6. RESOLVE MODEL → MODEL ID
+  // ============================================
+
+  const daftarModel =
+    ModelRepository.findAll();
+
+  const model =
+    daftarModel.find(function(item) {
+
+      return (
+        String(
+          item.merkId || ""
+        ).trim() === merkId
+      ) &&
+      String(
+        item.nama || ""
+      )
+      .trim()
+      .toLowerCase() ===
+      modelNama.toLowerCase();
+
+    });
+
+
+  if (!model) {
+
+    throw new Error(
+      "Model " +
+      modelNama +
+      " tidak ditemukan untuk Merk " +
+      merkNama +
+      "."
+    );
+
+  }
+
+  const modelId =
+    String(
+      model.id || ""
+    ).trim();
+
+  if (!modelId) {
+
+    throw new Error(
+      "Model ID tidak terbentuk untuk : " +
+      modelNama
+    );
+
+  }
+
+
+  // ============================================
+  // 7. CREATE VEHICLE MELALUI SERVICE
+  // ============================================
+
+  const result =
+    VehicleService.createVehicle({
+
+      customerId :
+        customerId,
+
+      noPolisi :
+        plat,
+
+      merkId :
+        merkId,
+
+      modelId :
+        modelId,
+
+      tahun :
+        tahun,
+
+      warna :
+        warna,
+
+      noMesin :
+        data.noMesin || "",
+
+      noRangka :
+        data.noRangka || "",
+
+      lastKilometer :
+        Number(
+          data.lastKilometer || 0
+        ),
+
+      status :
+        VehicleStatus.AKTIF,
+
+      catatan :
+        data.catatan || ""
+
+    });
+
+
+  // ============================================
+  // 8. VALIDASI RESULT
+  // ============================================
+
+  if (
+    !result ||
+    !result.vehicleId
+  ) {
+
+    throw new Error(
+      "Kendaraan gagal menghasilkan Vehicle ID."
+    );
+
+  }
+
+
+  // ============================================
+  // 9. PILIH KENDARAAN BARU DI POS
+  // ============================================
 
   SpreadsheetApp.flush();
 
-  // =========================
-  // CEK ID YANG DIHASILKAN
-  // =========================
-  const idKendaraan = kendaraan
-    .getRange(rowKendaraan, 1)
-    .getDisplayValue();
+  Utilities.sleep(300);
 
-  const idPelanggan = kendaraan
-    .getRange(rowKendaraan, 2)
-    .getDisplayValue();
-
-  if (!idPelanggan) {
-    throw new Error(
-      "IDPelanggan tidak terbentuk. Periksa ARRAYFORMULA kolom B di MasterKendaraan."
-    );
-  }
-
-  if (!idKendaraan) {
-    throw new Error(
-      "IDKendaraan tidak terbentuk. Periksa ARRAYFORMULA kolom A di MasterKendaraan."
-    );
-  }
-
-  // =========================
-  // PILIH KENDARAAN BARU
-  // OTOMATIS DI POS
-  // =========================
   SpreadsheetApp.flush();
-  Utilities.sleep(500);
 
-  const cellKendaraan = pos.getRange("E4");
+  const cellKendaraan =
+    pos.getRange("E4");
 
-  // Simpan validation
-  const validation = cellKendaraan.getDataValidation();
+  const validation =
+    cellKendaraan.getDataValidation();
 
-  // Lepaskan sementara
   cellKendaraan.clearDataValidations();
 
-  // Pilih plat baru
   cellKendaraan.setValue(plat);
 
-  // Pasang validation kembali
   if (validation) {
-    cellKendaraan.setDataValidation(validation);
+
+    cellKendaraan.setDataValidation(
+      validation
+    );
+
   }
 
   SpreadsheetApp.flush();
 
-  return {
-    sukses: true,
-    pelanggan: namaPelanggan,
-    plat: plat,
-    idPelanggan: idPelanggan,
-    idKendaraan: idKendaraan
-  };
-}
 
+  // ============================================
+  // 10. RETURN
+  // ============================================
+
+  return {
+
+    sukses :
+      true,
+
+    pelanggan :
+      namaPelanggan,
+
+    customerId :
+      customerId,
+
+    plat :
+      plat,
+
+    merk :
+      merk.nama,
+
+    merkId :
+      merkId,
+
+    model :
+      model.nama,
+
+    modelId :
+      modelId,
+
+    idKendaraan :
+      result.vehicleId
+
+  };
+
+}
 
 function generateDetailKomisi() {
 
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const ui = SpreadsheetApp.getUi();
 
-  const laporan = ss.getSheetByName("16_KomisiMekanik");
-  const penjualan = ss.getSheetByName("11_Penjualan");
-  const detail = ss.getSheetByName("12_DetailPenjualan");
+  const laporan = ss.getSheetByName(CONFIG.SHEET.KOMISI_MEKANIK);
+  const penjualan = ss.getSheetByName(CONFIG.SHEET.PENJUALAN);
+  const detail = ss.getSheetByName(CONFIG.SHEET.DETAIL_PENJUALAN);
 
   // ==========================================
   // AMBIL FILTER
@@ -1637,34 +2404,127 @@ function bukaFormPembelian() {
 
 
 function getDaftarBarangPembelian() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const barang = ss.getSheetByName("02_MasterBarang");
 
-  if (barang.getLastRow() < 2) return [];
+  const ss =
+    SpreadsheetApp.getActiveSpreadsheet();
 
-  const data = barang
-    .getRange(
-      2,
-      1,
-      barang.getLastRow() - 1,
-      barang.getLastColumn()
-    )
-    .getValues();
+  const barang =
+    ss.getSheetByName(
+      CONFIG.SHEET.BARANG
+    );
 
-  // Struktur MasterBarang kita:
-  // C = KodeBarang
-  // E = NamaBarang
-  // L = HargaModal
-  // O = Stok
+  if (
+    barang.getLastRow() < 2
+  ) {
+    return [];
+  }
+
+  const data =
+    barang
+      .getRange(
+        2,
+        1,
+        barang.getLastRow() - 1,
+        barang.getLastColumn()
+      )
+      .getValues();
 
   return data
-    .filter(row => String(row[2]).trim() !== "")
+
+    .filter(row =>
+      String(
+        row[COL_BARANG.ID]
+      ).trim() !== ""
+    )
+
     .map(row => ({
-      kode: String(row[2]).trim(),
-      nama: String(row[4]).trim(),
-      hargaModal: Number(row[11]) || 0,
-      stok: Number(row[14]) || 0
+
+      // A - ID
+      // ID saat ini berfungsi sebagai KodeBarang
+      kode:
+        String(
+          row[COL_BARANG.ID]
+        ).trim(),
+
+      // E - NamaBarang
+      nama:
+        String(
+          row[COL_BARANG.NAMA]
+        ).trim(),
+
+      // D - NamaPendek
+      namaPendek:
+        String(
+          row[COL_BARANG.NAMAPENDEK]
+        ).trim(),
+
+      // C - KataKunci
+      kataKunci:
+        String(
+          row[COL_BARANG.KATAKUNCI]
+        ).trim(),
+
+      // I - Kendaraan
+      // Ditampilkan di UI sebagai
+      // Kompatibilitas / Model Motor
+      kompatibilitas:
+        String(
+          row[COL_BARANG.KENDARAAN]
+        ).trim(),
+
+      // K - HargaModal
+      hargaModal:
+        Number(
+          row[COL_BARANG.HARGAMODAL]
+        ) || 0,
+
+      // M - HargaJual
+      hargaJual:
+        Number(
+          row[COL_BARANG.HARGAJUAL]
+        ) || 0,
+
+      // N - Stok
+      stok:
+        Number(
+          row[COL_BARANG.STOK]
+        ) || 0
+
     }));
+
+}
+
+function testGetDaftarBarangPembelianV2() {
+
+  const data =
+    getDaftarBarangPembelian();
+
+  Logger.log(
+    "[SEARCH BARANG V2] TOTAL = " +
+    data.length
+  );
+
+  if (data.length === 0) {
+
+    Logger.log(
+      "[SEARCH BARANG V2] MasterBarang kosong."
+    );
+
+    return;
+  }
+
+  Logger.log(
+    "[SEARCH BARANG V2] SAMPLE:"
+  );
+
+  Logger.log(
+    JSON.stringify(
+      data.slice(0, 5),
+      null,
+      2
+    )
+  );
+
 }
 
 
@@ -1672,8 +2532,8 @@ function simpanPembelian(data) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
 
   const pembelian = ss.getSheetByName("13_Pembelian");
-  const masterBarang = ss.getSheetByName("02_MasterBarang");
-  const stokSheet = ss.getSheetByName("14_Stok");
+  const masterBarang = ss.getSheetByName(CONFIG.SHEET.BARANG);
+  const stokSheet = ss.getSheetByName(CONFIG.SHEET.STOK);
 
   // ==========================================
   // INPUT
@@ -1895,10 +2755,10 @@ function simpanPembelianMulti(data) {
     ss.getSheetByName("13_Pembelian_Legacy");
 
   const masterBarang =
-    ss.getSheetByName("02_MasterBarang");
+    ss.getSheetByName(CONFIG.SHEET.BARANG);
 
   const stokSheet =
-    ss.getSheetByName("14_Stok");
+    ss.getSheetByName(CONFIG.SHEET.STOK);
 
 
   // ==========================================
@@ -2332,7 +3192,7 @@ function simpanPembelianMulti(data) {
 function getDaftarSupplier() {
 
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = ss.getSheetByName("05_MasterSupplier");
+  const sheet = ss.getSheetByName(CONFIG.SHEET.SUPPLIER);
 
   if (!sheet) {
     throw new Error("Sheet 05_MasterSupplier tidak ditemukan.");
@@ -2374,7 +3234,7 @@ function getDaftarSupplier() {
 function simpanSupplierBaru(data) {
 
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = ss.getSheetByName("05_MasterSupplier");
+  const sheet = ss.getSheetByName(CONFIG.SHEET.SUPPLIER);
 
   if (!sheet) {
     throw new Error("Sheet 05_MasterSupplier tidak ditemukan.");
@@ -2449,7 +3309,7 @@ function simpanSupplierBaru(data) {
 
 function cetakStrukTerakhir() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const penjualan = ss.getSheetByName("11_Penjualan");
+  const penjualan = ss.getSheetByName(CONFIG.SHEET.PENJUALAN);
 
   if (penjualan.getLastRow() < 2) {
     SpreadsheetApp.getUi().alert("Belum ada transaksi.");
@@ -2493,10 +3353,10 @@ function getDataStruk(noTransaksi) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
 
   const penjualan =
-    ss.getSheetByName("11_Penjualan");
+    ss.getSheetByName(CONFIG.SHEET.PENJUALAN);
 
   const detail =
-    ss.getSheetByName("12_DetailPenjualan");
+    ss.getSheetByName(CONFIG.SHEET.DETAIL_PENJUALAN);
 
   // ==========================================
   // CARI TRANSAKSI
@@ -2787,13 +3647,27 @@ function cetakUlangStruk() {
   );
 }
 
-/**
- * ============================================
- * Saat Spreadsheet dibuka
- * ============================================
- */
 
+function auditSheetNames(){
 
-function onOpen(e) {
-  buildMenu_();
+  const ss =
+    SpreadsheetApp.getActiveSpreadsheet();
+
+  const sheets =
+    ss.getSheets();
+
+  Logger.log(
+    "===== DAFTAR SHEET ====="
+  );
+
+  sheets.forEach(function(sh, index){
+
+    Logger.log(
+      (index + 1) +
+      " | " +
+      sh.getName()
+    );
+
+  });
+
 }

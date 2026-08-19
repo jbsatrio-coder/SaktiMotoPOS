@@ -38,6 +38,15 @@ onclick="cariKendaraan()">
 </button>
 </div>
 
+<button
+type="button"
+class="btn-secondary"
+onclick="tambahPelangganBaru()">
+
+＋ Tambah Pelanggan Baru
+
+</button>
+
 <div id="hasilCari"
 style="
 margin-top:8px;
@@ -49,6 +58,17 @@ overflow-y:auto;
 background:#fff;
 ">
 </div>
+
+<button
+type="button"
+class="btn-secondary"
+id="btnTambahKendaraan"
+onclick="tambahKendaraanBaru()"
+style="display:none; margin-top:8px;">
+
+＋ Tambah Kendaraan Baru
+
+</button>
 
 <label>Nama Pelanggan</label>
 
@@ -117,7 +137,756 @@ SIMPAN WORK ORDER
 </button>
 </div>
 
+
+<!--
+================================================
+OVERLAY TAMBAH KENDARAAN
+================================================
+-->
+
+<div
+  id="vehicleOverlay"
+  style="
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.45);
+    z-index:9999;
+    padding:20px;
+    box-sizing:border-box;
+    overflow-y:auto;
+  "
+>
+
+  <div
+    style="
+      width:100%;
+      max-width:480px;
+      margin:20px auto;
+      background:white;
+      border-radius:10px;
+      padding:20px;
+      box-sizing:border-box;
+      box-shadow:0 10px 40px rgba(0,0,0,0.25);
+    "
+  >
+
+    <h2
+      style="
+        margin-top:0;
+        margin-bottom:18px;
+      "
+    >
+      TAMBAH KENDARAAN
+    </h2>
+
+
+    <label>
+      Plat Nomor <span style="color:#c00">*</span>
+    </label>
+
+    <input
+      id="vehiclePlat"
+      placeholder="B 1234 ABC"
+      autocomplete="off"
+    >
+
+
+    <label>
+      Merk <span style="color:#c00">*</span>
+    </label>
+
+    <select
+      id="vehicleMerk"
+      onchange="loadVehicleModel()"
+    >
+
+      <option value="">
+        Memuat Merk...
+      </option>
+
+    </select>
+
+
+    <label>
+      Model <span style="color:#c00">*</span>
+    </label>
+
+    <select
+      id="vehicleModel"
+      disabled
+    >
+
+      <option value="">
+        Pilih Merk terlebih dahulu
+      </option>
+
+    </select>
+
+
+    <label>
+      Tahun
+      <span style="color:#777;font-size:11px">
+        (optional)
+      </span>
+    </label>
+
+    <input
+      id="vehicleTahun"
+      type="number"
+      placeholder="2022"
+    >
+
+
+    <label>
+      Warna
+      <span style="color:#777;font-size:11px">
+        (optional)
+      </span>
+    </label>
+
+    <input
+      id="vehicleWarna"
+      placeholder="Hitam"
+    >
+
+
+    <label>
+      Nomor Mesin
+      <span style="color:#777;font-size:11px">
+        (optional)
+      </span>
+    </label>
+
+    <input
+      id="vehicleNoMesin"
+      placeholder="Boleh dikosongkan"
+      autocomplete="off"
+    >
+
+
+    <label>
+      Nomor Rangka
+      <span style="color:#777;font-size:11px">
+        (optional)
+      </span>
+    </label>
+
+    <input
+      id="vehicleNoRangka"
+      placeholder="Boleh dikosongkan"
+      autocomplete="off"
+    >
+
+
+    <div
+      id="vehicleStatus"
+      style="
+        margin-top:14px;
+        font-size:13px;
+      "
+    ></div>
+
+
+    <div
+      style="
+        display:flex;
+        justify-content:flex-end;
+        gap:8px;
+        margin-top:20px;
+      "
+    >
+
+      <button
+        type="button"
+        class="btn-secondary"
+        onclick="tutupVehicleOverlay()"
+      >
+        BATAL
+      </button>
+
+      <button
+        type="button"
+        id="btnSimpanVehicle"
+        class="btn-full"
+        onclick="simpanVehicleDariWO()"
+      >
+        SIMPAN KENDARAAN
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
 <script>
+
+  /**
+ * ============================================
+ * EMBEDDED VEHICLE OVERLAY
+ * ============================================
+ */
+
+let vehicleMerkLoaded = false;
+
+
+/**
+ * ============================================
+ * BUKA OVERLAY KENDARAAN
+ * ============================================
+ */
+
+function tambahKendaraanBaru(){
+
+  const customerId =
+    document
+      .getElementById("idPelanggan")
+      .value
+      .trim();
+
+  if(!customerId){
+
+    alert(
+      "Pilih pelanggan terlebih dahulu."
+    );
+
+    return;
+
+  }
+
+
+  const overlay =
+    document.getElementById(
+      "vehicleOverlay"
+    );
+
+  if(!overlay){
+
+    alert(
+      "Vehicle overlay tidak ditemukan."
+    );
+
+    return;
+
+  }
+
+
+  overlay.style.display =
+    "block";
+
+
+  /*
+   * Reset form.
+   */
+
+  document.getElementById(
+    "vehiclePlat"
+  ).value = "";
+
+  document.getElementById(
+    "vehicleTahun"
+  ).value = "";
+
+  document.getElementById(
+    "vehicleWarna"
+  ).value = "";
+
+  document.getElementById(
+    "vehicleNoMesin"
+  ).value = "";
+
+  document.getElementById(
+    "vehicleNoRangka"
+  ).value = "";
+
+  document.getElementById(
+    "vehicleStatus"
+  ).innerHTML = "";
+
+
+  const model =
+    document.getElementById(
+      "vehicleModel"
+    );
+
+  model.innerHTML =
+    '<option value="">Pilih Merk terlebih dahulu</option>';
+
+  model.disabled =
+    true;
+
+
+  loadVehicleMerk();
+
+}
+
+
+/**
+ * ============================================
+ * TUTUP OVERLAY
+ * ============================================
+ */
+
+function tutupVehicleOverlay(){
+
+  const overlay =
+    document.getElementById(
+      "vehicleOverlay"
+    );
+
+  if(overlay){
+
+    overlay.style.display =
+      "none";
+
+  }
+
+}
+
+
+/**
+ * ============================================
+ * LOAD MASTER MERK
+ * ============================================
+ */
+
+function loadVehicleMerk(){
+
+  const select =
+    document.getElementById(
+      "vehicleMerk"
+    );
+
+  select.innerHTML =
+    '<option value="">Memuat Merk...</option>';
+
+  select.disabled =
+    true;
+
+
+  google.script.run
+
+    .withSuccessHandler(
+      function(data){
+
+        const daftar =
+          data || [];
+
+        select.innerHTML =
+          '<option value="">-- Pilih Merk --</option>';
+
+        daftar.forEach(
+          function(item){
+
+            const option =
+              document.createElement(
+                "option"
+              );
+
+            option.value =
+              item.id || "";
+
+            option.textContent =
+              item.nama || "";
+
+            select.appendChild(
+              option
+            );
+
+          }
+        );
+
+        select.disabled =
+          false;
+
+      }
+    )
+
+    .withFailureHandler(
+      function(error){
+
+        select.innerHTML =
+          '<option value="">Gagal memuat Merk</option>';
+
+        select.disabled =
+          true;
+
+        document.getElementById(
+          "vehicleStatus"
+        ).innerHTML =
+          "Gagal memuat Master Merk: " +
+          (
+            error.message ||
+            error
+          );
+
+      }
+    )
+
+    .getMasterMerkKendaraan();
+
+}
+
+
+/**
+ * ============================================
+ * LOAD MODEL BERDASARKAN MERK
+ * ============================================
+ */
+
+function loadVehicleModel(){
+
+  const merkId =
+    document
+      .getElementById(
+        "vehicleMerk"
+      )
+      .value;
+
+  const select =
+    document.getElementById(
+      "vehicleModel"
+    );
+
+
+  select.innerHTML =
+    '<option value="">Memuat Model...</option>';
+
+  select.disabled =
+    true;
+
+
+  if(!merkId){
+
+    select.innerHTML =
+      '<option value="">Pilih Merk terlebih dahulu</option>';
+
+    return;
+
+  }
+
+
+  google.script.run
+
+    .withSuccessHandler(
+      function(data){
+
+        const models =
+          data || [];
+
+        select.innerHTML =
+          '<option value="">-- Pilih Model --</option>';
+
+
+        models.forEach(
+          function(item){
+
+            const option =
+              document.createElement(
+                "option"
+              );
+
+            option.value =
+              item.id || "";
+
+            option.textContent =
+              item.nama || "";
+
+            select.appendChild(
+              option
+            );
+
+          }
+        );
+
+
+        select.disabled =
+          false;
+
+      }
+    )
+
+    .withFailureHandler(
+      function(error){
+
+        select.innerHTML =
+          '<option value="">Gagal memuat Model</option>';
+
+        select.disabled =
+          true;
+
+        document.getElementById(
+          "vehicleStatus"
+        ).innerHTML =
+          "Gagal memuat Master Model: " +
+          (
+            error.message ||
+            error
+          );
+
+      }
+    )
+
+    .getMasterModelKendaraan(
+      merkId
+    );
+
+}
+
+
+/**
+ * ============================================
+ * SIMPAN KENDARAAN DARI WORK ORDER
+ * ============================================
+ */
+
+function simpanVehicleDariWO(){
+
+  const customerId =
+    document
+      .getElementById(
+        "idPelanggan"
+      )
+      .value
+      .trim();
+
+
+  const merkSelect =
+    document.getElementById(
+      "vehicleMerk"
+    );
+
+  const modelSelect =
+    document.getElementById(
+      "vehicleModel"
+    );
+
+
+  const data = {
+
+    customerId :
+      customerId,
+
+    plat :
+      document
+        .getElementById(
+          "vehiclePlat"
+        )
+        .value,
+
+    merk :
+      merkSelect
+        .selectedOptions[0]
+        ?.textContent || "",
+
+    merkId :
+      merkSelect.value,
+
+    model :
+      modelSelect
+        .selectedOptions[0]
+        ?.textContent || "",
+
+    modelId :
+      modelSelect.value,
+
+    tahun :
+      document
+        .getElementById(
+          "vehicleTahun"
+        )
+        .value,
+
+    warna :
+      document
+        .getElementById(
+          "vehicleWarna"
+        )
+        .value,
+
+    noMesin :
+      document
+        .getElementById(
+          "vehicleNoMesin"
+        )
+        .value,
+
+    noRangka :
+      document
+        .getElementById(
+          "vehicleNoRangka"
+        )
+        .value
+
+  };
+
+
+  const status =
+    document.getElementById(
+      "vehicleStatus"
+    );
+
+  const tombol =
+    document.getElementById(
+      "btnSimpanVehicle"
+    );
+
+
+  /*
+   * ==========================================
+   * VALIDASI
+   * ==========================================
+   */
+
+  if(!data.customerId){
+
+    status.innerHTML =
+      "Customer belum dipilih.";
+
+    return;
+
+  }
+
+
+  if(!data.plat.trim()){
+
+    status.innerHTML =
+      "Plat nomor wajib diisi.";
+
+    return;
+
+  }
+
+
+  if(!data.merkId){
+
+    status.innerHTML =
+      "Merk wajib dipilih.";
+
+    return;
+
+  }
+
+
+  if(!data.modelId){
+
+    status.innerHTML =
+      "Model wajib dipilih.";
+
+    return;
+
+  }
+
+
+  tombol.disabled =
+    true;
+
+  status.innerHTML =
+    "Menyimpan kendaraan...";
+
+
+  /*
+   * ==========================================
+   * CREATE VEHICLE
+   * ==========================================
+   */
+
+  google.script.run
+
+    .withSuccessHandler(
+      function(result){
+
+        /*
+         * Kendaraan berhasil dibuat.
+         *
+         * Langsung masukkan ke Work Order.
+         */
+
+        pilihKendaraan({
+
+          idKendaraan :
+            result.idKendaraan ||
+            result.vehicleId ||
+            "",
+
+          idPelanggan :
+            result.customerId ||
+            customerId,
+
+          nama :
+            document
+              .getElementById(
+                "namaPelanggan"
+              )
+              .value || "",
+
+          noHp :
+            document
+              .getElementById(
+                "nohp"
+              )
+              .value || "",
+
+          plat :
+            result.plat ||
+            data.plat,
+
+          merk :
+            result.merk ||
+            data.merk,
+
+          model :
+            result.model ||
+            data.model,
+
+          kilometer :
+            ""
+
+        });
+
+
+        status.innerHTML =
+          "Kendaraan berhasil ditambahkan.";
+
+
+        /*
+         * Tutup overlay.
+         */
+
+        setTimeout(
+          function(){
+
+            tutupVehicleOverlay();
+
+          },
+          250
+        );
+
+
+      }
+    )
+
+    .withFailureHandler(
+      function(error){
+
+        status.innerHTML =
+          "Gagal: " +
+          (
+            error.message ||
+            error
+          );
+
+        tombol.disabled =
+          false;
+
+      }
+    )
+
+    .simpanKendaraanBaru(
+      data
+    );
+
+}
 
 function cariPlat() {
 
@@ -185,6 +954,250 @@ function cariPlat() {
 
 }
 
+/**
+ * ============================================
+ * TAMBAH PELANGGAN BARU
+ * ============================================
+ */
+
+let pendingCustomerPoll = null;
+
+let pendingCustomerRequest = false;
+
+
+function tambahPelangganBaru(){
+
+  /*
+   * Hentikan polling sebelumnya jika ada.
+   */
+
+  if(pendingCustomerPoll){
+
+    clearInterval(
+      pendingCustomerPoll
+    );
+
+    pendingCustomerPoll = null;
+
+  }
+
+
+  /*
+   * Buka FormPelanggan dengan context
+   * WORK_ORDER.
+   */
+
+  google.script.run
+
+    .withSuccessHandler(
+      function(){
+
+        mulaiPollingCustomerBaru();
+
+      }
+    )
+
+    .withFailureHandler(
+      function(error){
+
+        alert(
+          "Gagal membuka Form Pelanggan:\n\n" +
+          (
+            error.message ||
+            error
+          )
+        );
+
+      }
+    )
+
+    .bukaFormPelangganDariWorkOrder();
+
+}
+
+
+/**
+ * ============================================
+ * POLLING HASIL CUSTOMER BARU
+ * ============================================
+ */
+
+function mulaiPollingCustomerBaru(){
+
+  pendingCustomerPoll =
+    setInterval(
+      cekPendingCustomerBaru,
+      700
+    );
+
+}
+
+
+/**
+ * ============================================
+ * CEK CUSTOMER BARU
+ * ============================================
+ */
+
+function cekPendingCustomerBaru(){
+
+  /*
+   * Jangan membuat request bertumpuk.
+   */
+
+  if(pendingCustomerRequest){
+
+    return;
+
+  }
+
+
+  pendingCustomerRequest = true;
+
+
+  google.script.run
+
+    .withSuccessHandler(
+      function(data){
+
+        pendingCustomerRequest =
+          false;
+
+
+        if(!data){
+
+          return;
+
+        }
+
+
+        /*
+         * Customer berhasil dibuat.
+         * Isi otomatis Work Order.
+         */
+
+        isiCustomerBaruKeWorkOrder(
+          data
+        );
+
+
+        /*
+         * Hentikan polling.
+         */
+
+        if(pendingCustomerPoll){
+
+          clearInterval(
+            pendingCustomerPoll
+          );
+
+          pendingCustomerPoll = null;
+
+        }
+
+      }
+    )
+
+    .withFailureHandler(
+      function(){
+
+        pendingCustomerRequest =
+          false;
+
+      }
+    )
+
+    .getPendingWorkOrderCustomer();
+
+}
+
+
+/**
+ * ============================================
+ * ISI CUSTOMER BARU KE WORK ORDER
+ * ============================================
+ */
+
+function isiCustomerBaruKeWorkOrder(data){
+
+  document
+    .getElementById("idPelanggan")
+    .value =
+      data.customerId || "";
+
+
+  document
+    .getElementById("idKendaraan")
+    .value =
+      data.vehicleId || "";
+
+
+  document
+    .getElementById("namaPelanggan")
+    .value =
+      data.nama || "";
+
+
+  document
+    .getElementById("nohp")
+    .value =
+      data.noHP || "";
+
+
+  document
+    .getElementById("platNomor")
+    .value =
+      data.plat || "";
+
+
+  document
+    .getElementById("kendaraan")
+    .value =
+      (
+        (data.merk || "") +
+        " " +
+        (data.model || "")
+      ).trim();
+
+
+  /*
+   * KM kendaraan baru dimulai dari 0.
+   * Jangan menimpa jika nanti kita mengubah
+   * mekanisme ini untuk mengambil KM aktual.
+   */
+
+  const km =
+    document.getElementById("km");
+
+
+  if(km){
+
+    km.value = "";
+
+  }
+
+
+  /*
+   * Pastikan hasil pencarian lama hilang.
+   */
+
+  const hasil =
+    document.getElementById(
+      "hasilCari"
+    );
+
+
+  if(hasil){
+
+    hasil.style.display =
+      "none";
+
+    hasil.innerHTML =
+      "";
+
+  }
+
+}
 
 /**
  * ============================================
@@ -224,6 +1237,175 @@ document.addEventListener(
 
   }
 );
+
+
+/**
+ * ============================================
+ * TAMBAH KENDARAAN BARU
+ * DARI WORK ORDER
+ * ============================================
+ */
+
+let pendingVehiclePoll = null;
+let pendingVehicleRequest = false;
+
+
+/**
+ * ============================================
+ * TAMBAH KENDARAAN BARU
+ * DARI WORK ORDER
+ * ============================================
+ */
+
+/**
+ * ============================================
+ * POLLING KENDARAAN BARU
+ * ============================================
+ */
+
+function mulaiPollingKendaraanBaru(){
+
+  pendingVehiclePoll =
+    setInterval(
+      cekPendingKendaraanBaru,
+      700
+    );
+
+}
+
+
+/**
+ * ============================================
+ * CEK KENDARAAN BARU
+ * ============================================
+ */
+
+function cekPendingKendaraanBaru(){
+
+  /*
+   * Jangan membuat request bertumpuk.
+   */
+
+  if(pendingVehicleRequest){
+
+    return;
+
+  }
+
+  pendingVehicleRequest = true;
+
+  google.script.run
+
+    .withSuccessHandler(
+      function(data){
+
+        pendingVehicleRequest =
+          false;
+
+        if(!data){
+
+          return;
+
+        }
+
+        /*
+         * Pastikan kendaraan memang milik
+         * customer yang sedang dipakai WO.
+         */
+
+        const currentCustomerId =
+          document
+            .getElementById("idPelanggan")
+            .value
+            .trim();
+
+        if(
+          data.customerId &&
+          currentCustomerId &&
+          String(data.customerId).trim() !==
+          currentCustomerId
+        ){
+
+          console.warn(
+            "Pending vehicle bukan milik customer aktif."
+          );
+
+          return;
+
+        }
+
+        /*
+         * Bentuk data agar kompatibel dengan
+         * pilihKendaraan().
+         */
+
+        pilihKendaraan({
+
+          idKendaraan :
+            data.vehicleId || "",
+
+          idPelanggan :
+            data.customerId || "",
+
+          nama :
+            document
+              .getElementById("namaPelanggan")
+              .value || "",
+
+          noHp :
+            document
+              .getElementById("nohp")
+              .value || "",
+
+          plat :
+            data.plat || "",
+
+          merk :
+            data.merk || "",
+
+          model :
+            data.model || "",
+
+          kilometer :
+            ""
+
+        });
+
+        /*
+         * Hentikan polling.
+         */
+
+        if(pendingVehiclePoll){
+
+          clearInterval(
+            pendingVehiclePoll
+          );
+
+          pendingVehiclePoll = null;
+
+        }
+
+      }
+    )
+
+    .withFailureHandler(
+      function(err){
+
+        pendingVehicleRequest =
+          false;
+
+        console.error(
+          "Gagal mengambil kendaraan baru:",
+          err
+        );
+
+      }
+    )
+
+    .getPendingWorkOrderVehicle();
+
+}
+
 
 
 /**
@@ -503,6 +1685,24 @@ function pilihKendaraan(data){
   document.getElementById("hasilCari").style.display =
     "none";
 
+  /*
+   * Customer sudah dipilih.
+   * Izinkan user menambahkan kendaraan baru
+   * untuk customer tersebut.
+   */
+
+  const btnTambahKendaraan =
+    document.getElementById(
+      "btnTambahKendaraan"
+    );
+
+  if(btnTambahKendaraan){
+
+    btnTambahKendaraan.style.display =
+      "block";
+
+  }
+
 }
 
 
@@ -779,6 +1979,8 @@ function simpanWorkOrder(){
 );
 
 }
+
+
 
 </script>
 
