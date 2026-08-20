@@ -7,14 +7,22 @@
 
 const WorkOrderService = {
 
-    /**
-     * Membuat Work Order baru
-     */
     create(request){
 
-        Logger.log(request);
+    /**
+     * ========================================
+     * PERMISSION CHECK
+     * ========================================
+     */
 
-        this.validate(request);
+    PermissionService.require(
+        Permission.CREATE_WO
+    );
+
+
+    Logger.log(request);
+
+    this.validate(request);
 
         const customer =
 
@@ -338,15 +346,31 @@ const WorkOrderService = {
 
     },
 
-    /**
+  /**
  * ============================================
- * Mengubah Status Work Order
+ * CHANGE STATUS WORK ORDER
+ * Version : 1.4.0
  * ============================================
- */
-/**
- * ============================================
- * Mengubah Status Work Order
- * Version : 1.3.0
+ *
+ * Mengubah status Work Order.
+ *
+ * KHUSUS CANCEL:
+ *
+ * Jika target = DIBATALKAN:
+ *
+ * 1. Validasi transition WO
+ * 2. Ambil seluruh WorkOrderPart
+ * 3. Cancel setiap WorkOrderPart
+ * 4. Jika part sudah Stock OUT:
+ *      → reversal otomatis
+ * 5. Jika part belum Stock OUT:
+ *      → langsung CANCEL
+ * 6. Pastikan seluruh part sudah CANCEL
+ * 7. Baru WO menjadi DIBATALKAN
+ *
+ * Jika salah satu part gagal:
+ *      → WO tidak diubah
+ *
  * ============================================
  */
 changeStatus(
@@ -356,7 +380,7 @@ changeStatus(
 
     /**
      * ========================================
-     * VALIDASI ID
+     * 1. VALIDASI ID
      * ========================================
      */
 
@@ -371,7 +395,44 @@ changeStatus(
 
     /**
      * ========================================
-     * AMBIL WORK ORDER
+     * 2. PERMISSION CHECK
+     * ========================================
+     */
+
+    let requiredPermission =
+        Permission.CHANGE_STATUS;
+
+
+    if(
+        nextStatus ===
+        WorkOrderStatus.SELESAI
+    ){
+
+        requiredPermission =
+            Permission.COMPLETE_WO;
+
+    }
+
+
+    if(
+        nextStatus ===
+        WorkOrderStatus.DIBATALKAN
+    ){
+
+        requiredPermission =
+            Permission.CANCEL_WO;
+
+    }
+
+
+    PermissionService.require(
+        requiredPermission
+    );
+
+
+    /**
+     * ========================================
+     * 3. AMBIL WORK ORDER
      * ========================================
      */
 
@@ -393,7 +454,7 @@ changeStatus(
 
     /**
      * ========================================
-     * STATUS SAAT INI
+     * 4. STATUS SAAT INI
      * ========================================
      */
 
@@ -405,7 +466,7 @@ changeStatus(
 
     /**
      * ========================================
-     * VALIDASI TRANSITION
+     * 5. VALIDATE TRANSITION
      * ========================================
      */
 
@@ -420,10 +481,7 @@ changeStatus(
 
     /**
      * ========================================
-     * COMPLETION GATE
-     *
-     * Hanya dijalankan jika target status
-     * adalah SELESAI.
+     * 6. COMPLETION GATE
      * ========================================
      */
 
@@ -454,7 +512,352 @@ changeStatus(
 
     /**
      * ========================================
-     * SIMPAN STATUS BARU
+     * 7. CANCEL CASCADE
+     * ========================================
+     *
+     * Hanya dijalankan jika target status
+     * adalah DIBATALKAN.
+     *
+     * WO tidak akan diubah menjadi
+     * DIBATALKAN sebelum seluruh
+     * WorkOrderPart berhasil CANCEL.
+     *
+     * WorkOrderPartService.cancel()
+     * menangani:
+     *
+     * - validasi transition part
+     * - pengecekan Stock OUT
+     * - reversal stock
+     * - pembuatan ledger REVERSAL
+     * - update status part → CANCEL
+     *
+     * ========================================
+     */
+
+    let cancelCascade = null;
+
+
+    if(
+        nextStatus ===
+        WorkOrderStatus.DIBATALKAN
+    ){
+
+        /**
+         * ====================================
+         * AMBIL SEMUA WORK ORDER PART
+         * ====================================
+         */
+
+        const workOrderParts =
+            WorkOrderPartRepository
+                .findByWorkOrderId(
+                    workOrderId
+                );
+
+
+        /**
+         * ====================================
+         * INITIALIZE RESULT
+         * ====================================
+         */
+
+        cancelCascade = {
+
+            totalPart :
+                workOrderParts
+                    ? workOrderParts.length
+                    : 0,
+
+            processed :
+                0,
+
+            cancelled :
+                0,
+
+            skipped :
+                0,
+
+            stockReversal :
+                0,
+
+            items :
+                []
+
+        };
+
+
+        /**
+         * ====================================
+         * PROSES SEMUA PART
+         * ====================================
+         */
+
+        if(
+            workOrderParts &&
+            workOrderParts.length > 0
+        ){
+
+            for(
+                let i = 0;
+                i < workOrderParts.length;
+                i++
+            ){
+
+                const part =
+                    workOrderParts[i];
+
+
+                /**
+                 * ================================
+                 * WORK ORDER PART ID
+                 * ================================
+                 */
+
+                const workOrderPartId =
+                    part[
+                        COL_WORK_ORDER_PART.ID
+                    ];
+
+
+                /**
+                 * ================================
+                 * STATUS PART
+                 * ================================
+                 */
+
+                const partStatus =
+                    part[
+                        COL_WORK_ORDER_PART.STATUS
+                    ];
+
+
+                Logger.log(
+                    "================================"
+                );
+
+                Logger.log(
+                    "WO CANCEL CASCADE"
+                );
+
+                Logger.log(
+                    "WORK ORDER ID:"
+                );
+
+                Logger.log(
+                    workOrderId
+                );
+
+                Logger.log(
+                    "WORK ORDER PART ID:"
+                );
+
+                Logger.log(
+                    workOrderPartId
+                );
+
+                Logger.log(
+                    "PART STATUS:"
+                );
+
+                Logger.log(
+                    partStatus
+                );
+
+
+                /**
+                 * ================================
+                 * SUDAH CANCEL
+                 * ================================
+                 */
+
+                if(
+                    partStatus ===
+                    WorkOrderPartStatus.CANCEL
+                ){
+
+                    cancelCascade.skipped++;
+
+
+                    cancelCascade.items.push({
+
+                        workOrderPartId :
+                            workOrderPartId,
+
+                        previousStatus :
+                            partStatus,
+
+                        status :
+                            WorkOrderPartStatus.CANCEL,
+
+                        skipped :
+                            true,
+
+                        stockOutRecorded :
+                            false,
+
+                        reversal :
+                            null,
+
+                        reason :
+                            "WorkOrderPart sudah CANCEL."
+
+                    });
+
+
+                    continue;
+
+                }
+
+
+                /**
+                 * ================================
+                 * CANCEL PART
+                 * ================================
+                 */
+
+                const cancelResult =
+                    WorkOrderPartService.cancel(
+                        workOrderPartId
+                    );
+
+
+                /**
+                 * ================================
+                 * VALIDASI RESULT
+                 * ================================
+                 */
+
+                if(
+                    !cancelResult ||
+                    !cancelResult.success
+                ){
+
+                    throw new Error(
+                        "Gagal membatalkan Work Order Part: " +
+                        workOrderPartId
+                    );
+
+                }
+
+
+                /**
+                 * ================================
+                 * HITUNG RESULT
+                 * ================================
+                 */
+
+                cancelCascade.processed++;
+
+                cancelCascade.cancelled++;
+
+
+                if(
+                    cancelResult.stockOutRecorded
+                ){
+
+                    cancelCascade.stockReversal++;
+
+                }
+
+
+                /**
+                 * ================================
+                 * SIMPAN DETAIL
+                 * ================================
+                 */
+
+                cancelCascade.items.push({
+
+                    workOrderPartId :
+                        workOrderPartId,
+
+                    previousStatus :
+                        cancelResult.previousStatus,
+
+                    status :
+                        cancelResult.status,
+
+                    stockOutRecorded :
+                        cancelResult.stockOutRecorded,
+
+                    reversal :
+                        cancelResult.reversal
+
+                });
+
+            }
+
+        }
+
+
+        /**
+         * ====================================
+         * FINAL VALIDATION
+         * ====================================
+         *
+         * Pastikan seluruh part sudah CANCEL.
+         */
+
+        const finalParts =
+            WorkOrderPartRepository
+                .findByWorkOrderId(
+                    workOrderId
+                );
+
+
+        if(
+            finalParts &&
+            finalParts.length > 0
+        ){
+
+            for(
+                let i = 0;
+                i < finalParts.length;
+                i++
+            ){
+
+                const finalPart =
+                    finalParts[i];
+
+
+                const finalPartStatus =
+                    finalPart[
+                        COL_WORK_ORDER_PART.STATUS
+                    ];
+
+
+                if(
+                    finalPartStatus !==
+                    WorkOrderPartStatus.CANCEL
+                ){
+
+                    throw new Error(
+                        "Cancel cascade gagal. " +
+                        "Work Order Part belum CANCEL: " +
+                        finalPart[
+                            COL_WORK_ORDER_PART.ID
+                        ]
+                    );
+
+                }
+
+            }
+
+        }
+
+    }
+
+
+    /**
+     * ========================================
+     * 8. UPDATE STATUS WORK ORDER
+     * ========================================
+     *
+     * Baru dilakukan setelah:
+     *
+     * - completion gate lolos, atau
+     * - cancel cascade selesai.
+     *
      * ========================================
      */
 
@@ -470,7 +873,7 @@ changeStatus(
 
     /**
      * ========================================
-     * RETURN
+     * 9. RETURN
      * ========================================
      */
 
@@ -486,11 +889,16 @@ changeStatus(
             currentStatus,
 
         status :
-            nextStatus
+            nextStatus,
+
+        cancelCascade :
+            cancelCascade
 
     };
 
+},
+
 }
 
-};
+
 

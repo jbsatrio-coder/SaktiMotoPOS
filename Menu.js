@@ -9,11 +9,35 @@ function buildMenu_() {
 
     .addItem("🏍️ POS V2", "openPOSV2")
 
+    .addItem(
+  "👤 Pelanggan Baru",
+  "bukaFormPelanggan"
+)
+
+    .addItem(
+  "📦 Barang Baru",
+  "bukaFormBarangBaru"
+)
+
+    .addItem(
+  "🔧 Jasa Baru",
+  "bukaFormJasaBaru"
+)
+
+    .addItem(
+  "🏍️ Kendaraan Baru",
+  "bukaFormKendaraan"
+)
+
     .addSeparator()
 
     .addItem("🏍️ Work Order Baru", "showFormWorkOrder")
 
     .addItem("📋 Dashboard Work Order", "showDashboardWO")
+
+    .addSeparator()
+
+    .addItem("📦 Pembelian / Stok Masuk", "bukaFormPembelian")
 
     .addSeparator()
 

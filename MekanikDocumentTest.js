@@ -16,9 +16,9 @@ function testCreateMekanikDocument(){
 
                 gajiPokok : 4500000,
 
-                tipeKomisi : "PERSEN",
+                tipeKomisi : "PERSENTASE",
 
-                persentase : 10
+                nilaiKomisi : 30
 
             }),
 

@@ -298,9 +298,29 @@ writeLedger(movementResult){
 
     const now = new Date();
 
+    const kodeBarang =
+        movementResult.movement.kodeBarang;
+
+    const barang =
+        BarangRepository.findById(
+            kodeBarang
+        );
+
+    if (!barang) {
+        throw new Error(
+            "Barang tidak ditemukan untuk ledger : " +
+            kodeBarang
+        );
+    }
+
+    const namaBarang =
+        barang[COL_BARANG.NAMA];
+
     const ledger = {
 
-        id : Utilities.getUuid(),
+       id : RunningNumberService.generate(
+    DocumentType.STOCK_LEDGER
+),
 
         tanggal : Utilities.formatDate(
             now,
@@ -314,9 +334,9 @@ writeLedger(movementResult){
             "HH:mm:ss"
         ),
 
-        kodeBarang : movementResult.movement.kodeBarang,
+        kodeBarang : kodeBarang,
 
-        namaBarang : "",
+        namaBarang : namaBarang,
 
         jenisMutasi : movementResult.movement.movementType,
 
@@ -682,5 +702,28 @@ function testMoveStockBatch(){
     )
 
 );
+
+}
+function testPurchaseStockBefore(){
+
+    const items = [
+        "BRG000114",
+        "BRG000115"
+    ];
+
+    items.forEach(function(kodeBarang){
+
+        const stok =
+            InventoryService.getCurrentStock(
+                kodeBarang
+            );
+
+        Logger.log(
+            kodeBarang +
+            " | STOK AWAL = " +
+            stok
+        );
+
+    });
 
 }

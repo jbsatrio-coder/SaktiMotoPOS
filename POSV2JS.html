@@ -154,9 +154,40 @@ function renderSearch() {
 
 function addToCart(index){
 
-  POSCart.addItem(searchResult[index]);
+  const item = searchResult[index];
 
+  if(!item){
+    return;
+  }
+
+  // Tambahkan item ke cart
+  POSCart.addItem(item);
+
+  // Render cart
   renderCart();
+
+  // Bersihkan hasil pencarian
+  searchResult = [];
+
+  const resultDiv =
+    document.getElementById("searchResult");
+
+  if(resultDiv){
+    resultDiv.innerHTML = "";
+  }
+
+  // Bersihkan textbox pencarian
+  const searchInput =
+    document.getElementById("search");
+
+  if(searchInput){
+
+    searchInput.value = "";
+
+    // Kembalikan fokus ke search
+    searchInput.focus();
+
+  }
 
 }
 
@@ -321,7 +352,7 @@ btn.textContent = "Menyimpan...";
 
     alert(
       "✅ Transaksi berhasil!\n\n" +
-      result.noTransaksi
+      result.transactionNumber
     );
 
     resetPOS();

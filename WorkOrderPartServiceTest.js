@@ -7390,3 +7390,3742 @@ function testCleanLifecyclePreflight(){
     );
 
 }
+
+/**
+ * ============================================
+ * TEST:
+ * Completion Gate + Part Cancel + Stock Reversal
+ *
+ * Version : 1.0.0
+ *
+ * Scenario:
+ *
+ * WO
+ *  ↓
+ * JASA DONE
+ *  ↓
+ * PART PROGRESS
+ *  ↓
+ * WO → QC
+ *  ↓
+ * STOCK OUT
+ *  ↓
+ * COMPLETION GATE = TRUE
+ *  ↓
+ * PART CANCEL
+ *  ↓
+ * REVERSAL
+ *  ↓
+ * STOCK KEMBALI
+ *  ↓
+ * COMPLETION GATE = FALSE
+ *
+ * Expected:
+ *
+ * 1. Stock berkurang saat Stock OUT.
+ * 2. Completion Gate TRUE sebelum cancel.
+ * 3. Cancel Part berhasil.
+ * 4. Reversal mengembalikan stock.
+ * 5. Stock kembali ke baseline.
+ * 6. Completion Gate FALSE setelah part CANCEL.
+ * 7. Tidak ada double reversal.
+ *
+ * ============================================
+ */
+
+function testCompletionGateAfterPartCancelReversalV1(){
+
+    Logger.log(
+        "================================"
+    );
+
+    Logger.log(
+        "COMPLETION GATE + PART CANCEL + REVERSAL"
+    );
+
+    Logger.log(
+        "INTEGRATION TEST V1"
+    );
+
+    Logger.log(
+        "================================"
+    );
+
+
+    /**
+     * ========================================
+     * TEST FIXTURE
+     * ========================================
+     */
+
+    const barangId =
+        "BRG000001";
+
+    const customerId =
+        "CUS2608160002";
+
+    const vehicleId =
+        "VEH2608160002";
+
+
+    /**
+     * ========================================
+     * CLEANUP STATE
+     * ========================================
+     */
+
+    let stockBaseline = null;
+
+    let stockLedgerId = null;
+
+    let workOrderPartId = null;
+
+    let workOrderId = null;
+
+
+    try{
+
+        /**
+         * ====================================
+         * 1. SNAPSHOT STOCK BASELINE
+         * ====================================
+         */
+
+        stockBaseline =
+            BarangRepository.getStock(
+                barangId
+            );
+
+
+        Logger.log(
+            "STOCK BASELINE:"
+        );
+
+        Logger.log(
+            stockBaseline
+        );
+
+
+        /**
+         * ====================================
+         * 2. CREATE WORK ORDER
+         * ====================================
+         */
+
+        Logger.log(
+            "STEP 1: CREATE WORK ORDER"
+        );
+
+
+        const woResult =
+            WorkOrderService.create({
+
+                customerId :
+                    customerId,
+
+                vehicleId :
+                    vehicleId,
+
+                kilometerMasuk :
+                    18000,
+
+                admin :
+                    "Completion Gate Cancel Reversal V1",
+
+                jenisTransaksi :
+                    WorkOrderType.SERVICE,
+
+                prioritas :
+                    WorkOrderPriority.NORMAL,
+
+                catatan :
+                    "Completion Gate Cancel Reversal V1"
+
+            });
+
+
+        workOrderId =
+            woResult.workOrderId;
+
+
+        Logger.log(
+            "WORK ORDER ID:"
+        );
+
+        Logger.log(
+            workOrderId
+        );
+
+
+        /**
+         * ====================================
+         * 3. CREATE JASA
+         * ====================================
+         */
+
+        Logger.log(
+            "STEP 2: CREATE JASA"
+        );
+
+
+        const jasaResult =
+            WorkOrderJasaService.create({
+
+                workOrderId :
+                    workOrderId,
+
+                jasaId :
+                    "JAS000002",
+
+                qty :
+                    1,
+
+                diskon :
+                    0,
+
+                mekanikId :
+                    "",
+
+                keluhan :
+                    "Completion Gate Cancel Reversal",
+
+                diagnosa :
+                    "Integration Test",
+
+                catatan :
+                    "Completion Gate Cancel Reversal V1"
+
+            });
+
+
+        const workOrderJasaId =
+            jasaResult.workOrderJasaId;
+
+
+        Logger.log(
+            "WORK ORDER JASA ID:"
+        );
+
+        Logger.log(
+            workOrderJasaId
+        );
+
+
+        /**
+         * ====================================
+         * 4. JASA → DONE
+         * ====================================
+         */
+
+        Logger.log(
+            "STEP 3: JASA → DONE"
+        );
+
+
+        WorkOrderJasaService.changeStatus(
+
+            workOrderJasaId,
+
+            WorkOrderJasaStatus.DONE
+
+        );
+
+
+        Logger.log(
+            "JASA DONE PASS"
+        );
+
+
+        /**
+         * ====================================
+         * 5. CREATE PART
+         * ====================================
+         */
+
+        Logger.log(
+            "STEP 4: CREATE PART"
+        );
+
+
+        const partResult =
+            WorkOrderPartService.create({
+
+                workOrderId :
+                    workOrderId,
+
+                workOrderJasaId :
+                    workOrderJasaId,
+
+                barangId :
+                    barangId,
+
+                qty :
+                    1,
+
+                harga :
+                    55000,
+
+                diskon :
+                    0,
+
+                catatan :
+                    "Completion Gate Cancel Reversal Part"
+
+            });
+
+
+        workOrderPartId =
+            partResult.workOrderPartId;
+
+
+        Logger.log(
+            "WORK ORDER PART ID:"
+        );
+
+        Logger.log(
+            workOrderPartId
+        );
+
+
+        /**
+         * ====================================
+         * 6. PART → PROGRESS
+         * ====================================
+         */
+
+        Logger.log(
+            "STEP 5: PART → PROGRESS"
+        );
+
+
+        WorkOrderPartService.changeStatus(
+
+            workOrderPartId,
+
+            WorkOrderPartStatus.PROGRESS
+
+        );
+
+
+        Logger.log(
+            "PART PROGRESS PASS"
+        );
+
+
+        /**
+         * ====================================
+         * 7. WO LIFECYCLE → QC
+         * ====================================
+         */
+
+        Logger.log(
+            "STEP 6: WO LIFECYCLE → QC"
+        );
+
+
+        WorkOrderService.changeStatus(
+
+            workOrderId,
+
+            WorkOrderStatus.MENUNGGU_DIAGNOSA
+
+        );
+
+
+        WorkOrderService.changeStatus(
+
+            workOrderId,
+
+            WorkOrderStatus.MENUNGGU_APPROVAL
+
+        );
+
+
+        WorkOrderService.changeStatus(
+
+            workOrderId,
+
+            WorkOrderStatus.DALAM_PENGERJAAN
+
+        );
+
+
+        /**
+         * ====================================
+         * CARI TRANSISI QC
+         * ====================================
+         *
+         * Mengikuti lifecycle yang sudah
+         * digunakan pada regression test.
+         */
+
+        WorkOrderService.changeStatus(
+
+            workOrderId,
+
+            WorkOrderStatus.QC
+
+        );
+
+
+        Logger.log(
+            "WO → QC PASS"
+        );
+
+
+        /**
+         * ====================================
+         * 8. STOCK OUT
+         * ====================================
+         */
+
+        Logger.log(
+            "STEP 7: STOCK OUT"
+        );
+
+
+        const stockOutResult =
+            WorkOrderPartService.consumeStock(
+
+                workOrderPartId
+
+            );
+
+
+        Logger.log(
+            "STOCK OUT RESULT:"
+        );
+
+        Logger.log(
+            JSON.stringify(
+                stockOutResult,
+                null,
+                2
+            )
+        );
+
+
+        /**
+         * ====================================
+         * 9. AMBIL STOCK LEDGER ID
+         * ====================================
+         */
+
+        const ledgersAfterOut =
+            StockLedgerRepository
+                .findByReferensi(
+                    workOrderPartId
+                );
+
+
+        Logger.log(
+            "LEDGER AFTER STOCK OUT:"
+        );
+
+        Logger.log(
+            JSON.stringify(
+                ledgersAfterOut,
+                null,
+                2
+            )
+        );
+
+
+        const outLedgers =
+            ledgersAfterOut.filter(
+                function(ledger){
+
+                    return (
+
+                        Number(
+                            ledger[
+                                COL_STOK.QTYKELUAR
+                            ]
+                        ) || 0
+
+                    ) > 0;
+
+                }
+            );
+
+
+        if(
+            outLedgers.length !== 1
+        ){
+
+            throw new Error(
+                "Ledger STOCK OUT tidak ditemukan."
+            );
+
+        }
+
+
+        stockLedgerId =
+            String(
+                outLedgers[0][
+                    COL_STOK.ID
+                ]
+            ).trim();
+
+
+        Logger.log(
+            "STOCK LEDGER ID:"
+        );
+
+        Logger.log(
+            stockLedgerId
+        );
+
+
+        /**
+         * ====================================
+         * 10. VERIFY STOCK BERKURANG
+         * ====================================
+         */
+
+        const stockAfterOut =
+            BarangRepository.getStock(
+                barangId
+            );
+
+
+        Logger.log(
+            "STOCK AFTER OUT:"
+        );
+
+        Logger.log(
+            stockAfterOut
+        );
+
+
+        if(
+            stockAfterOut !==
+            stockBaseline - 1
+        ){
+
+            throw new Error(
+                "Stock OUT tidak sesuai expectation."
+            );
+
+        }
+
+
+        Logger.log(
+            "STOCK OUT QTY PASS"
+        );
+
+
+        /**
+         * ====================================
+         * 11. COMPLETION GATE SEBELUM CANCEL
+         * ====================================
+         */
+
+        Logger.log(
+            "STEP 8: COMPLETION GATE BEFORE CANCEL"
+        );
+
+
+        const completionBeforeCancel =
+            WorkOrderStatusService.canComplete(
+                workOrderId
+            );
+
+
+        Logger.log(
+            JSON.stringify(
+                completionBeforeCancel,
+                null,
+                2
+            )
+        );
+
+
+        if(
+            completionBeforeCancel.canComplete !==
+            true
+        ){
+
+            throw new Error(
+                "Completion Gate seharusnya TRUE sebelum cancel."
+            );
+
+        }
+
+
+        Logger.log(
+            "COMPLETION GATE BEFORE CANCEL PASS"
+        );
+
+
+        /**
+         * ====================================
+         * 12. CANCEL PART
+         * ====================================
+         */
+
+        Logger.log(
+            "STEP 9: CANCEL PART"
+        );
+
+
+        const cancelResult =
+            WorkOrderPartService.cancel(
+
+                workOrderPartId
+
+            );
+
+
+        Logger.log(
+            "CANCEL RESULT:"
+        );
+
+        Logger.log(
+            JSON.stringify(
+                cancelResult,
+                null,
+                2
+            )
+        );
+
+
+        /**
+         * ====================================
+         * 13. VERIFY PART STATUS
+         * ====================================
+         */
+
+        const cancelledPart =
+            WorkOrderPartRepository.findById(
+                workOrderPartId
+            );
+
+
+        const cancelledStatus =
+            String(
+                cancelledPart[
+                    COL_WORK_ORDER_PART.STATUS
+                ] || ""
+            ).trim();
+
+
+        Logger.log(
+            "PART STATUS AFTER CANCEL:"
+        );
+
+        Logger.log(
+            cancelledStatus
+        );
+
+
+        if(
+            cancelledStatus !==
+            WorkOrderPartStatus.CANCEL
+        ){
+
+            throw new Error(
+                "Work Order Part gagal menjadi CANCEL."
+            );
+
+        }
+
+
+        Logger.log(
+            "PART CANCEL PASS"
+        );
+
+
+        /**
+         * ====================================
+         * 14. REVERSAL
+         * ====================================
+         */
+
+        Logger.log(
+            "STEP 10: STOCK REVERSAL"
+        );
+
+
+        const reversalResult =
+            StockLedgerReversalService
+                .reverseByWorkOrderPartId(
+                    workOrderPartId
+                );
+
+
+        Logger.log(
+            "REVERSAL RESULT:"
+        );
+
+        Logger.log(
+            JSON.stringify(
+                reversalResult,
+                null,
+                2
+            )
+        );
+
+
+        /**
+         * ====================================
+         * 15. VERIFY STOCK RESTORED
+         * ====================================
+         */
+
+        const stockAfterReversal =
+            BarangRepository.getStock(
+                barangId
+            );
+
+
+        Logger.log(
+            "STOCK AFTER REVERSAL:"
+        );
+
+        Logger.log(
+            stockAfterReversal
+        );
+
+
+        if(
+            stockAfterReversal !==
+            stockBaseline
+        ){
+
+            throw new Error(
+                "Stock tidak kembali ke baseline setelah reversal."
+            );
+
+        }
+
+
+        Logger.log(
+            "STOCK RESTORE PASS"
+        );
+
+
+        /**
+         * ====================================
+         * 16. VERIFY REVERSAL LEDGER
+         * ====================================
+         */
+
+        const ledgersAfterReversal =
+            StockLedgerRepository
+                .findByReferensi(
+                    workOrderPartId
+                );
+
+
+        const reversalLedgers =
+            ledgersAfterReversal.filter(
+                function(ledger){
+
+                    return (
+
+                        String(
+                            ledger[
+                                COL_STOK.JENISMUTASI
+                            ] || ""
+                        ).trim()
+                        ===
+                        "REVERSAL"
+
+                    );
+
+                }
+            );
+
+
+        Logger.log(
+            "REVERSAL LEDGER COUNT:"
+        );
+
+        Logger.log(
+            reversalLedgers.length
+        );
+
+
+        if(
+            reversalLedgers.length !== 1
+        ){
+
+            throw new Error(
+                "Ledger REVERSAL tidak ditemukan."
+            );
+
+        }
+
+
+        Logger.log(
+            "REVERSAL LEDGER PASS"
+        );
+
+
+        /**
+         * ====================================
+         * 17. COMPLETION GATE AFTER CANCEL
+         * ====================================
+         */
+
+        Logger.log(
+            "STEP 11: COMPLETION GATE AFTER CANCEL"
+        );
+
+
+        const completionAfterCancel =
+            WorkOrderStatusService.canComplete(
+                workOrderId
+            );
+
+
+        Logger.log(
+            JSON.stringify(
+                completionAfterCancel,
+                null,
+                2
+            )
+        );
+
+
+        if(
+            completionAfterCancel.canComplete !==
+            false
+        ){
+
+            throw new Error(
+                "Completion Gate seharusnya FALSE setelah Part CANCEL."
+            );
+
+        }
+
+
+        Logger.log(
+            "COMPLETION GATE AFTER CANCEL PASS"
+        );
+
+
+        /**
+         * ====================================
+         * 18. TEST DOUBLE REVERSAL
+         * ====================================
+         */
+
+        Logger.log(
+            "STEP 12: DUPLICATE REVERSAL"
+        );
+
+
+        let duplicateReversalRejected =
+            false;
+
+
+        try{
+
+            StockLedgerReversalService
+                .reverseByWorkOrderPartId(
+                    workOrderPartId
+                );
+
+        }
+        catch(error){
+
+            duplicateReversalRejected =
+                true;
+
+
+            Logger.log(
+                "EXPECTED DUPLICATE ERROR:"
+            );
+
+            Logger.log(
+                error.message
+            );
+
+        }
+
+
+        if(
+            !duplicateReversalRejected
+        ){
+
+            throw new Error(
+                "Double reversal seharusnya ditolak."
+            );
+
+        }
+
+
+        Logger.log(
+            "DUPLICATE REVERSAL REJECT PASS"
+        );
+
+
+        /**
+         * ====================================
+         * 19. FINAL VERIFICATION
+         * ====================================
+         */
+
+        const finalStock =
+            BarangRepository.getStock(
+                barangId
+            );
+
+
+        if(
+            finalStock !==
+            stockBaseline
+        ){
+
+            throw new Error(
+                "Final stock tidak sama dengan baseline."
+            );
+
+        }
+
+
+        Logger.log(
+            "FINAL STOCK:"
+        );
+
+        Logger.log(
+            finalStock
+        );
+
+
+        /**
+         * ====================================
+         * FINAL PASS
+         * ====================================
+         */
+
+        Logger.log(
+            "================================"
+        );
+
+        Logger.log(
+            "COMPLETION GATE + CANCEL + REVERSAL"
+        );
+
+        Logger.log(
+            "INTEGRATION TEST V1 PASS"
+        );
+
+        Logger.log(
+            "================================"
+        );
+
+
+    }
+    finally{
+
+
+        /**
+         * ====================================
+         * CLEANUP
+         * ====================================
+         *
+         * Pastikan stock kembali ke baseline.
+         *
+         * Jangan menghapus ledger OUT/REVERSAL
+         * di sini jika reversal sudah berhasil,
+         * karena lifecycle ledger memang bagian
+         * dari data yang sedang diuji.
+         *
+         * Namun jika test berhenti sebelum
+         * reversal terjadi, stock perlu
+         * dikembalikan secara manual.
+         * ====================================
+         */
+
+        if(
+            stockBaseline !== null
+        ){
+
+            const currentStock =
+                BarangRepository.getStock(
+                    barangId
+                );
+
+
+            Logger.log(
+                "CLEANUP STOCK:"
+            );
+
+            Logger.log(
+                currentStock
+            );
+
+
+            /**
+             * Jika stock masih berbeda dari
+             * baseline, restore langsung.
+             */
+
+            if(
+                currentStock !==
+                stockBaseline
+            ){
+
+                BarangRepository.updateStockAbsolute(
+
+                    barangId,
+
+                    stockBaseline
+
+                );
+
+
+                Logger.log(
+                    "STOCK FORCE RESTORED:"
+                );
+
+                Logger.log(
+                    BarangRepository.getStock(
+                        barangId
+                    )
+                );
+
+            }
+            else{
+
+                Logger.log(
+                    "STOCK SUDAH SESUAI BASELINE."
+                );
+
+            }
+
+        }
+
+
+        Logger.log(
+            "CLEANUP SELESAI"
+        );
+
+    }
+
+}
+
+/**
+ * ============================================
+ * TEST:
+ * Work Order Part Cancel Auto Reversal
+ * + Duplicate Cancel Rejection
+ * ============================================
+ *
+ * Expected:
+ *
+ * PROGRESS
+ *    ↓
+ * STOCK OUT
+ *    ↓
+ * CANCEL
+ *    ↓
+ * AUTO REVERSAL
+ *
+ * Kemudian:
+ *
+ * CANCEL
+ *    ↓
+ * CANCEL
+ *    ↓
+ * REJECT
+ *
+ * Validasi:
+ *
+ * 1. Stock berkurang 1 saat Stock Out.
+ * 2. Stock kembali ke baseline setelah CANCEL.
+ * 3. Ledger OUT tetap ada.
+ * 4. Ledger REVERSAL dibuat tepat 1.
+ * 5. Status WOP menjadi CANCEL.
+ * 6. CANCEL kedua ditolak.
+ * 7. Stock tidak berubah setelah CANCEL kedua.
+ * 8. Tidak dibuat reversal kedua.
+ * ============================================
+ */
+
+function testWorkOrderPartCancelAutoReversalDuplicateCancel(){
+
+    Logger.log(
+        "================================"
+    );
+
+    Logger.log(
+        "WORK ORDER PART CANCEL AUTO REVERSAL"
+    );
+
+    Logger.log(
+        "DUPLICATE CANCEL REJECTION TEST"
+    );
+
+    Logger.log(
+        "================================"
+    );
+
+
+    /**
+     * ========================================
+     * 1. CREATE WORK ORDER
+     * ========================================
+     */
+
+    const woResult =
+        WorkOrderService.create({
+
+            customerId :
+    "CUS2608160002",
+
+vehicleId :
+    "VEH2608160002",
+
+            kilometerMasuk :
+                16000,
+
+            admin :
+                "Developer",
+
+            jenisTransaksi :
+                WorkOrderType.SERVICE,
+
+            prioritas :
+                WorkOrderPriority.NORMAL,
+
+            catatan :
+                "Cancel Auto Reversal Duplicate Cancel Test"
+
+        });
+
+
+    const workOrderId =
+        woResult.workOrderId;
+
+
+    Logger.log(
+        "WORK ORDER ID:"
+    );
+
+    Logger.log(
+        workOrderId
+    );
+
+
+    /**
+     * ========================================
+     * 2. CREATE WORK ORDER PART
+     * ========================================
+     */
+
+    const partResult =
+        WorkOrderPartService.create({
+
+            workOrderId :
+                workOrderId,
+
+            barangId :
+                "BRG000001",
+
+            workOrderJasaId :
+                "",
+
+            qty :
+                1,
+
+            harga :
+                55000,
+
+            diskon :
+                0,
+
+            catatan :
+                "Cancel Auto Reversal Duplicate Cancel Part"
+
+        });
+
+
+    const workOrderPartId =
+        partResult.workOrderPartId;
+
+
+    if(
+        !workOrderPartId
+    ){
+
+        throw new Error(
+            "Work Order Part gagal dibuat."
+        );
+
+    }
+
+
+    Logger.log(
+        "WORK ORDER PART ID:"
+    );
+
+    Logger.log(
+        workOrderPartId
+    );
+
+
+    /**
+     * ========================================
+     * 3. OPEN → PROGRESS
+     * ========================================
+     */
+
+    const progressResult =
+        WorkOrderPartService.changeStatus(
+
+            workOrderPartId,
+
+            WorkOrderPartStatus.PROGRESS
+
+        );
+
+
+    Logger.log(
+        "OPEN → PROGRESS:"
+    );
+
+    Logger.log(
+        JSON.stringify(
+            progressResult
+        )
+    );
+
+
+    /**
+     * ========================================
+     * 4. STOCK BASELINE
+     * ========================================
+     */
+
+    const stockBefore =
+        BarangRepository.getStock(
+            "BRG000001"
+        );
+
+
+    Logger.log(
+        "STOCK BASELINE:"
+    );
+
+    Logger.log(
+        stockBefore
+    );
+
+
+    /**
+     * ========================================
+     * 5. STOCK OUT
+     * ========================================
+     */
+
+    const stockOutResult =
+        WorkOrderPartService.consumeStock(
+            workOrderPartId
+        );
+
+
+    Logger.log(
+        "STOCK OUT RESULT:"
+    );
+
+    Logger.log(
+        JSON.stringify(
+            stockOutResult
+        )
+    );
+
+
+    /**
+     * ========================================
+     * 6. VALIDATE STOCK AFTER OUT
+     * ========================================
+     */
+
+    const stockAfterOut =
+        BarangRepository.getStock(
+            "BRG000001"
+        );
+
+
+    Logger.log(
+        "STOCK AFTER OUT:"
+    );
+
+    Logger.log(
+        stockAfterOut
+    );
+
+
+    const stockReducedOnce =
+        stockAfterOut ===
+        stockBefore - 1;
+
+
+    Logger.log(
+        "STOCK BERKURANG 1:"
+    );
+
+    Logger.log(
+        stockReducedOnce
+    );
+
+
+    if(
+        !stockReducedOnce
+    ){
+
+        throw new Error(
+            "Stock Out tidak sesuai expectation."
+        );
+
+    }
+
+
+    /**
+     * ========================================
+     * 7. CEK LEDGER SEBELUM CANCEL
+     * ========================================
+     */
+
+    const ledgersBeforeCancel =
+        StockLedgerRepository.findByReferensi(
+            workOrderPartId
+        );
+
+
+    const stockOutLedgerCountBefore =
+        ledgersBeforeCancel.filter(
+            function(ledger){
+
+                return (
+                    Number(
+                        ledger[
+                            COL_STOK.QTYKELUAR
+                        ]
+                    ) || 0
+                ) > 0;
+
+            }
+        ).length;
+
+
+    const reversalLedgerCountBefore =
+        ledgersBeforeCancel.filter(
+            function(ledger){
+
+                return String(
+                    ledger[
+                        COL_STOK.JENISMUTASI
+                    ] || ""
+                ).trim()
+                ===
+                "REVERSAL";
+
+            }
+        ).length;
+
+
+    Logger.log(
+        "STOCK OUT LEDGER SEBELUM CANCEL:"
+    );
+
+    Logger.log(
+        stockOutLedgerCountBefore
+    );
+
+
+    Logger.log(
+        "REVERSAL LEDGER SEBELUM CANCEL:"
+    );
+
+    Logger.log(
+        reversalLedgerCountBefore
+    );
+
+
+    /**
+     * ========================================
+     * 8. CANCEL
+     * ========================================
+     *
+     * Penting:
+     *
+     * Kita TIDAK memanggil
+     * StockLedgerReversalService
+     * secara manual.
+     *
+     * Karena changeStatus(CANCEL)
+     * seharusnya melakukan AUTO REVERSAL.
+     * ========================================
+     */
+
+    const cancelResult =
+        WorkOrderPartService.changeStatus(
+
+            workOrderPartId,
+
+            WorkOrderPartStatus.CANCEL
+
+        );
+
+
+    Logger.log(
+        "CANCEL RESULT:"
+    );
+
+    Logger.log(
+        JSON.stringify(
+            cancelResult
+        )
+    );
+
+
+    /**
+     * ========================================
+     * 9. STATUS SETELAH CANCEL
+     * ========================================
+     */
+
+    const partAfterCancel =
+        WorkOrderPartRepository.findById(
+            workOrderPartId
+        );
+
+
+    const statusAfterCancel =
+        partAfterCancel[
+            COL_WORK_ORDER_PART.STATUS
+        ];
+
+
+    Logger.log(
+        "STATUS SETELAH CANCEL:"
+    );
+
+    Logger.log(
+        statusAfterCancel
+    );
+
+
+    const statusCancel =
+        statusAfterCancel ===
+        WorkOrderPartStatus.CANCEL;
+
+
+    Logger.log(
+        "STATUS = CANCEL:"
+    );
+
+    Logger.log(
+        statusCancel
+    );
+
+
+    if(
+        !statusCancel
+    ){
+
+        throw new Error(
+            "Status WOP tidak menjadi CANCEL."
+        );
+
+    }
+
+
+    /**
+     * ========================================
+     * 10. STOCK SETELAH AUTO REVERSAL
+     * ========================================
+     */
+
+    const stockAfterCancel =
+        BarangRepository.getStock(
+            "BRG000001"
+        );
+
+
+    Logger.log(
+        "STOCK SETELAH AUTO REVERSAL:"
+    );
+
+    Logger.log(
+        stockAfterCancel
+    );
+
+
+    const stockRestored =
+        stockAfterCancel ===
+        stockBefore;
+
+
+    Logger.log(
+        "STOCK KEMBALI KE BASELINE:"
+    );
+
+    Logger.log(
+        stockRestored
+    );
+
+
+    if(
+        !stockRestored
+    ){
+
+        throw new Error(
+            "Auto reversal gagal: stock tidak kembali ke baseline."
+        );
+
+    }
+
+
+    /**
+     * ========================================
+     * 11. CEK LEDGER SETELAH AUTO REVERSAL
+     * ========================================
+     */
+
+    const ledgersAfterCancel =
+        StockLedgerRepository.findByReferensi(
+            workOrderPartId
+        );
+
+
+    const stockOutLedgerCountAfter =
+        ledgersAfterCancel.filter(
+            function(ledger){
+
+                return (
+                    Number(
+                        ledger[
+                            COL_STOK.QTYKELUAR
+                        ]
+                    ) || 0
+                ) > 0;
+
+            }
+        ).length;
+
+
+    const reversalLedgerCountAfter =
+        ledgersAfterCancel.filter(
+            function(ledger){
+
+                return String(
+                    ledger[
+                        COL_STOK.JENISMUTASI
+                    ] || ""
+                ).trim()
+                ===
+                "REVERSAL";
+
+            }
+        ).length;
+
+
+    Logger.log(
+        "STOCK OUT LEDGER SETELAH CANCEL:"
+    );
+
+    Logger.log(
+        stockOutLedgerCountAfter
+    );
+
+
+    Logger.log(
+        "REVERSAL LEDGER SETELAH CANCEL:"
+    );
+
+    Logger.log(
+        reversalLedgerCountAfter
+    );
+
+
+    /**
+     * ========================================
+     * 12. VALIDASI AUTO REVERSAL
+     * ========================================
+     */
+
+    const stockOutRemains =
+        stockOutLedgerCountAfter ===
+        1;
+
+
+    const reversalCreatedOnce =
+        reversalLedgerCountBefore ===
+            0 &&
+        reversalLedgerCountAfter ===
+            1;
+
+
+    Logger.log(
+        "STOCK OUT LEDGER TETAP ADA:"
+    );
+
+    Logger.log(
+        stockOutRemains
+    );
+
+
+    Logger.log(
+        "REVERSAL TEPAT 1:"
+    );
+
+    Logger.log(
+        reversalCreatedOnce
+    );
+
+
+    if(
+        !stockOutRemains
+    ){
+
+        throw new Error(
+            "Ledger Stock OUT lama tidak tetap ada."
+        );
+
+    }
+
+
+    if(
+        !reversalCreatedOnce
+    ){
+
+        throw new Error(
+            "Auto reversal tidak menghasilkan tepat 1 ledger REVERSAL."
+        );
+
+    }
+
+
+    /**
+     * ========================================
+     * 13. SNAPSHOT SEBELUM DUPLICATE CANCEL
+     * ========================================
+     */
+
+    const stockBeforeDuplicateCancel =
+        BarangRepository.getStock(
+            "BRG000001"
+        );
+
+
+    const ledgersBeforeDuplicateCancel =
+        StockLedgerRepository.findByReferensi(
+            workOrderPartId
+        );
+
+
+    const reversalCountBeforeDuplicateCancel =
+        ledgersBeforeDuplicateCancel.filter(
+            function(ledger){
+
+                return String(
+                    ledger[
+                        COL_STOK.JENISMUTASI
+                    ] || ""
+                ).trim()
+                ===
+                "REVERSAL";
+
+            }
+        ).length;
+
+
+    Logger.log(
+        "STOCK SEBELUM DUPLICATE CANCEL:"
+    );
+
+    Logger.log(
+        stockBeforeDuplicateCancel
+    );
+
+
+    Logger.log(
+        "REVERSAL SEBELUM DUPLICATE CANCEL:"
+    );
+
+    Logger.log(
+        reversalCountBeforeDuplicateCancel
+    );
+
+
+    /**
+     * ========================================
+     * 14. DUPLICATE CANCEL
+     * ========================================
+     */
+
+    let duplicateCancelRejected =
+        false;
+
+
+    try{
+
+        WorkOrderPartService.changeStatus(
+
+            workOrderPartId,
+
+            WorkOrderPartStatus.CANCEL
+
+        );
+
+
+        Logger.log(
+            "ERROR: DUPLICATE CANCEL SEHARUSNYA DITOLAK"
+        );
+
+    }
+    catch(error){
+
+        duplicateCancelRejected =
+            true;
+
+
+        Logger.log(
+            "EXPECTED DUPLICATE CANCEL ERROR:"
+        );
+
+        Logger.log(
+            error.message
+        );
+
+    }
+
+
+    Logger.log(
+        "DUPLICATE CANCEL DITOLAK:"
+    );
+
+    Logger.log(
+        duplicateCancelRejected
+    );
+
+
+    /**
+     * ========================================
+     * 15. STOCK SETELAH DUPLICATE CANCEL
+     * ========================================
+     */
+
+    const stockAfterDuplicateCancel =
+        BarangRepository.getStock(
+            "BRG000001"
+        );
+
+
+    Logger.log(
+        "STOCK SETELAH DUPLICATE CANCEL:"
+    );
+
+    Logger.log(
+        stockAfterDuplicateCancel
+    );
+
+
+    const stockUnchanged =
+        stockAfterDuplicateCancel ===
+        stockBeforeDuplicateCancel;
+
+
+    Logger.log(
+        "STOCK TIDAK BERUBAH:"
+    );
+
+    Logger.log(
+        stockUnchanged
+    );
+
+
+    /**
+     * ========================================
+     * 16. LEDGER SETELAH DUPLICATE CANCEL
+     * ========================================
+     */
+
+    const ledgersAfterDuplicateCancel =
+        StockLedgerRepository.findByReferensi(
+            workOrderPartId
+        );
+
+
+    const reversalCountAfterDuplicateCancel =
+        ledgersAfterDuplicateCancel.filter(
+            function(ledger){
+
+                return String(
+                    ledger[
+                        COL_STOK.JENISMUTASI
+                    ] || ""
+                ).trim()
+                ===
+                "REVERSAL";
+
+            }
+        ).length;
+
+
+    Logger.log(
+        "REVERSAL SETELAH DUPLICATE CANCEL:"
+    );
+
+    Logger.log(
+        reversalCountAfterDuplicateCancel
+    );
+
+
+    const noDuplicateReversal =
+        reversalCountAfterDuplicateCancel ===
+        reversalCountBeforeDuplicateCancel;
+
+
+    Logger.log(
+        "TIDAK ADA DUPLICATE REVERSAL:"
+    );
+
+    Logger.log(
+        noDuplicateReversal
+    );
+
+
+    /**
+     * ========================================
+     * 17. FINAL STATUS
+     * ========================================
+     */
+
+    const finalPart =
+        WorkOrderPartRepository.findById(
+            workOrderPartId
+        );
+
+
+    const finalStatus =
+        finalPart[
+            COL_WORK_ORDER_PART.STATUS
+        ];
+
+
+    const finalStatusStillCancel =
+        finalStatus ===
+        WorkOrderPartStatus.CANCEL;
+
+
+    Logger.log(
+        "FINAL STATUS:"
+    );
+
+    Logger.log(
+        finalStatus
+    );
+
+
+    Logger.log(
+        "FINAL STATUS TETAP CANCEL:"
+    );
+
+    Logger.log(
+        finalStatusStillCancel
+    );
+
+
+    /**
+     * ========================================
+     * 18. FINAL ASSERTION
+     * ========================================
+     */
+
+    if(
+        !duplicateCancelRejected
+    ){
+
+        throw new Error(
+            "Duplicate CANCEL seharusnya ditolak."
+        );
+
+    }
+
+
+    if(
+        !stockUnchanged
+    ){
+
+        throw new Error(
+            "Stock berubah setelah duplicate CANCEL."
+        );
+
+    }
+
+
+    if(
+        !noDuplicateReversal
+    ){
+
+        throw new Error(
+            "Duplicate CANCEL menghasilkan reversal kedua."
+        );
+
+    }
+
+
+    if(
+        !finalStatusStillCancel
+    ){
+
+        throw new Error(
+            "Status akhir WOP tidak tetap CANCEL."
+        );
+
+    }
+
+
+    /**
+     * ========================================
+     * FINAL
+     * ========================================
+     */
+
+    Logger.log(
+        "================================"
+    );
+
+    Logger.log(
+        "CANCEL AUTO REVERSAL"
+    );
+
+    Logger.log(
+        "DUPLICATE CANCEL REJECTION PASS"
+    );
+
+    Logger.log(
+        "================================"
+    );
+
+}
+
+/**
+ * ============================================
+ * TEST: Work Order Cancel Cascade
+ * Stock Reversal Regression V1
+ * ============================================
+ *
+ * FLOW:
+ *
+ * DRAFT
+ *   ↓
+ * MENUNGGU_DIAGNOSA
+ *   ↓
+ * MENUNGGU_APPROVAL
+ *   ↓
+ * DALAM_PENGERJAAN
+ *   ↓
+ * DIBATALKAN
+ *
+ * PART A:
+ * OPEN
+ *   ↓
+ * PROGRESS
+ *   ↓
+ * STOCK OUT
+ *   ↓
+ * EXPECTED CANCEL + AUTO REVERSAL
+ *
+ * PART B:
+ * OPEN
+ *   ↓
+ * PROGRESS
+ *   ↓
+ * EXPECTED CANCEL TANPA REVERSAL
+ *
+ * TEST INI SAAT INI DIMAKSUDKAN UNTUK
+ * MEMBUKTIKAN GAP CASCADE DI WORK ORDER.
+ * ============================================
+ */
+
+function testWorkOrderCancelCascadeStockReversalV1(){
+
+    Logger.log(
+        "================================"
+    );
+
+    Logger.log(
+        "WORK ORDER CANCEL CASCADE"
+    );
+
+    Logger.log(
+        "STOCK REVERSAL REGRESSION V1"
+    );
+
+    Logger.log(
+        "================================"
+    );
+
+
+    /**
+     * ========================================
+     * CONSTANT
+     * ========================================
+     */
+
+    const CUSTOMER_ID =
+        "CUS2608160002";
+
+    const VEHICLE_ID =
+        "VEH2608160002";
+
+    const BARANG_ID =
+        "BRG000001";
+
+
+    /**
+     * ========================================
+     * 1. CREATE WORK ORDER
+     * ========================================
+     */
+
+    const woResult =
+        WorkOrderService.create({
+
+            customerId :
+                CUSTOMER_ID,
+
+            vehicleId :
+                VEHICLE_ID,
+
+            kilometerMasuk :
+                16000,
+
+            admin :
+                "Developer",
+
+            jenisTransaksi :
+                WorkOrderType.SERVICE,
+
+            prioritas :
+                WorkOrderPriority.NORMAL,
+
+            catatan :
+                "WO Cancel Cascade Stock Reversal V1"
+
+        });
+
+
+    const workOrderId =
+        woResult.workOrderId;
+
+
+    if(!workOrderId){
+
+        throw new Error(
+            "Work Order gagal dibuat."
+        );
+
+    }
+
+
+    Logger.log(
+        "WORK ORDER ID:"
+    );
+
+    Logger.log(
+        workOrderId
+    );
+
+
+    /**
+     * ========================================
+     * 2. CREATE PART A
+     * ========================================
+     */
+
+    const partAResult =
+        WorkOrderPartService.create({
+
+            workOrderId :
+                workOrderId,
+
+            barangId :
+                BARANG_ID,
+
+            workOrderJasaId :
+                "",
+
+            qty :
+                1,
+
+            harga :
+                55000,
+
+            diskon :
+                0,
+
+            catatan :
+                "Cancel Cascade Part A"
+
+        });
+
+
+    const partAId =
+        partAResult.workOrderPartId;
+
+
+    if(!partAId){
+
+        throw new Error(
+            "Part A gagal dibuat."
+        );
+
+    }
+
+
+    Logger.log(
+        "PART A ID:"
+    );
+
+    Logger.log(
+        partAId
+    );
+
+
+    /**
+     * ========================================
+     * 3. CREATE PART B
+     * ========================================
+     */
+
+    const partBResult =
+        WorkOrderPartService.create({
+
+            workOrderId :
+                workOrderId,
+
+            barangId :
+                BARANG_ID,
+
+            workOrderJasaId :
+                "",
+
+            qty :
+                1,
+
+            harga :
+                55000,
+
+            diskon :
+                0,
+
+            catatan :
+                "Cancel Cascade Part B"
+
+        });
+
+
+    const partBId =
+        partBResult.workOrderPartId;
+
+
+    if(!partBId){
+
+        throw new Error(
+            "Part B gagal dibuat."
+        );
+
+    }
+
+
+    Logger.log(
+        "PART B ID:"
+    );
+
+    Logger.log(
+        partBId
+    );
+
+
+    /**
+     * ========================================
+     * 4. PART A → PROGRESS
+     * ========================================
+     */
+
+    const partAProgress =
+        WorkOrderPartService.changeStatus(
+
+            partAId,
+
+            WorkOrderPartStatus.PROGRESS
+
+        );
+
+
+    Logger.log(
+        "PART A OPEN → PROGRESS:"
+    );
+
+    Logger.log(
+        JSON.stringify(
+            partAProgress
+        )
+    );
+
+
+    /**
+     * ========================================
+     * 5. PART B → PROGRESS
+     * ========================================
+     */
+
+    const partBProgress =
+        WorkOrderPartService.changeStatus(
+
+            partBId,
+
+            WorkOrderPartStatus.PROGRESS
+
+        );
+
+
+    Logger.log(
+        "PART B OPEN → PROGRESS:"
+    );
+
+    Logger.log(
+        JSON.stringify(
+            partBProgress
+        )
+    );
+
+
+    /**
+     * ========================================
+     * 6. STOCK BASELINE
+     * ========================================
+     */
+
+    const stockBefore =
+        BarangRepository.getStock(
+            BARANG_ID
+        );
+
+
+    Logger.log(
+        "STOCK BASELINE:"
+    );
+
+    Logger.log(
+        stockBefore
+    );
+
+
+    /**
+     * ========================================
+     * 7. STOCK OUT PART A
+     * ========================================
+     */
+
+    const stockOutA =
+        WorkOrderPartService.consumeStock(
+            partAId
+        );
+
+
+    Logger.log(
+        "PART A STOCK OUT:"
+    );
+
+    Logger.log(
+        JSON.stringify(
+            stockOutA
+        )
+    );
+
+
+    /**
+     * ========================================
+     * 8. STOCK SETELAH PART A OUT
+     * ========================================
+     */
+
+    const stockAfterOut =
+        BarangRepository.getStock(
+            BARANG_ID
+        );
+
+
+    Logger.log(
+        "STOCK AFTER PART A OUT:"
+    );
+
+    Logger.log(
+        stockAfterOut
+    );
+
+
+    /**
+     * ========================================
+     * 9. VALIDASI STOCK BERKURANG
+     * ========================================
+     */
+
+    const stockReducedOnce =
+        stockAfterOut ===
+        stockBefore - 1;
+
+
+    Logger.log(
+        "STOCK BERKURANG 1:"
+    );
+
+    Logger.log(
+        stockReducedOnce
+    );
+
+
+    if(!stockReducedOnce){
+
+        throw new Error(
+            "Stock Part A tidak berkurang 1."
+        );
+
+    }
+
+
+    /**
+     * ========================================
+     * 10. WO DRAFT
+     *     →
+     *     MENUNGGU_DIAGNOSA
+     * ========================================
+     */
+
+    const woDiagnosaResult =
+        WorkOrderService.changeStatus(
+
+            workOrderId,
+
+            WorkOrderStatus.MENUNGGU_DIAGNOSA
+
+        );
+
+
+    Logger.log(
+        "WO DRAFT → MENUNGGU_DIAGNOSA:"
+    );
+
+    Logger.log(
+        JSON.stringify(
+            woDiagnosaResult
+        )
+    );
+
+
+    /**
+     * ========================================
+     * 11. WO MENUNGGU_DIAGNOSA
+     *     →
+     *     MENUNGGU_APPROVAL
+     * ========================================
+     */
+
+    const woApprovalResult =
+        WorkOrderService.changeStatus(
+
+            workOrderId,
+
+            WorkOrderStatus.MENUNGGU_APPROVAL
+
+        );
+
+
+    Logger.log(
+        "WO MENUNGGU_DIAGNOSA → MENUNGGU_APPROVAL:"
+    );
+
+    Logger.log(
+        JSON.stringify(
+            woApprovalResult
+        )
+    );
+
+
+    /**
+     * ========================================
+     * 12. WO MENUNGGU_APPROVAL
+     *     →
+     *     DALAM_PENGERJAAN
+     * ========================================
+     */
+
+    const woProgressResult =
+        WorkOrderService.changeStatus(
+
+            workOrderId,
+
+            WorkOrderStatus.DALAM_PENGERJAAN
+
+        );
+
+
+    Logger.log(
+        "WO MENUNGGU_APPROVAL → DALAM_PENGERJAAN:"
+    );
+
+    Logger.log(
+        JSON.stringify(
+            woProgressResult
+        )
+    );
+
+
+    /**
+     * ========================================
+     * 13. VALIDASI WO SUDAH
+     *     DALAM_PENGERJAAN
+     * ========================================
+     */
+
+    const woBeforeCancel =
+        WorkOrderRepository.findById(
+            workOrderId
+        );
+
+
+    const woStatusBeforeCancel =
+        woBeforeCancel[
+            COL_WORK_ORDER.STATUS
+        ];
+
+
+    Logger.log(
+        "WO STATUS SEBELUM CANCEL:"
+    );
+
+    Logger.log(
+        woStatusBeforeCancel
+    );
+
+
+    if(
+        woStatusBeforeCancel !==
+        WorkOrderStatus.DALAM_PENGERJAAN
+    ){
+
+        throw new Error(
+            "WO tidak berada di DALAM_PENGERJAAN sebelum cancel."
+        );
+
+    }
+
+
+    /**
+     * ========================================
+     * 14. LEDGER SEBELUM CANCEL
+     * ========================================
+     */
+
+    const partALedgersBefore =
+        StockLedgerRepository.findByReferensi(
+            partAId
+        );
+
+
+    const partBLedgersBefore =
+        StockLedgerRepository.findByReferensi(
+            partBId
+        );
+
+
+    const partAOutBefore =
+        partALedgersBefore.filter(
+            function(ledger){
+
+                return (
+                    Number(
+                        ledger[
+                            COL_STOK.QTYKELUAR
+                        ]
+                    ) || 0
+                ) > 0;
+
+            }
+        ).length;
+
+
+    const partAReversalBefore =
+        partALedgersBefore.filter(
+            function(ledger){
+
+                return String(
+                    ledger[
+                        COL_STOK.JENISMUTASI
+                    ] || ""
+                ).trim()
+                ===
+                "REVERSAL";
+
+            }
+        ).length;
+
+
+    const partBOutBefore =
+        partBLedgersBefore.filter(
+            function(ledger){
+
+                return (
+                    Number(
+                        ledger[
+                            COL_STOK.QTYKELUAR
+                        ]
+                    ) || 0
+                ) > 0;
+
+            }
+        ).length;
+
+
+    const partBReversalBefore =
+        partBLedgersBefore.filter(
+            function(ledger){
+
+                return String(
+                    ledger[
+                        COL_STOK.JENISMUTASI
+                    ] || ""
+                ).trim()
+                ===
+                "REVERSAL";
+
+            }
+        ).length;
+
+
+    Logger.log(
+        "PART A OUT BEFORE CANCEL:"
+    );
+
+    Logger.log(
+        partAOutBefore
+    );
+
+
+    Logger.log(
+        "PART A REVERSAL BEFORE CANCEL:"
+    );
+
+    Logger.log(
+        partAReversalBefore
+    );
+
+
+    Logger.log(
+        "PART B OUT BEFORE CANCEL:"
+    );
+
+    Logger.log(
+        partBOutBefore
+    );
+
+
+    Logger.log(
+        "PART B REVERSAL BEFORE CANCEL:"
+    );
+
+    Logger.log(
+        partBReversalBefore
+    );
+
+
+    /**
+     * ========================================
+     * 15. CANCEL WORK ORDER
+     * ========================================
+     */
+
+    let cancelResult = null;
+
+    let cancelError = null;
+
+
+    try{
+
+        cancelResult =
+            WorkOrderService.changeStatus(
+
+                workOrderId,
+
+                WorkOrderStatus.DIBATALKAN
+
+            );
+
+
+        Logger.log(
+            "WO CANCEL RESULT:"
+        );
+
+        Logger.log(
+            JSON.stringify(
+                cancelResult
+            )
+        );
+
+    }
+    catch(error){
+
+        cancelError =
+            error;
+
+        Logger.log(
+            "WO CANCEL ERROR:"
+        );
+
+        Logger.log(
+            error.message
+        );
+
+    }
+
+
+    /**
+     * ========================================
+     * 16. CEK WO STATUS
+     * ========================================
+     */
+
+    const finalWO =
+        WorkOrderRepository.findById(
+            workOrderId
+        );
+
+
+    const finalWOStatus =
+        finalWO[
+            COL_WORK_ORDER.STATUS
+        ];
+
+
+    Logger.log(
+        "FINAL WO STATUS:"
+    );
+
+    Logger.log(
+        finalWOStatus
+    );
+
+
+    /**
+     * ========================================
+     * 17. CEK PART A
+     * ========================================
+     */
+
+    const finalPartA =
+        WorkOrderPartRepository.findById(
+            partAId
+        );
+
+
+    const finalPartAStatus =
+        finalPartA[
+            COL_WORK_ORDER_PART.STATUS
+        ];
+
+
+    Logger.log(
+        "FINAL PART A STATUS:"
+    );
+
+    Logger.log(
+        finalPartAStatus
+    );
+
+
+    /**
+     * ========================================
+     * 18. CEK PART B
+     * ========================================
+     */
+
+    const finalPartB =
+        WorkOrderPartRepository.findById(
+            partBId
+        );
+
+
+    const finalPartBStatus =
+        finalPartB[
+            COL_WORK_ORDER_PART.STATUS
+        ];
+
+
+    Logger.log(
+        "FINAL PART B STATUS:"
+    );
+
+    Logger.log(
+        finalPartBStatus
+    );
+
+
+    /**
+     * ========================================
+     * 19. STOCK SETELAH CANCEL
+     * ========================================
+     */
+
+    const stockAfterCancel =
+        BarangRepository.getStock(
+            BARANG_ID
+        );
+
+
+    Logger.log(
+        "STOCK AFTER WO CANCEL:"
+    );
+
+    Logger.log(
+        stockAfterCancel
+    );
+
+
+    /**
+     * ========================================
+     * 20. LEDGER SETELAH CANCEL
+     * ========================================
+     */
+
+    const partALedgersAfter =
+        StockLedgerRepository.findByReferensi(
+            partAId
+        );
+
+
+    const partBLedgersAfter =
+        StockLedgerRepository.findByReferensi(
+            partBId
+        );
+
+
+    const partAOutAfter =
+        partALedgersAfter.filter(
+            function(ledger){
+
+                return (
+                    Number(
+                        ledger[
+                            COL_STOK.QTYKELUAR
+                        ]
+                    ) || 0
+                ) > 0;
+
+            }
+        ).length;
+
+
+    const partAReversalAfter =
+        partALedgersAfter.filter(
+            function(ledger){
+
+                return String(
+                    ledger[
+                        COL_STOK.JENISMUTASI
+                    ] || ""
+                ).trim()
+                ===
+                "REVERSAL";
+
+            }
+        ).length;
+
+
+    const partBOutAfter =
+        partBLedgersAfter.filter(
+            function(ledger){
+
+                return (
+                    Number(
+                        ledger[
+                            COL_STOK.QTYKELUAR
+                        ]
+                    ) || 0
+                ) > 0;
+
+            }
+        ).length;
+
+
+    const partBReversalAfter =
+        partBLedgersAfter.filter(
+            function(ledger){
+
+                return String(
+                    ledger[
+                        COL_STOK.JENISMUTASI
+                    ] || ""
+                ).trim()
+                ===
+                "REVERSAL";
+
+            }
+        ).length;
+
+
+    Logger.log(
+        "PART A OUT AFTER:"
+    );
+
+    Logger.log(
+        partAOutAfter
+    );
+
+
+    Logger.log(
+        "PART A REVERSAL AFTER:"
+    );
+
+    Logger.log(
+        partAReversalAfter
+    );
+
+
+    Logger.log(
+        "PART B OUT AFTER:"
+    );
+
+    Logger.log(
+        partBOutAfter
+    );
+
+
+    Logger.log(
+        "PART B REVERSAL AFTER:"
+    );
+
+    Logger.log(
+        partBReversalAfter
+    );
+
+
+    /**
+     * ========================================
+     * 21. VALIDATION
+     * ========================================
+     */
+
+    const woCancelled =
+        finalWOStatus ===
+        WorkOrderStatus.DIBATALKAN;
+
+
+    const partACancelled =
+        finalPartAStatus ===
+        WorkOrderPartStatus.CANCEL;
+
+
+    const partBCancelled =
+        finalPartBStatus ===
+        WorkOrderPartStatus.CANCEL;
+
+
+    const stockRestored =
+        stockAfterCancel ===
+        stockBefore;
+
+
+    const partAOutRemains =
+        partAOutAfter ===
+        1;
+
+
+    const partAReversalCreated =
+        partAReversalAfter ===
+        1;
+
+
+    const partBNoOut =
+        partBOutAfter ===
+        0;
+
+
+    const partBNoReversal =
+        partBReversalAfter ===
+        0;
+
+
+    Logger.log(
+        "WO = DIBATALKAN:"
+    );
+
+    Logger.log(
+        woCancelled
+    );
+
+
+    Logger.log(
+        "PART A = CANCEL:"
+    );
+
+    Logger.log(
+        partACancelled
+    );
+
+
+    Logger.log(
+        "PART B = CANCEL:"
+    );
+
+    Logger.log(
+        partBCancelled
+    );
+
+
+    Logger.log(
+        "STOCK KEMBALI:"
+    );
+
+    Logger.log(
+        stockRestored
+    );
+
+
+    Logger.log(
+        "PART A OUT TETAP ADA:"
+    );
+
+    Logger.log(
+        partAOutRemains
+    );
+
+
+    Logger.log(
+        "PART A REVERSAL = 1:"
+    );
+
+    Logger.log(
+        partAReversalCreated
+    );
+
+
+    Logger.log(
+        "PART B TIDAK ADA OUT:"
+    );
+
+    Logger.log(
+        partBNoOut
+    );
+
+
+    Logger.log(
+        "PART B TIDAK ADA REVERSAL:"
+    );
+
+    Logger.log(
+        partBNoReversal
+    );
+
+
+    /**
+     * ========================================
+     * 22. FINAL ASSERTION
+     * ========================================
+     */
+
+    if(
+
+        !woCancelled ||
+
+        !partACancelled ||
+
+        !partBCancelled ||
+
+        !stockRestored ||
+
+        !partAOutRemains ||
+
+        !partAReversalCreated ||
+
+        !partBNoOut ||
+
+        !partBNoReversal
+
+    ){
+
+        throw new Error(
+            "WORK ORDER CANCEL CASCADE STOCK REVERSAL V1 GAGAL."
+        );
+
+    }
+
+
+    Logger.log(
+        "================================"
+    );
+
+    Logger.log(
+        "WORK ORDER CANCEL CASCADE"
+    );
+
+    Logger.log(
+        "STOCK REVERSAL REGRESSION V1 PASS"
+    );
+
+    Logger.log(
+        "================================"
+    );
+
+}
+
+/**
+ * ============================================
+ * TEST: Direct Stock Ledger Reversal
+ * Duplicate Reversal Rejection V1
+ * ============================================
+ *
+ * FLOW:
+ *
+ * OPEN
+ *   ↓
+ * PROGRESS
+ *   ↓
+ * STOCK OUT
+ *   ↓
+ * DIRECT REVERSAL
+ *   ↓
+ * DIRECT REVERSAL AGAIN
+ *   ↓
+ * REJECT
+ *
+ * Validasi:
+ *
+ * 1. Stock berkurang 1 setelah Stock OUT.
+ * 2. Stock kembali baseline setelah reversal pertama.
+ * 3. Ledger OUT tetap ada.
+ * 4. Ledger REVERSAL = 1.
+ * 5. Reversal kedua ditolak.
+ * 6. Stock tidak berubah setelah reversal kedua.
+ * 7. Tidak dibuat REVERSAL kedua.
+ * ============================================
+ */
+
+function testStockLedgerDirectReversalDuplicateRejectionV1(){
+
+    Logger.log(
+        "================================"
+    );
+
+    Logger.log(
+        "DIRECT STOCK REVERSAL"
+    );
+
+    Logger.log(
+        "DUPLICATE REVERSAL REJECTION TEST"
+    );
+
+    Logger.log(
+        "================================"
+    );
+
+
+    /**
+     * ========================================
+     * 1. CREATE WORK ORDER
+     * ========================================
+     */
+
+    const woResult =
+        WorkOrderService.create({
+
+            customerId :
+                "CUS2608160002",
+
+            vehicleId :
+                "VEH2608160002",
+
+            kilometerMasuk :
+                17000,
+
+            admin :
+                "Developer",
+
+            jenisTransaksi :
+                WorkOrderType.SERVICE,
+
+            prioritas :
+                WorkOrderPriority.NORMAL,
+
+            catatan :
+                "Direct Reversal Duplicate Test"
+
+        });
+
+
+    const workOrderId =
+        woResult.workOrderId;
+
+
+    Logger.log(
+        "WORK ORDER ID:"
+    );
+
+    Logger.log(
+        workOrderId
+    );
+
+
+    /**
+     * ========================================
+     * 2. CREATE WORK ORDER PART
+     * ========================================
+     */
+
+    const partResult =
+        WorkOrderPartService.create({
+
+            workOrderId :
+                workOrderId,
+
+            barangId :
+                "BRG000001",
+
+            workOrderJasaId :
+                "",
+
+            qty :
+                1,
+
+            harga :
+                55000,
+
+            diskon :
+                0,
+
+            catatan :
+                "Direct Reversal Duplicate Part"
+
+        });
+
+
+    const workOrderPartId =
+        partResult.workOrderPartId;
+
+
+    if(
+        !workOrderPartId
+    ){
+
+        throw new Error(
+            "Work Order Part gagal dibuat."
+        );
+
+    }
+
+
+    Logger.log(
+        "WORK ORDER PART ID:"
+    );
+
+    Logger.log(
+        workOrderPartId
+    );
+
+
+    /**
+     * ========================================
+     * 3. OPEN → PROGRESS
+     * ========================================
+     */
+
+    WorkOrderPartService.changeStatus(
+
+        workOrderPartId,
+
+        WorkOrderPartStatus.PROGRESS
+
+    );
+
+
+    Logger.log(
+        "OPEN → PROGRESS PASS"
+    );
+
+
+    /**
+     * ========================================
+     * 4. STOCK BASELINE
+     * ========================================
+     */
+
+    const stockBefore =
+        BarangRepository.getStock(
+            "BRG000001"
+        );
+
+
+    Logger.log(
+        "STOCK BASELINE:"
+    );
+
+    Logger.log(
+        stockBefore
+    );
+
+
+    /**
+     * ========================================
+     * 5. STOCK OUT
+     * ========================================
+     */
+
+    const stockOutResult =
+        WorkOrderPartService.consumeStock(
+            workOrderPartId
+        );
+
+
+    Logger.log(
+        "STOCK OUT RESULT:"
+    );
+
+    Logger.log(
+        JSON.stringify(
+            stockOutResult,
+            null,
+            2
+        )
+    );
+
+
+    /**
+     * ========================================
+     * 6. VERIFY STOCK OUT
+     * ========================================
+     */
+
+    const stockAfterOut =
+        BarangRepository.getStock(
+            "BRG000001"
+        );
+
+
+    Logger.log(
+        "STOCK AFTER OUT:"
+    );
+
+    Logger.log(
+        stockAfterOut
+    );
+
+
+    if(
+        stockAfterOut !==
+        stockBefore - 1
+    ){
+
+        throw new Error(
+            "Stock OUT tidak mengurangi stock sebesar 1."
+        );
+
+    }
+
+
+    Logger.log(
+        "STOCK OUT PASS"
+    );
+
+
+    /**
+     * ========================================
+     * 7. VERIFY LEDGER BEFORE REVERSAL
+     * ========================================
+     */
+
+    const ledgersBefore =
+        StockLedgerRepository.findByReferensi(
+            workOrderPartId
+        );
+
+
+    const outCountBefore =
+        ledgersBefore.filter(
+            function(ledger){
+
+                return (
+                    Number(
+                        ledger[
+                            COL_STOK.QTYKELUAR
+                        ]
+                    ) || 0
+                ) > 0;
+
+            }
+        ).length;
+
+
+    const reversalCountBefore =
+        ledgersBefore.filter(
+            function(ledger){
+
+                return String(
+                    ledger[
+                        COL_STOK.JENISMUTASI
+                    ] || ""
+                ).trim()
+                ===
+                "REVERSAL";
+
+            }
+        ).length;
+
+
+    Logger.log(
+        "OUT LEDGER BEFORE REVERSAL:"
+    );
+
+    Logger.log(
+        outCountBefore
+    );
+
+
+    Logger.log(
+        "REVERSAL LEDGER BEFORE REVERSAL:"
+    );
+
+    Logger.log(
+        reversalCountBefore
+    );
+
+
+    if(
+        outCountBefore !== 1 ||
+        reversalCountBefore !== 0
+    ){
+
+        throw new Error(
+            "Ledger sebelum reversal tidak sesuai expectation."
+        );
+
+    }
+
+
+    /**
+     * ========================================
+     * 8. DIRECT REVERSAL #1
+     * ========================================
+     */
+
+    const reversalResult =
+        StockLedgerReversalService
+            .reverseByWorkOrderPartId(
+                workOrderPartId
+            );
+
+
+    Logger.log(
+        "REVERSAL #1 RESULT:"
+    );
+
+    Logger.log(
+        JSON.stringify(
+            reversalResult,
+            null,
+            2
+        )
+    );
+
+
+    if(
+        !reversalResult ||
+        reversalResult.success !== true
+    ){
+
+        throw new Error(
+            "Direct reversal pertama gagal."
+        );
+
+    }
+
+
+    Logger.log(
+        "REVERSAL #1 PASS"
+    );
+
+
+    /**
+     * ========================================
+     * 9. VERIFY STOCK RESTORED
+     * ========================================
+     */
+
+    const stockAfterReversal =
+        BarangRepository.getStock(
+            "BRG000001"
+        );
+
+
+    Logger.log(
+        "STOCK AFTER REVERSAL #1:"
+    );
+
+    Logger.log(
+        stockAfterReversal
+    );
+
+
+    if(
+        stockAfterReversal !==
+        stockBefore
+    ){
+
+        throw new Error(
+            "Stock tidak kembali ke baseline setelah reversal."
+        );
+
+    }
+
+
+    Logger.log(
+        "STOCK RESTORE PASS"
+    );
+
+
+    /**
+     * ========================================
+     * 10. VERIFY REVERSAL LEDGER = 1
+     * ========================================
+     */
+
+    const ledgersAfterReversal =
+        StockLedgerRepository.findByReferensi(
+            workOrderPartId
+        );
+
+
+    const outCountAfter =
+        ledgersAfterReversal.filter(
+            function(ledger){
+
+                return (
+                    Number(
+                        ledger[
+                            COL_STOK.QTYKELUAR
+                        ]
+                    ) || 0
+                ) > 0;
+
+            }
+        ).length;
+
+
+    const reversalCountAfter =
+        ledgersAfterReversal.filter(
+            function(ledger){
+
+                return String(
+                    ledger[
+                        COL_STOK.JENISMUTASI
+                    ] || ""
+                ).trim()
+                ===
+                "REVERSAL";
+
+            }
+        ).length;
+
+
+    Logger.log(
+        "OUT LEDGER AFTER REVERSAL #1:"
+    );
+
+    Logger.log(
+        outCountAfter
+    );
+
+
+    Logger.log(
+        "REVERSAL LEDGER AFTER REVERSAL #1:"
+    );
+
+    Logger.log(
+        reversalCountAfter
+    );
+
+
+    if(
+        outCountAfter !== 1
+    ){
+
+        throw new Error(
+            "Ledger OUT lama tidak tetap ada."
+        );
+
+    }
+
+
+    if(
+        reversalCountAfter !== 1
+    ){
+
+        throw new Error(
+            "Reversal pertama tidak menghasilkan tepat 1 ledger."
+        );
+
+    }
+
+
+    Logger.log(
+        "REVERSAL LEDGER #1 PASS"
+    );
+
+
+    /**
+     * ========================================
+     * 11. SNAPSHOT BEFORE REVERSAL #2
+     * ========================================
+     */
+
+    const stockBeforeReversal2 =
+        BarangRepository.getStock(
+            "BRG000001"
+        );
+
+
+    const ledgersBeforeReversal2 =
+        StockLedgerRepository.findByReferensi(
+            workOrderPartId
+        );
+
+
+    const reversalCountBeforeReversal2 =
+        ledgersBeforeReversal2.filter(
+            function(ledger){
+
+                return String(
+                    ledger[
+                        COL_STOK.JENISMUTASI
+                    ] || ""
+                ).trim()
+                ===
+                "REVERSAL";
+
+            }
+        ).length;
+
+
+    Logger.log(
+        "STOCK BEFORE REVERSAL #2:"
+    );
+
+    Logger.log(
+        stockBeforeReversal2
+    );
+
+
+    Logger.log(
+        "REVERSAL COUNT BEFORE #2:"
+    );
+
+    Logger.log(
+        reversalCountBeforeReversal2
+    );
+
+
+    /**
+     * ========================================
+     * 12. DIRECT REVERSAL #2
+     * ========================================
+     */
+
+    let duplicateReversalRejected =
+        false;
+
+
+    try{
+
+        StockLedgerReversalService
+            .reverseByWorkOrderPartId(
+                workOrderPartId
+            );
+
+
+        Logger.log(
+            "ERROR: DUPLICATE REVERSAL SEHARUSNYA DITOLAK"
+        );
+
+    }
+    catch(error){
+
+        duplicateReversalRejected =
+            true;
+
+
+        Logger.log(
+            "EXPECTED DUPLICATE REVERSAL ERROR:"
+        );
+
+        Logger.log(
+            error.message
+        );
+
+    }
+
+
+    Logger.log(
+        "DUPLICATE REVERSAL DITOLAK:"
+    );
+
+    Logger.log(
+        duplicateReversalRejected
+    );
+
+
+    /**
+     * ========================================
+     * 13. VERIFY STOCK UNCHANGED
+     * ========================================
+     */
+
+    const stockAfterReversal2 =
+        BarangRepository.getStock(
+            "BRG000001"
+        );
+
+
+    Logger.log(
+        "STOCK AFTER REVERSAL #2:"
+    );
+
+    Logger.log(
+        stockAfterReversal2
+    );
+
+
+    const stockUnchanged =
+        stockAfterReversal2 ===
+        stockBeforeReversal2;
+
+
+    Logger.log(
+        "STOCK TIDAK BERUBAH:"
+    );
+
+    Logger.log(
+        stockUnchanged
+    );
+
+
+    /**
+     * ========================================
+     * 14. VERIFY NO SECOND REVERSAL
+     * ========================================
+     */
+
+    const ledgersAfterReversal2 =
+        StockLedgerRepository.findByReferensi(
+            workOrderPartId
+        );
+
+
+    const reversalCountAfterReversal2 =
+        ledgersAfterReversal2.filter(
+            function(ledger){
+
+                return String(
+                    ledger[
+                        COL_STOK.JENISMUTASI
+                    ] || ""
+                ).trim()
+                ===
+                "REVERSAL";
+
+            }
+        ).length;
+
+
+    Logger.log(
+        "REVERSAL COUNT AFTER #2:"
+    );
+
+    Logger.log(
+        reversalCountAfterReversal2
+    );
+
+
+    const noDuplicateReversal =
+        reversalCountAfterReversal2 ===
+        reversalCountBeforeReversal2;
+
+
+    Logger.log(
+        "NO DUPLICATE REVERSAL:"
+    );
+
+    Logger.log(
+        noDuplicateReversal
+    );
+
+
+    /**
+     * ========================================
+     * 15. FINAL ASSERTION
+     * ========================================
+     */
+
+    if(
+        !duplicateReversalRejected
+    ){
+
+        throw new Error(
+            "Direct reversal kedua seharusnya ditolak."
+        );
+
+    }
+
+
+    if(
+        !stockUnchanged
+    ){
+
+        throw new Error(
+            "Stock berubah setelah duplicate direct reversal."
+        );
+
+    }
+
+
+    if(
+        !noDuplicateReversal
+    ){
+
+        throw new Error(
+            "Duplicate direct reversal menghasilkan reversal kedua."
+        );
+
+    }
+
+
+    /**
+     * ========================================
+     * FINAL
+     * ========================================
+     */
+
+    Logger.log(
+        "================================"
+    );
+
+    Logger.log(
+        "DIRECT STOCK REVERSAL"
+    );
+
+    Logger.log(
+        "DUPLICATE REVERSAL REJECTION PASS"
+    );
+
+    Logger.log(
+        "================================"
+    );
+
+}

@@ -45,73 +45,124 @@ const StockLedgerRepository = {
   addHistory(data) {
 
     if (!data) {
+
       throw new Error(
         "Data Stock Ledger wajib diisi."
       );
+
     }
 
+
     if (!data.id) {
+
       throw new Error(
         "ID Mutasi wajib diisi."
       );
+
     }
 
-    if (!data.barangId) {
+
+    /**
+     * ============================================
+     * COMPATIBILITY
+     * ============================================
+     *
+     * InventoryService:
+     *   menggunakan kodeBarang
+     *
+     * StockLedgerService:
+     *   menggunakan barangId
+     *
+     * Repository menerima keduanya.
+     *
+     * Prioritas:
+     *   1. kodeBarang
+     *   2. barangId
+     * ============================================
+     */
+
+    const kodeBarang =
+      String(
+        data.kodeBarang ||
+        data.barangId ||
+        ""
+      ).trim();
+
+
+    if (!kodeBarang) {
+
       throw new Error(
-        "Barang ID wajib diisi."
+        "Kode Barang / Barang ID wajib diisi."
       );
+
     }
 
-    const sh = this.sheet();
+
+    const sh =
+      this.sheet();
+
 
     sh.appendRow([
 
       // A - IDMutasi
       data.id,
 
+
       // B - Tanggal
       data.tanggal,
+
 
       // C - Jam
       data.jam,
 
-      // D - Barang ID
-      data.barangId,
+
+      // D - KodeBarang
+      kodeBarang,
+
 
       // E - NamaBarang
-      data.namaBarang,
+      data.namaBarang || "",
+
 
       // F - JenisMutasi
-      data.jenisMutasi,
+      data.jenisMutasi || "",
+
 
       // G - Referensi
-      data.referensi,
+      data.referensi || "",
+
 
       // H - StokAwal
       data.stokAwal,
 
+
       // I - QtyMasuk
-      data.qtyMasuk,
+      data.qtyMasuk || 0,
+
 
       // J - QtyKeluar
-      data.qtyKeluar,
+      data.qtyKeluar || 0,
+
 
       // K - StokAkhir
       data.stokAkhir,
 
+
       // L - Keterangan
-      data.keterangan,
+      data.keterangan || "",
+
 
       // M - Admin
-      data.admin,
+      data.admin || "",
+
 
       // N - CreatedAt
-      data.createdAt
+      data.createdAt ||
+        new Date()
 
     ]);
 
   },
-
 
   /**
    * ============================================

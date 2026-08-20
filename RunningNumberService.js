@@ -47,19 +47,7 @@ function testGenerateSupplierNumber(){
 
 }
 
-function testGenerateCustomerNumber(){
 
-    Logger.log(
-
-        RunningNumberService.generate(
-
-            DocumentType.CUSTOMER
-
-        )
-
-    );
-
-}
 
 function testGenerateCustomerNumber(){
 

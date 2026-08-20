@@ -75,11 +75,11 @@ function getMasterMekanik() {
 
 function testGetMasterMekanik() {
 
-  const data = getMasterMekanik_();
+  const data = getMasterMekanik();
 
-  Logger.log(data);
-
-  SpreadsheetApp.getUi().alert(JSON.stringify(data));
+  Logger.log(
+    JSON.stringify(data)
+  );
 
 }
 

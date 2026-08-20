@@ -78,112 +78,164 @@ const WorkOrderPartService = {
      * - hanya mengatur lifecycle status
      * ========================================
      */
-    changeStatus(
-        workOrderPartId,
-        nextStatus
-    ){
+    /**
+ * ========================================
+ * CHANGE STATUS
+ * ========================================
+ *
+ * Mengubah status WorkOrderPart melalui
+ * lifecycle status service.
+ *
+ * CANCEL memiliki lifecycle khusus:
+ *
+ * PROGRESS
+ *    ↓
+ * CANCEL
+ *    ↓
+ * AUTO REVERSAL jika sudah Stock Out
+ *
+ * Status lain menggunakan update biasa.
+ * ========================================
+ */
+changeStatus(
+    workOrderPartId,
+    nextStatus
+){
 
-        /**
-         * ====================================
-         * VALIDASI ID
-         * ====================================
-         */
+    /**
+     * ====================================
+     * 1. VALIDASI ID
+     * ====================================
+     */
 
-        if(!workOrderPartId){
+    if(!workOrderPartId){
 
-            throw new Error(
-                "Work Order Part ID wajib diisi."
-            );
+        throw new Error(
+            "WorkOrderPart ID wajib diisi."
+        );
 
-        }
-
-
-        /**
-         * ====================================
-         * LOAD WORK ORDER PART
-         * ====================================
-         */
-
-        const workOrderPart =
-            WorkOrderPartRepository.findById(
-                workOrderPartId
-            );
-
-
-        if(!workOrderPart){
-
-            throw new Error(
-                "WorkOrderPart tidak ditemukan : " +
-                workOrderPartId
-            );
-
-        }
+    }
 
 
-        /**
-         * ====================================
-         * CURRENT STATUS
-         * ====================================
-         */
+    /**
+     * ====================================
+     * 2. LOAD WORK ORDER PART
+     * ====================================
+     */
 
-        const currentStatus =
-            workOrderPart[
-                COL_WORK_ORDER_PART.STATUS
-            ];
-
-
-        /**
-         * ====================================
-         * VALIDATE TRANSITION
-         * ====================================
-         */
-
-        WorkOrderPartStatusService.validateTransition(
-            currentStatus,
-            nextStatus
+    const workOrderPart =
+        WorkOrderPartRepository.findById(
+            workOrderPartId
         );
 
 
-                /**
-         * ====================================
-         * UPDATE STATUS
-         * ====================================
-         */
+    if(!workOrderPart){
 
-        WorkOrderPartRepository.update({
+        throw new Error(
+            "WorkOrderPart tidak ditemukan : " +
+            workOrderPartId
+        );
 
-            id :
-                workOrderPartId,
-
-            status :
-                nextStatus
-
-        });
+    }
 
 
-        /**
-         * ====================================
-         * RETURN
-         * ====================================
-         */
+    /**
+     * ====================================
+     * 3. CURRENT STATUS
+     * ====================================
+     */
 
-        return {
+    const currentStatus =
+        workOrderPart[
+            COL_WORK_ORDER_PART.STATUS
+        ];
 
-            success :
-                true,
 
-            workOrderPartId :
-                workOrderPartId,
+    /**
+     * ====================================
+     * 4. VALIDATE TRANSITION
+     * ====================================
+     */
 
-            previousStatus :
-                currentStatus,
+    WorkOrderPartStatusService.validateTransition(
+        currentStatus,
+        nextStatus
+    );
 
-            status :
-                nextStatus
 
-        };
+    /**
+     * ====================================
+     * 5. SPECIAL LIFECYCLE: CANCEL
+     * ====================================
+     *
+     * CANCEL tidak boleh langsung
+     * update status.
+     *
+     * Gunakan cancel() agar:
+     *
+     * - Stock Out dicek
+     * - Reversal dilakukan jika perlu
+     * - Stock dikembalikan
+     * - Ledger OUT dipertahankan
+     * - Ledger REVERSAL dibuat
+     * - Baru status menjadi CANCEL
+     */
 
-    },
+    if(
+        nextStatus ===
+        WorkOrderPartStatus.CANCEL
+    ){
+
+        return this.cancel(
+            workOrderPartId
+        );
+
+    }
+
+
+    /**
+     * ====================================
+     * 6. UPDATE STATUS NORMAL
+     * ====================================
+     *
+     * Untuk status selain CANCEL,
+     * gunakan mekanisme update biasa.
+     */
+
+    WorkOrderPartRepository.update({
+
+        id :
+            workOrderPartId,
+
+        status :
+            nextStatus
+
+    });
+
+
+    /**
+     * ====================================
+     * 7. RETURN
+     * ====================================
+     */
+
+    return {
+
+        success :
+            true,
+
+        workOrderPartId :
+            workOrderPartId,
+
+        previousStatus :
+            currentStatus,
+
+        status :
+            nextStatus
+
+    };
+
+},
 
     /**
      * ========================================

@@ -204,6 +204,21 @@ const BarangRepository = {
 
     },
 
+        /**
+     * Mencari barang berdasarkan Kode Barang
+     *
+     * Kode Barang saat ini menggunakan
+     * COL_BARANG.ID
+     */
+    getByKode(
+        kode
+    ){
+
+        return this.findById(
+            kode
+        );
+
+    },
 
     /**
      * Mencari barang berdasarkan barcode
@@ -390,7 +405,164 @@ const BarangRepository = {
 
     },
 
+    /**
+     * ==========================================
+     * Menyimpan Barang Baru
+     * ==========================================
+     */
 
+    save(
+        document
+    ){
+
+        if(
+            !document ||
+            !document.barang
+        ){
+
+            throw new Error(
+                "Document Barang wajib diisi."
+            );
+
+        }
+
+
+        const barang =
+            document.barang;
+
+        const sheet =
+            this.sheet();
+
+
+        // ======================================
+        // CEK DUPLIKAT ID
+        // ======================================
+
+        if(
+            this.exists(
+                barang.id
+            )
+        ){
+
+            throw new Error(
+
+                "ID Barang sudah terdaftar : " +
+
+                barang.id
+
+            );
+
+        }
+
+
+        // ======================================
+        // CEK DUPLIKAT BARCODE
+        // ======================================
+
+        if(
+            this.findRowByBarcode(
+                barang.barcode
+            ) > 0
+        ){
+
+            throw new Error(
+
+                "Barcode Barang sudah terdaftar : " +
+
+                barang.barcode
+
+            );
+
+        }
+
+
+        // ======================================
+        // SUSUN DATA SESUAI COL_BARANG
+        // ======================================
+
+        const row = [
+
+            barang.id,
+
+            barang.barcode,
+
+            barang.kataKunci,
+
+            barang.namaPendek,
+
+            barang.nama,
+
+            barang.kategori,
+
+            barang.subkategori,
+
+            barang.merk,
+
+            barang.kendaraan,
+
+            barang.satuan,
+
+            barang.hargaModal,
+
+            barang.margin,
+
+            barang.hargaJual,
+
+            barang.stok,
+
+            barang.minStok,
+
+            barang.rak,
+
+            barang.supplier,
+
+            barang.status,
+
+            barang.catatan,
+
+            barang.createdAt,
+
+            barang.updatedAt,
+
+            barang.createdBy,
+
+            barang.updatedBy
+
+        ];
+
+
+        // ======================================
+        // SIMPAN
+        // ======================================
+
+        sheet
+            .getRange(
+                sheet.getLastRow() + 1,
+                1,
+                1,
+                COL_BARANG.TOTAL
+            )
+            .setValues([
+                row
+            ]);
+
+
+        Logger.log(
+
+            "[BARANG SAVE] " +
+
+            barang.id +
+
+            " | " +
+
+            barang.nama
+
+        );
+
+
+        return barang;
+
+    },
     /**
      * Mengurangi stok
      */

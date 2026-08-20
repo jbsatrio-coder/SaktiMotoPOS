@@ -668,10 +668,10 @@ function testWorkOrderServiceCompletionGateFailure(){
         WorkOrderService.create({
 
             customerId :
-                "CUS999999",
+                "CUS2608160002",
 
             vehicleId :
-                "VEH2608060003",
+                "VEH2608160002",
 
             kilometerMasuk :
                 16000,
@@ -798,6 +798,20 @@ function testWorkOrderServiceCompletionGateFailure(){
 
     );
 
+        /**
+     * ========================================
+     * 5B. DALAM_PENGERJAAN
+     * → QC
+     * ========================================
+     */
+
+    WorkOrderService.changeStatus(
+
+        workOrderId,
+
+        WorkOrderStatus.QC
+
+    );
 
     /**
      * ========================================
@@ -905,33 +919,43 @@ function testWorkOrderServiceCompletionGateFailure(){
     );
 
 
-    Logger.log(
-        "STATUS TETAP DALAM_PENGERJAAN:"
+   Logger.log(
+    "STATUS TETAP QC:"
     );
 
     Logger.log(
         finalStatus ===
-        WorkOrderStatus.DALAM_PENGERJAAN
+        WorkOrderStatus.QC
     );
 
-        /**
-     * ========================================
-     * 9. FINAL ASSERT
-     * ========================================
-     */
+       /**
+ * ========================================
+ * 9. FINAL ASSERT
+ * ========================================
+ *
+ * Completion Gate harus:
+ *
+ * 1. Menolak penyelesaian karena part
+ *    belum terpenuhi.
+ *
+ * 2. Menghasilkan error.
+ *
+ * 3. WO tetap berada di QC.
+ * ========================================
+ */
 
-    if(
-        completion.canComplete !== false ||
-        !errorDetected ||
-        finalStatus !==
-            WorkOrderStatus.DALAM_PENGERJAAN
-    ){
+if(
+    completion.canComplete !== false ||
+    !errorDetected ||
+    finalStatus !==
+        WorkOrderStatus.QC
+){
 
-        throw new Error(
-            "Completion Gate Failure Test gagal."
-        );
+    throw new Error(
+        "Completion Gate Failure Test gagal."
+    );
 
-    }
+}
 
 
     Logger.log(
@@ -983,10 +1007,10 @@ function testWorkOrderServiceCompletionGateSuccess(){
         WorkOrderService.create({
 
             customerId :
-                "CUS999999",
+                "CUS2608160002",
 
             vehicleId :
-                "VEH2608060003",
+                "VEH2608160002",
 
             kilometerMasuk :
                 16000,
@@ -1232,6 +1256,20 @@ function testWorkOrderServiceCompletionGateSuccess(){
 
     }
 
+        /**
+     * ========================================
+     * 9B. DALAM_PENGERJAAN
+     * → QC
+     * ========================================
+     */
+
+    WorkOrderService.changeStatus(
+
+        workOrderId,
+
+        WorkOrderStatus.QC
+
+    );
 
     /**
      * ========================================
@@ -2478,10 +2516,10 @@ function testWorkOrderServiceCompletionGateJasaFailure(){
         WorkOrderService.create({
 
             customerId :
-                "CUS999999",
+                "CUS2608160002",
 
             vehicleId :
-                "VEH2608060003",
+                "VEH2608160002",
 
             kilometerMasuk :
                 16000,
@@ -4298,6 +4336,217 @@ function testWorkOrderIntegratedLifecycle(){
 
     Logger.log(
         "================================"
+    );
+
+}
+function testWorkOrderV2CreateFromVehicle(){
+
+  Logger.log(
+    "===== WORK ORDER V2 CREATE ====="
+  );
+
+  const hasil =
+    searchKendaraan("BTESTV2001");
+
+  if(
+    !hasil ||
+    hasil.length === 0
+  ){
+
+    throw new Error(
+      "Kendaraan test tidak ditemukan."
+    );
+
+  }
+
+  const vehicle =
+    hasil[0];
+
+  Logger.log(
+    "Vehicle: " +
+    vehicle.idKendaraan
+  );
+
+  Logger.log(
+    "Customer: " +
+    vehicle.idPelanggan
+  );
+
+  const result =
+    WorkOrderService.create({
+
+      jenisTransaksi :
+        WorkOrderType.SERVICE,
+
+      customerId :
+        vehicle.idPelanggan,
+
+      vehicleId :
+        vehicle.idKendaraan,
+
+      kilometerMasuk :
+        Number(vehicle.kilometer || 0),
+
+      prioritas :
+        WorkOrderPriority.NORMAL,
+
+      admin :
+        "TEST ADMIN",
+
+      catatan :
+        "TEST WORK ORDER V2"
+
+    });
+
+  Logger.log(
+    JSON.stringify(
+      result,
+      null,
+      2
+    )
+  );
+
+}
+
+/**
+ * ============================================
+ * INSPECT COMPLETION TEST FIXTURE
+ * ============================================
+ */
+
+function inspectCompletionTestFixture(){
+
+    const customer =
+        CustomerRepository.findById(
+            "CUS000001"
+        );
+
+    const vehicle =
+        VehicleRepository.findById(
+            "VEH2608060003"
+        );
+
+    Logger.log(
+        "================================"
+    );
+
+    Logger.log(
+        "CUSTOMER FIXTURE"
+    );
+
+    Logger.log(
+        "================================"
+    );
+
+    Logger.log(
+        JSON.stringify(
+            customer,
+            null,
+            2
+        )
+    );
+
+
+    Logger.log(
+        "================================"
+    );
+
+    Logger.log(
+        "VEHICLE FIXTURE"
+    );
+
+    Logger.log(
+        "================================"
+    );
+
+    Logger.log(
+        JSON.stringify(
+            vehicle,
+            null,
+            2
+        )
+    );
+
+}
+
+/**
+ * ============================================
+ * INSPECT MASTER CUSTOMER & VEHICLE
+ * ============================================
+ */
+
+function inspectMasterCustomerVehicle(){
+
+    const customers =
+        CustomerRepository.findAll();
+
+    const vehicles =
+        VehicleRepository.findAll();
+
+
+    Logger.log(
+        "================================"
+    );
+
+    Logger.log(
+        "MASTER CUSTOMER"
+    );
+
+    Logger.log(
+        "================================"
+    );
+
+
+    Logger.log(
+        "Jumlah Customer: " +
+        customers.length
+    );
+
+
+    customers.forEach(
+        function(row, index){
+
+            Logger.log(
+                "CUSTOMER #" +
+                (index + 1) +
+                " : " +
+                JSON.stringify(row)
+            );
+
+        }
+    );
+
+
+    Logger.log(
+        "================================"
+    );
+
+    Logger.log(
+        "MASTER VEHICLE"
+    );
+
+    Logger.log(
+        "================================"
+    );
+
+
+    Logger.log(
+        "Jumlah Vehicle: " +
+        vehicles.length
+    );
+
+
+    vehicles.forEach(
+        function(row, index){
+
+            Logger.log(
+                "VEHICLE #" +
+                (index + 1) +
+                " : " +
+                JSON.stringify(row)
+            );
+
+        }
     );
 
 }

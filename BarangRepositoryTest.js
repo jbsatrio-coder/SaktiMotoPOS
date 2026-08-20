@@ -93,3 +93,118 @@ function testSearchBarang(){
     );
 
 }
+
+function testGetByKodeBarang(){
+
+    const result =
+        BarangRepository.getByKode(
+            "BRG000160"
+        );
+
+    Logger.log(
+        JSON.stringify(
+            result,
+            null,
+            2
+        )
+    );
+
+}
+
+function testSaveBarangRepository(){
+
+    const document = {
+
+        barang : {
+
+            id :
+                "BRGTEST999",
+
+            barcode :
+                "199999999",
+
+            kataKunci :
+                "test repository barang",
+
+            namaPendek :
+                "Test Repository",
+
+            nama :
+                "Barang Test Repository",
+
+            kategori :
+                "TEST",
+
+            subkategori :
+                "TEST",
+
+            merk :
+                "TEST",
+
+            kendaraan :
+                "MATIC",
+
+            satuan :
+                "PCS",
+
+            hargaModal :
+                10000,
+
+            margin :
+                0.25,
+
+            hargaJual :
+                13500,
+
+            stok :
+                5,
+
+            minStok :
+                2,
+
+            rak :
+                "TEST",
+
+            supplier :
+                "SUP000001",
+
+            status :
+                "AKTIF",
+
+            catatan :
+                "Test save repository",
+
+            createdAt :
+                new Date(),
+
+            updatedAt :
+                "",
+
+            createdBy :
+                "TEST",
+
+            updatedBy :
+                ""
+
+        }
+
+    };
+
+
+    const result =
+        BarangRepository.save(
+            document
+        );
+
+
+    Logger.log(
+
+        JSON.stringify(
+            result,
+            null,
+            2
+        )
+
+    );
+
+}

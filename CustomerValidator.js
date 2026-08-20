@@ -26,41 +26,45 @@ const CustomerValidator = {
     /**
      * Validasi Create
      */
-    validateCreate(document){
+   validateCreate(document){
 
-        this.validate(document);
+    this.validate(document);
 
-        this.validateDuplicate(document);
+    this.validateDuplicate(document);
 
-    },
+    this.validateNoHP(document);
+
+},
 
     /**
      * Validasi Update
      */
     validateUpdate(document){
 
-        this.validate(document);
+    this.validate(document);
 
-        const customer =
-            document.customer;
+    const customer =
+        document.customer;
 
-        if(
+    if(
 
-            !CustomerRepository.exists(
-                customer.id
-            )
+        !CustomerRepository.exists(
+            customer.id
+        )
 
-        ){
+    ){
 
-            throw new Error(
+        throw new Error(
 
-                "Customer tidak ditemukan."
+            "Customer tidak ditemukan."
 
-            );
+        );
 
-        }
+    }
 
-    },
+    this.validateNoHP(document);
+
+},
 
     /**
      * Validasi ID
@@ -177,6 +181,87 @@ const CustomerValidator = {
         }
 
     },
+
+    /**
+ * ============================================
+ * Validasi Nomor HP
+ *
+ * No HP boleh kosong.
+ *
+ * Jika diisi:
+ * - CREATE : tidak boleh dimiliki customer lain
+ * - UPDATE : tidak boleh dimiliki customer lain
+ * ============================================
+ */
+validateNoHP(document){
+
+    const customer =
+        document.customer;
+
+    const noHP =
+        String(
+            customer.noHP || ""
+        ).trim();
+
+    // No HP optional
+    if(!noHP){
+
+        return;
+
+    }
+
+    const existingCustomers =
+        CustomerRepository.findByPhone(
+            noHP
+        );
+
+    const duplicate =
+        existingCustomers.find(
+            row => {
+
+                const existingNoHP =
+                    String(
+                        row[
+                            COL_PELANGGAN.NOHP
+                        ] || ""
+                    ).trim();
+
+                const existingId =
+                    String(
+                        row[
+                            COL_PELANGGAN.ID
+                        ] || ""
+                    ).trim();
+
+                return (
+
+                    existingNoHP === noHP
+
+                    &&
+
+                    existingId !==
+                        String(
+                            customer.id
+                        ).trim()
+
+                );
+
+            }
+        );
+
+    if(duplicate){
+
+        throw new Error(
+
+            "Nomor HP " +
+            noHP +
+            " sudah terdaftar pada customer lain."
+
+        );
+
+    }
+
+},
 
     /**
      * Validasi Duplicate

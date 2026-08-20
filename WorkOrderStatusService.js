@@ -130,7 +130,7 @@ const WorkOrderStatusService = {
 
                 WorkOrderStatus.MENUNGGU_SPAREPART,
 
-                WorkOrderStatus.SELESAI,
+                WorkOrderStatus.QC,
 
                 WorkOrderStatus.DIBATALKAN
 
@@ -142,6 +142,15 @@ const WorkOrderStatusService = {
                 WorkOrderStatus.DALAM_PENGERJAAN,
 
                 WorkOrderStatus.DIBATALKAN
+
+            ],
+
+
+            [WorkOrderStatus.QC] : [
+
+                WorkOrderStatus.DALAM_PENGERJAAN,
+
+                WorkOrderStatus.SELESAI
 
             ],
 
@@ -270,11 +279,44 @@ const WorkOrderStatusService = {
  * TIDAK mengubah data.
  * ============================================
  */
+/**
+ * ============================================
+ * Validate Work Order Completion
+ * Version : 1.1.0
+ *
+ * Memastikan seluruh pekerjaan pada WO
+ * sudah terpenuhi sebelum status menjadi SELESAI.
+ *
+ * Rule:
+ *
+ * 1. Work Order harus ada
+ * 2. Harus ada minimal satu Jasa atau Part
+ *
+ * 3. Jasa:
+ *      DONE / CANCEL = terpenuhi
+ *      OPEN / PROGRESS = belum selesai
+ *
+ * 4. Part:
+ *      hanya PART AKTIF yang diperiksa
+ *
+ *      Stock Ledger dihitung berdasarkan
+ *      NET STOCK OUT:
+ *
+ *      OUT       = +
+ *      REVERSAL  = -
+ *
+ *      NET QTY harus sama dengan
+ *      Qty WorkOrderPart.
+ *
+ * 5. Tidak mengubah database.
+ *
+ * ============================================
+ */
 canComplete(workOrderId){
 
     /**
      * ========================================
-     * VALIDASI INPUT
+     * 1. VALIDASI INPUT
      * ========================================
      */
 
@@ -289,7 +331,7 @@ canComplete(workOrderId){
 
     /**
      * ========================================
-     * CEK WORK ORDER
+     * 2. CEK WORK ORDER
      * ========================================
      */
 
@@ -311,7 +353,7 @@ canComplete(workOrderId){
 
     /**
      * ========================================
-     * AMBIL JASA
+     * 3. AMBIL JASA
      * ========================================
      */
 
@@ -319,12 +361,12 @@ canComplete(workOrderId){
         WorkOrderJasaRepository
             .findByWorkOrderId(
                 workOrderId
-            );
+            ) || [];
 
 
     /**
      * ========================================
-     * AMBIL PART
+     * 4. AMBIL PART
      * ========================================
      */
 
@@ -332,12 +374,15 @@ canComplete(workOrderId){
         WorkOrderPartRepository
             .findByWorkOrderId(
                 workOrderId
-            );
+            ) || [];
 
 
     /**
      * ========================================
-     * FILTER PART AKTIF
+     * 5. FILTER PART AKTIF
+     * ========================================
+     *
+     * Part CANCEL tidak ikut completion.
      * ========================================
      */
 
@@ -379,7 +424,7 @@ canComplete(workOrderId){
 
     /**
      * ========================================
-     * MINIMAL HARUS ADA PEKERJAAN
+     * 6. MINIMAL HARUS ADA PEKERJAAN
      * ========================================
      */
 
@@ -408,7 +453,10 @@ canComplete(workOrderId){
                     0,
 
                 belumSelesai :
-                    0
+                    0,
+
+                details :
+                    []
 
             },
 
@@ -421,7 +469,10 @@ canComplete(workOrderId){
                     0,
 
                 belumTerpenuhi :
-                    0
+                    0,
+
+                details :
+                    []
 
             }
 
@@ -432,7 +483,7 @@ canComplete(workOrderId){
 
     /**
      * ========================================
-     * VALIDASI JASA
+     * 7. VALIDASI JASA
      * ========================================
      */
 
@@ -503,7 +554,7 @@ canComplete(workOrderId){
 
     /**
      * ========================================
-     * VALIDASI PART
+     * 8. VALIDASI PART
      * ========================================
      */
 
@@ -556,12 +607,24 @@ canComplete(workOrderId){
             StockLedgerRepository
                 .findByReferensi(
                     workOrderPartId
-                );
+                ) || [];
 
 
-        let qtyLedger = 0;
+        /**
+         * ====================================
+         * INITIALIZE LEDGER CALCULATION
+         * ====================================
+         */
+
+        let qtyOut = 0;
+
+        let qtyReversal = 0;
 
         let barangMatch = true;
+
+        let outLedgerCount = 0;
+
+        let reversalLedgerCount = 0;
 
 
         /**
@@ -588,6 +651,12 @@ canComplete(workOrderId){
                 ).trim();
 
 
+            /**
+             * ================================
+             * BARANG ID HARUS SAMA
+             * ================================
+             */
+
             if(
                 ledgerBarangId !==
                 barangId
@@ -598,23 +667,128 @@ canComplete(workOrderId){
             }
 
 
-            qtyLedger +=
+            /**
+             * ================================
+             * JENIS MUTASI
+             * ================================
+             */
+
+            const jenisMutasi =
+                String(
+                    ledger[
+                        COL_STOK.JENISMUTASI
+                    ] || ""
+                ).trim().toUpperCase();
+
+
+            const qty =
                 Number(
                     ledger[
                         COL_STOK.QTYKELUAR
                     ]
                 ) || 0;
 
+
+            /**
+             * ================================
+             * STOCK OUT
+             * ================================
+             */
+
+            if(
+    jenisMutasi ===
+    "SERVICE"
+){
+
+    qtyOut += qty;
+
+    outLedgerCount++;
+
+}
+
+
+           /**
+             * ================================
+             * REVERSAL
+             * ================================
+             */
+
+            if(
+                jenisMutasi ===
+                "REVERSAL"
+            ){
+
+                const qtyMasuk =
+                    Number(
+                        ledger[
+                            COL_STOK.QTYMASUK
+                        ]
+                    ) || 0;
+
+
+                qtyReversal +=
+                    qtyMasuk;
+
+
+                reversalLedgerCount++;
+
+            }
+
+
+            /**
+             * ================================
+             * MUTASI LAIN
+             * ================================
+             *
+             * Tidak dihitung sebagai
+             * pemenuhan Part.
+             * ================================
+             */
+
         }
 
 
+        /**
+         * ====================================
+         * NET STOCK OUT
+         * ====================================
+         *
+         * OUT       = +
+         * REVERSAL  = -
+         * ====================================
+         */
+
+        const qtyNet =
+            qtyOut -
+            qtyReversal;
+
+
+        /**
+         * ====================================
+         * VALIDASI QTY
+         * ====================================
+         */
+
         const qtyMatch =
-            qtyLedger ===
+            qtyNet ===
             qtyWOP;
 
 
+        /**
+         * ====================================
+         * PART VALID
+         * ====================================
+         *
+         * Syarat:
+         *
+         * 1. Barang cocok
+         * 2. Ada Stock OUT
+         * 3. Net Qty sesuai WOP
+         * ====================================
+         */
+
         const valid =
-            ledgers.length > 0 &&
+            outLedgerCount > 0 &&
             barangMatch &&
             qtyMatch;
 
@@ -631,6 +805,12 @@ canComplete(workOrderId){
         }
 
 
+        /**
+         * ====================================
+         * DETAIL
+         * ====================================
+         */
+
         partDetails.push({
 
             workOrderPartId :
@@ -645,8 +825,20 @@ canComplete(workOrderId){
             ledgerCount :
                 ledgers.length,
 
-            qtyLedger :
-                qtyLedger,
+            outLedgerCount :
+                outLedgerCount,
+
+            reversalLedgerCount :
+                reversalLedgerCount,
+
+            qtyOut :
+                qtyOut,
+
+            qtyReversal :
+                qtyReversal,
+
+            qtyNet :
+                qtyNet,
 
             barangMatch :
                 barangMatch,
@@ -664,7 +856,7 @@ canComplete(workOrderId){
 
     /**
      * ========================================
-     * HASIL AKHIR
+     * 9. HASIL AKHIR
      * ========================================
      */
 
@@ -672,6 +864,12 @@ canComplete(workOrderId){
         jasaBelumSelesai === 0 &&
         partBelumTerpenuhi === 0;
 
+
+    /**
+     * ========================================
+     * 10. REASON
+     * ========================================
+     */
 
     let reason = "";
 
@@ -712,6 +910,12 @@ canComplete(workOrderId){
 
     }
 
+
+    /**
+     * ========================================
+     * 11. RETURN
+     * ========================================
+     */
 
     return {
 

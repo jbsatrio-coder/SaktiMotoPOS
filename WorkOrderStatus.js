@@ -16,6 +16,8 @@ const WorkOrderStatus = {
 
     MENUNGGU_SPAREPART : "MENUNGGU_SPAREPART",
 
+    QC : "QC",
+
     SELESAI : "SELESAI",
 
     SUDAH_DIAMBIL : "SUDAH_DIAMBIL",

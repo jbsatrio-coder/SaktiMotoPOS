@@ -192,6 +192,14 @@ function getAllWorkOrder(){
               COL_WORK_ORDER.CATATAN
             ],
 
+          mekanikNama :
+            getMekanikByWorkOrder_(
+            row[
+              COL_WORK_ORDER.ID
+            ]
+            ).join(", "),
+
+            
           dibuatPada :
             row[
               COL_WORK_ORDER.DIBUAT_PADA
@@ -206,6 +214,54 @@ function getAllWorkOrder(){
 
       }
     );
+
+}
+
+/**
+ * ======================================================
+ * MENGAMBIL SATU WORK ORDER
+ * ======================================================
+ */
+
+function getMekanikByWorkOrder_(
+  workOrderId
+){
+
+  const jasaRows =
+    WorkOrderJasaRepository
+      .findByWorkOrderId(
+        workOrderId
+      );
+
+
+  const names = [];
+
+
+  (jasaRows || []).forEach(
+    function(row){
+
+      const nama =
+        String(
+          row[
+            COL_WO_JASA.MEKANIK_NAMA
+          ] || ""
+        ).trim();
+
+
+      if(
+        nama &&
+        !names.includes(nama)
+      ){
+
+        names.push(nama);
+
+      }
+
+    }
+  );
+
+
+  return names;
 
 }
 
@@ -457,6 +513,21 @@ function testGetWorkOrderDetail() {
 
   Logger.log(
     JSON.stringify(data, null, 2)
+  );
+
+}
+
+ function testGetAllWorkOrderDashboard(){
+
+  const data =
+    getAllWorkOrder();
+
+  Logger.log(
+    JSON.stringify(
+      data.slice(0, 5),
+      null,
+      2
+    )
   );
 
 }

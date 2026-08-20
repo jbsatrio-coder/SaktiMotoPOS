@@ -377,6 +377,20 @@ const SHEET_COL_BARANG = {
 
 };
 
+/* =====================================================
+ * MASTER KATEGORI
+ * ===================================================== */
+
+const COL_KATEGORI = {
+
+    ID : 0,
+
+    NAMA : 1,
+
+    TOTAL : 2
+
+};
+
 
 /* =====================================================
  * MASTER JASA
@@ -386,17 +400,22 @@ const COL_JASA = {
 
     ID : 0,
 
+    // MasterJasa menggunakan ID sebagai kode internal jasa.
+    KODE : 0,
+
     NAMA : 1,
 
-    KATEGORI : 2,
+    HARGA : 2,
 
-    HARGA : 3,
+    // Komisi khusus jasa dalam Rupiah.
+    KOMISI : 3,
 
-    KOMISI : 4,
+    ESTIMASI : 4,
 
-    ESTIMASI : 5,
+    STATUS : 5,
 
-    STATUS : 6,
+    // MEKANIK atau JASA
+    MODE_KOMISI : 6,
 
     CATATAN : 7,
 
@@ -405,6 +424,42 @@ const COL_JASA = {
     UPDATED_AT : 9,
 
     TOTAL : 10
+
+};
+
+/* =====================================================
+ * MASTER MERK
+ * ===================================================== */
+
+const COL_MERK = {
+
+    ID : 0,
+
+    NAMA : 1,
+
+    TOTAL : 2
+
+};
+
+/* =====================================================
+ * MASTER MODEL
+ * ===================================================== */
+
+const COL_MODEL = {
+
+    ID : 0,
+
+    MERK_ID : 1,
+
+    NAMA : 2,
+
+    STATUS : 3,
+
+    CREATED_AT : 4,
+
+    UPDATED_AT : 5,
+
+    TOTAL : 6
 
 };
 
@@ -505,6 +560,50 @@ const COL_MEKANIK = {
     URUTAN_TAMPILAN : 11,
 
     TOTAL : 12
+
+};
+
+/* =====================================================
+ * MASTER USER
+ * ===================================================== */
+
+const COL_MASTER_USER = {
+
+    ID : 0,
+
+    EMAIL : 1,
+
+    NAMA : 2,
+
+    ROLE : 3,
+
+    STATUS : 4,
+
+    CREATED_AT : 5,
+
+    UPDATED_AT : 6,
+
+    TOTAL : 7
+
+};
+
+/* =====================================================
+ * ROLE PERMISSION
+ * ===================================================== */
+
+const COL_ROLE_PERMISSION = {
+
+    ID : 0,
+
+    ROLE : 1,
+
+    PERMISSION : 2,
+
+    STATUS : 3,
+
+    UPDATED_AT : 4,
+
+    TOTAL : 5
 
 };
 

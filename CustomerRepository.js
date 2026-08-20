@@ -191,48 +191,124 @@ const CustomerRepository = {
 
     },
 
-    /**
-     * Simpan Customer Baru
-     */
-    save(customerDocument){
+/**
+ * ============================================
+ * Simpan Customer Baru
+ * ============================================
+ */
+save(customerDocument){
 
-        const customer =
-            customerDocument.customer;
+    const customer =
+        customerDocument.customer;
 
-        this.sheet().appendRow([
+    const sh =
+        this.sheet();
 
+    // ============================================
+    // NORMALISASI NO HP
+    // ============================================
+
+    const noHP =
+        String(
+            customer.noHP || ""
+        ).trim();
+
+
+    // ============================================
+    // BARIS BARU
+    // ============================================
+
+    const targetRow =
+        sh.getLastRow() + 1;
+
+
+    // ============================================
+    // PAKSA KOLOM NO HP MENJADI TEXT
+    // SEBELUM DATA DITULIS
+    // ============================================
+
+    sh.getRange(
+        targetRow,
+        SHEET_COL_PELANGGAN.NOHP
+    ).setNumberFormat("@");
+
+
+    // ============================================
+    // SIMPAN CUSTOMER
+    // ============================================
+
+    sh.getRange(
+        targetRow,
+        1,
+        1,
+        9
+    ).setValues([[
+        customer.id,
+        customer.nama,
+        noHP,
+        customer.alamat,
+        customer.tanggalLahir,
+        customer.jenisKelamin,
+        customer.status,
+        customer.catatan,
+        customer.createdAt
+    ]]);
+
+
+    // ============================================
+    // PASTIKAN NO HP TETAP TEXT
+    // ============================================
+
+    sh.getRange(
+        targetRow,
+        SHEET_COL_PELANGGAN.NOHP
+    ).setNumberFormat("@");
+
+    sh.getRange(
+        targetRow,
+        SHEET_COL_PELANGGAN.NOHP
+    ).setValue(noHP);
+
+
+    // ============================================
+    // RETURN CUSTOMER RESULT
+    // ============================================
+
+    return {
+
+        success :
+            true,
+
+        customerId :
             customer.id,
 
+        nama :
             customer.nama,
 
-            customer.noHP,
+        noHP :
+            noHP,
 
+        alamat :
             customer.alamat,
 
+        tanggalLahir :
             customer.tanggalLahir,
 
+        jenisKelamin :
             customer.jenisKelamin,
 
+        status :
             customer.status,
 
+        catatan :
             customer.catatan,
 
-            customer.createdAt,
+        createdAt :
+            customer.createdAt
 
-            customer.updatedAt
+    };
 
-        ]);
-
-        return {
-
-            success : true,
-
-            customerId :
-                customer.id
-
-        };
-
-    },
+},
 
     /**
      * Update Customer

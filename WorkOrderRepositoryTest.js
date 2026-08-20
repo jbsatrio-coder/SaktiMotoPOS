@@ -362,3 +362,31 @@ function testWorkOrderRepositoryUpdateStatus(){
     );
 
 }
+function testFindWorkOrderV2Created(){
+
+    Logger.log(
+        "===== VERIFY WORK ORDER V2 ====="
+    );
+
+    const workOrder =
+        WorkOrderRepository.findById(
+            "WO2608190001"
+        );
+
+    if(!workOrder){
+
+        throw new Error(
+            "WO2608190001 tidak ditemukan."
+        );
+
+    }
+
+    Logger.log(
+        JSON.stringify(
+            workOrder,
+            null,
+            2
+        )
+    );
+
+}

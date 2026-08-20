@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+  <base target="_top">
+
+  <style>
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 16px;
+      color: #222;
+      background: #f7f7f7;
+      font-size: 13px;
+    }
+
+    h2 {
+      margin: 0 0 16px 0;
+      font-size: 20px;
+    }
+
+    .section {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: bold;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+    }
+
+    label {
+      display: block;
+      margin-top: 8px;
+      margin-bottom: 4px;
+      font-size: 11px;
+      font-weight: bold;
+      color: #555;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 13px;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      outline: none;
+      border-color: #888;
+    }
+
+    button {
+      padding: 8px 12px;
+      border: 1px solid #bbb;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+      background: #fff;
+    }
+
+    button:hover {
+      background: #f2f2f2;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    #simpan {
+      margin-top: 4px;
+      width: 100%;
+      padding: 11px;
+      font-size: 13px;
+    }
+
+    #status {
+      margin-top: 10px;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .required {
+      color: #b00000;
+    }
+
+    .muted {
+      color: #777;
+      font-size: 11px;
+    }
+
+    .preview {
+      margin-top: 10px;
+      padding: 10px;
+      background: #f7f7f7;
+      border-radius: 6px;
+      line-height: 1.6;
+    }
+
+    .preview-price {
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+  </style>
+
+</head>
+
+<body>
+
+<h2>🔧 Jasa Baru</h2>
+
+
+<!-- ======================================================
+     INFORMASI JASA
+     ====================================================== -->
+
+<div class="section">
+
+  <div class="section-title">
+    Informasi Jasa
+  </div>
+
+
+  <label>
+    Nama Jasa <span class="required">*</span>
+  </label>
+
+  <input
+    id="nama"
+    type="text"
+    placeholder="Contoh: Service ringan kelistrikan"
+  >
+
+
+  <label>
+    Harga Jasa <span class="required">*</span>
+  </label>
+
+  <input
+    id="harga"
+    type="number"
+    min="0"
+    step="1000"
+    value="0"
+    oninput="previewJasa()"
+  >
+
+
+  <label>
+  Metode Komisi
+</label>
+
+<select
+  id="modeKomisi"
+  onchange="ubahModeKomisi()"
+>
+
+  <option value="MEKANIK" selected>
+    Berdasarkan Mekanik
+  </option>
+
+  <option value="JASA">
+    Berdasarkan Jasa
+  </option>
+
+</select>
+
+
+<div
+  id="komisiJasaSection"
+  style="display:none;"
+>
+
+  <label>
+    Komisi Khusus Jasa
+  </label>
+
+  <input
+    id="komisi"
+    type="number"
+    min="0"
+    step="1000"
+    value="0"
+    oninput="previewJasa()"
+  >
+
+  <div class="muted">
+    Komisi dalam Rupiah yang berlaku untuk jasa ini,
+    terlepas dari mekanik yang mengerjakannya.
+  </div>
+
+</div>
+
+
+<div
+  id="komisiMekanikInfo"
+  class="muted"
+>
+
+  Komisi akan mengikuti NilaiKomisi
+  pada MasterMekanik.
+
+</div>
+
+
+  <label>
+    Estimasi Waktu
+  </label>
+
+  <input
+    id="estimasi"
+    type="text"
+    placeholder="Contoh: 30 menit"
+  >
+
+</div>
+
+
+<!-- ======================================================
+     PREVIEW
+     ====================================================== -->
+
+<div class="section">
+
+  <div class="section-title">
+    Preview
+  </div>
+
+  <div
+    id="preview"
+    class="preview"
+  >
+    Masukkan harga jasa.
+  </div>
+
+</div>
+
+
+<!-- ======================================================
+     STATUS
+     ====================================================== -->
+
+<div class="section">
+
+  <div class="section-title">
+    Informasi Tambahan
+  </div>
+
+
+  <label>
+    Status
+  </label>
+
+  <select id="statusJasa">
+
+    <option value="AKTIF">
+      AKTIF
+    </option>
+
+    <option value="NONAKTIF">
+      NONAKTIF
+    </option>
+
+  </select>
+
+
+  <label>
+    Catatan
+  </label>
+
+  <textarea
+    id="catatan"
+    rows="3"
+    placeholder="Catatan tambahan..."
+  ></textarea>
+
+</div>
+
+
+<!-- ======================================================
+     ACTION
+     ====================================================== -->
+
+<button
+  id="simpan"
+  onclick="simpanJasa()"
+>
+  SIMPAN JASA
+</button>
+
+
+<button
+  style="margin-top:8px;width:100%;"
+  onclick="google.script.host.close()"
+>
+  BATAL
+</button>
+
+
+<div id="status"></div>
+
+
+<script>
+
+
+// ========================================================
+// INITIAL LOAD
+// ========================================================
+
+document.addEventListener(
+  "DOMContentLoaded",
+  function() {
+
+    document
+      .getElementById("nama")
+      .focus();
+
+    previewJasa();
+
+  }
+);
+
+
+// ========================================================
+// PREVIEW JASA
+// ========================================================
+
+function previewJasa() {
+
+  const harga =
+    Number(
+      document.getElementById("harga")
+        .value
+    ) || 0;
+
+
+  const mode =
+    document.getElementById("modeKomisi")
+      .value;
+
+
+  const komisi =
+    Number(
+      document.getElementById("komisi")
+        .value
+    ) || 0;
+
+
+  const preview =
+    document.getElementById("preview");
+
+
+  if (harga <= 0) {
+
+    preview.innerHTML =
+      "Masukkan harga jasa.";
+
+    return;
+
+  }
+
+
+  // ======================================
+  // MODE MEKANIK
+  // ======================================
+
+  if (mode === "MEKANIK") {
+
+    preview.innerHTML =
+
+      "<b>Harga Jasa</b><br>" +
+
+      "Rp" +
+      formatRupiah(harga) +
+
+      "<br><br>" +
+
+      "<b>Metode Komisi:</b> Berdasarkan Mekanik" +
+
+      "<br><br>" +
+
+      "Komisi akan mengikuti " +
+      "<b>NilaiKomisi</b> " +
+      "masing-masing mekanik.";
+
+    return;
+
+  }
+
+
+  // ======================================
+  // MODE JASA
+  // ======================================
+
+  const profitSetelahKomisi =
+    harga -
+    komisi;
+
+
+  preview.innerHTML =
+
+    "<b>Harga Jasa</b><br>" +
+
+    "Rp" +
+    formatRupiah(harga) +
+
+    "<br><br>" +
+
+    "<b>Metode Komisi:</b> Berdasarkan Jasa" +
+
+    "<br>" +
+
+    "Komisi: Rp" +
+    formatRupiah(komisi) +
+
+    "<br>" +
+
+    "Nilai setelah komisi: Rp" +
+    formatRupiah(
+      profitSetelahKomisi
+    ) +
+
+    (
+      komisi > harga
+        ? "<br><br>" +
+          "<b style='color:#b00000;'>" +
+          "PERINGATAN: komisi lebih besar dari harga jasa." +
+          "</b>"
+        : ""
+    );
+
+}
+
+
+// ========================================================
+// FORMAT RUPIAH
+// ========================================================
+
+function formatRupiah(value) {
+
+  const number =
+    Number(value);
+
+  if (!Number.isFinite(number)) {
+
+    return "0";
+
+  }
+
+  return Math.round(number)
+    .toLocaleString("id-ID");
+
+}
+
+
+// ========================================================
+// VALIDASI
+// ========================================================
+
+function validasiForm(data) {
+
+  if (!data.nama.trim()) {
+
+    return "Nama Jasa wajib diisi.";
+
+  }
+
+
+  if (
+    !Number.isFinite(data.harga) ||
+    data.harga <= 0
+  ) {
+
+    return "Harga Jasa harus lebih dari 0.";
+
+  }
+
+
+  if (
+  data.modeKomisi === "JASA"
+) {
+
+  if (
+    !Number.isFinite(data.komisi) ||
+    data.komisi < 0
+  ) {
+
+    return "Komisi Jasa tidak valid.";
+
+  }
+
+
+  if (
+    data.komisi > data.harga
+  ) {
+
+    return "Komisi Jasa tidak boleh lebih besar dari harga jasa.";
+
+  }
+
+}
+
+
+  if (
+    data.status !== "AKTIF" &&
+    data.status !== "NONAKTIF"
+  ) {
+
+    return "Status Jasa tidak valid.";
+
+  }
+
+
+  return "";
+
+}
+
+
+// ========================================================
+// SIMPAN JASA
+// ========================================================
+
+function simpanJasa() {
+
+  const status =
+    document.getElementById("status");
+
+
+  const tombol =
+    document.getElementById("simpan");
+
+
+  const data = {
+
+    modeKomisi:
+     document
+        .getElementById("modeKomisi")
+        .value,
+
+    nama:
+      document
+        .getElementById("nama")
+        .value
+        .trim(),
+
+    harga:
+      Number(
+        document
+          .getElementById("harga")
+          .value
+      ) || 0,
+
+    komisi:
+      Number(
+        document
+          .getElementById("komisi")
+          .value
+      ) || 0,
+
+    estimasi:
+      document
+        .getElementById("estimasi")
+        .value
+        .trim(),
+
+    status:
+      document
+        .getElementById("statusJasa")
+        .value,
+
+    catatan:
+      document
+        .getElementById("catatan")
+        .value
+        .trim()
+
+  };
+
+
+  // ==========================================
+  // VALIDASI
+  // ==========================================
+
+  const error =
+    validasiForm(data);
+
+
+  if (error) {
+
+    status.innerHTML =
+      "<b>VALIDASI:</b> " +
+      error;
+
+    return;
+
+  }
+
+
+  tombol.disabled = true;
+
+  status.innerHTML =
+    "Menyimpan jasa...";
+
+
+  // ==========================================
+  // KIRIM KE APPS SCRIPT
+  // ==========================================
+
+  google.script.run
+
+    .withSuccessHandler(function(result) {
+
+      status.innerHTML =
+
+        "<b>JASA BERHASIL DISIMPAN</b><br><br>" +
+
+        "Kode Jasa: " +
+        result.id +
+
+        "<br>" +
+
+        "Nama: " +
+        result.nama +
+
+        "<br>" +
+
+        "Harga: Rp" +
+        formatRupiah(
+          result.harga
+        ) +
+
+        "<br>" +
+
+        "Komisi: Rp" +
+        formatRupiah(
+          result.komisi
+        ) +
+
+        "<br>" +
+
+        "Estimasi: " +
+        (
+          result.estimasi ||
+          "-"
+        );
+
+
+      tombol.disabled = false;
+
+    })
+
+    .withFailureHandler(function(error) {
+
+      status.innerHTML =
+        "<b>GAGAL:</b> " +
+        error.message;
+
+      tombol.disabled = false;
+
+    })
+
+    .simpanJasaBaru(data);
+
+}
+
+// ========================================================
+// MODE KOMISI
+// ========================================================
+
+function ubahModeKomisi() {
+
+  const mode =
+    document.getElementById("modeKomisi")
+      .value;
+
+
+  const section =
+    document.getElementById(
+      "komisiJasaSection"
+    );
+
+
+  const info =
+    document.getElementById(
+      "komisiMekanikInfo"
+    );
+
+
+  if (mode === "JASA") {
+
+    section.style.display =
+      "block";
+
+    info.style.display =
+      "none";
+
+  }
+
+  else {
+
+    section.style.display =
+      "none";
+
+    info.style.display =
+      "block";
+
+    document.getElementById(
+      "komisi"
+    ).value = 0;
+
+  }
+
+
+  previewJasa();
+
+}
+
+</script>
+
+</body>
+</html>

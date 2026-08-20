@@ -18,6 +18,8 @@ const DocumentType = {
 
     VEHICLE : "VEH",
 
+    KELUHAN : "KEL",
+
     WORK_ORDER : "WO",
 
     WORK_ORDER_JASA : "WOJ",
@@ -32,7 +34,9 @@ const DocumentType = {
 
     ATTACHMENT : "ATT",
 
-    ACTIVITY_LOG : "LOG"
+    ACTIVITY_LOG : "LOG",
+
+    ROLE_PERMISSION : "RPR"
 
 };
 

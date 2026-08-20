@@ -40,6 +40,8 @@ function testMekanikFindRow(){
 
 }
 
+
+
 function testMekanikExists(){
 
     Logger.log(
@@ -119,5 +121,62 @@ function testMekanikIsActive(){
     Logger.log(
         "================================"
     );
+
+}
+
+function testMekanikFixture(){
+
+    Logger.log("================================");
+    Logger.log("MEKANIK FIXTURE TEST");
+    Logger.log("================================");
+
+    const mekanikId = "MEC000002";
+
+    const exists =
+        MekanikRepository.exists(
+            mekanikId
+        );
+
+    const active =
+        MekanikRepository.isActive(
+            mekanikId
+        );
+
+    const row =
+        MekanikRepository.findById(
+            mekanikId
+        );
+
+    Logger.log("ID:");
+    Logger.log(mekanikId);
+
+    Logger.log("EXISTS:");
+    Logger.log(exists);
+
+    Logger.log("IS ACTIVE:");
+    Logger.log(active);
+
+    Logger.log("ROW:");
+    Logger.log(row);
+
+    if(!exists){
+
+        throw new Error(
+            "MEC000002 tidak ditemukan."
+        );
+
+    }
+
+    if(!active){
+
+        throw new Error(
+            "MEC000002 ditemukan tetapi statusnya bukan AKTIF."
+        );
+
+    }
+
+    Logger.log("================================");
+    Logger.log("MEKANIK FIXTURE TEST PASS");
+    Logger.log("================================");
 
 }

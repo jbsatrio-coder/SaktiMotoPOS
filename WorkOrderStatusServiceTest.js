@@ -157,28 +157,89 @@ function testWorkOrderStatusService(){
      * ========================================
      */
 
-    const test6 =
-        WorkOrderStatusService.canTransition(
+    /**
+ * ========================================
+ * TEST 6
+ * DALAM_PENGERJAAN → QC
+ * ========================================
+ */
 
-            WorkOrderStatus.DALAM_PENGERJAAN,
+const testProgressToQC =
+    WorkOrderStatusService.canTransition(
 
-            WorkOrderStatus.SELESAI
+        WorkOrderStatus.DALAM_PENGERJAAN,
 
-        );
+        WorkOrderStatus.QC
 
-
-    Logger.log(
-        "TEST 6 DALAM_PENGERJAAN → SELESAI:"
     );
 
-    Logger.log(
-        test6
+
+Logger.log(
+    "TEST DALAM_PENGERJAAN → QC:"
+);
+
+Logger.log(
+    testProgressToQC
+);
+
+
+    /**
+ * ========================================
+ * TEST 7
+ * QC → SELESAI
+ * ========================================
+ */
+
+const testQCToSelesai =
+    WorkOrderStatusService.canTransition(
+
+        WorkOrderStatus.QC,
+
+        WorkOrderStatus.SELESAI
+
     );
+
+
+Logger.log(
+    "TEST QC → SELESAI:"
+);
+
+Logger.log(
+    testQCToSelesai
+);
+
+
+/**
+ * ========================================
+ * TEST 8
+ * DALAM_PENGERJAAN → SELESAI
+ *
+ * HARUS DITOLAK
+ * ========================================
+ */
+
+const testProgressToSelesai =
+    WorkOrderStatusService.canTransition(
+
+        WorkOrderStatus.DALAM_PENGERJAAN,
+
+        WorkOrderStatus.SELESAI
+
+    );
+
+
+Logger.log(
+    "TEST DALAM_PENGERJAAN → SELESAI (HARUS FALSE):"
+);
+
+Logger.log(
+    testProgressToSelesai
+);
 
 
     /**
      * ========================================
-     * TEST 7
+     * TEST 9
      * SELESAI → SUDAH_DIAMBIL
      * ========================================
      */
@@ -351,6 +412,125 @@ function testWorkOrderStatusService(){
     );
 
 }
+
+    /**
+     * ========================================
+     * TERMINAL STATE REGRESSION TEST
+     * ========================================
+     *
+     * DIBATALKAN dan SUDAH_DIAMBIL
+     * harus menjadi terminal state.
+     *
+     * Tidak boleh berpindah ke status lain.
+     * ========================================
+     */
+
+    const terminalStatuses = [
+
+        WorkOrderStatus.DIBATALKAN,
+
+        WorkOrderStatus.SUDAH_DIAMBIL
+
+    ];
+
+
+    const allStatuses = [
+
+        WorkOrderStatus.DRAFT,
+
+        WorkOrderStatus.MENUNGGU_DIAGNOSA,
+
+        WorkOrderStatus.MENUNGGU_APPROVAL,
+
+        WorkOrderStatus.DALAM_PENGERJAAN,
+
+        WorkOrderStatus.MENUNGGU_SPAREPART,
+
+        WorkOrderStatus.QC,
+
+        WorkOrderStatus.SELESAI,
+
+        WorkOrderStatus.SUDAH_DIAMBIL,
+
+        WorkOrderStatus.DIBATALKAN
+
+    ];
+
+
+    for(
+        let i = 0;
+        i < terminalStatuses.length;
+        i++
+    ){
+
+        const fromStatus =
+            terminalStatuses[i];
+
+
+        for(
+            let j = 0;
+            j < allStatuses.length;
+            j++
+        ){
+
+            const toStatus =
+                allStatuses[j];
+
+
+            if(
+                fromStatus === toStatus
+            ){
+
+                continue;
+
+            }
+
+
+            const allowed =
+                WorkOrderStatusService.canTransition(
+
+                    fromStatus,
+
+                    toStatus
+
+                );
+
+
+            Logger.log(
+
+                "TERMINAL " +
+                fromStatus +
+                " → " +
+                toStatus +
+                " = " +
+                allowed
+
+            );
+
+
+            if(
+                allowed
+            ){
+
+                throw new Error(
+
+                    "Terminal state tidak boleh berpindah: " +
+                    fromStatus +
+                    " → " +
+                    toStatus
+
+                );
+
+            }
+
+        }
+
+    }
+
+
+    Logger.log(
+        "TERMINAL STATE REGRESSION PASS"
+    );
 
 function testWorkOrderStatusServiceValidate(){
 

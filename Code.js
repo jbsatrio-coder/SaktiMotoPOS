@@ -3671,3 +3671,66 @@ function auditSheetNames(){
   });
 
 }
+
+function getMasterJasaWO(){
+
+  const data =
+    JasaRepository.findAll();
+
+  return data
+    .filter(function(row){
+
+      return String(
+        row[COL_JASA.ID] || ""
+      ).trim() !== "";
+
+    })
+    .filter(function(row){
+
+      return String(
+        row[COL_JASA.STATUS] || ""
+      )
+      .trim()
+      .toUpperCase() === "AKTIF";
+
+    })
+    .map(function(row){
+
+      return {
+
+        id:
+          String(
+            row[COL_JASA.ID] || ""
+          ).trim(),
+
+        nama:
+          String(
+            row[COL_JASA.NAMA] || ""
+          ).trim(),
+
+        harga:
+          Number(
+            row[COL_JASA.HARGA] || 0
+          )
+
+      };
+
+    });
+
+}
+
+function testGetMasterJasaWO(){
+
+  const result =
+    getMasterJasaWO();
+
+  Logger.log(
+    "TOTAL JASA = " +
+    result.length
+  );
+
+  Logger.log(
+    JSON.stringify(result)
+  );
+
+}

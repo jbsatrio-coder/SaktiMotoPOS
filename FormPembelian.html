@@ -4,28 +4,64 @@
   <base target="_top">
 
   <style>
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       font-family: Arial, sans-serif;
-      padding: 18px;
+      margin: 0;
+      padding: 16px;
       color: #222;
+      background: #f7f7f7;
+      font-size: 13px;
     }
 
     h2 {
-      margin-top: 0;
+      margin: 0 0 16px 0;
+      font-size: 20px;
+    }
+
+    .section {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: bold;
+      margin-bottom: 10px;
+      text-transform: uppercase;
     }
 
     label {
       display: block;
-      margin-top: 10px;
+      margin-top: 8px;
       margin-bottom: 4px;
-      font-size: 12px;
+      font-size: 11px;
       font-weight: bold;
+      color: #555;
     }
 
-    input, select, textarea {
+    input,
+    select,
+    textarea {
       width: 100%;
-      box-sizing: border-box;
       padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 13px;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      outline: none;
+      border-color: #888;
     }
 
     .row {
@@ -35,35 +71,120 @@
 
     .col {
       flex: 1;
+      min-width: 0;
     }
 
     button {
-      padding: 9px 14px;
+      padding: 8px 12px;
+      border: 1px solid #bbb;
+      border-radius: 5px;
       cursor: pointer;
       font-weight: bold;
+      background: #fff;
+    }
+
+    button:hover {
+      background: #f2f2f2;
     }
 
     #tambah {
-      margin-top: 14px;
+      margin-top: 10px;
+      width: 100%;
     }
 
     #simpan {
-      margin-top: 18px;
+      margin-top: 14px;
       width: 100%;
-      padding: 12px;
+      padding: 11px;
+      font-size: 13px;
+    }
+
+    .search-box {
+      position: relative;
+    }
+
+    #cariBarang {
+      font-size: 14px;
+      padding: 10px;
+    }
+
+    #hasilBarang {
+      margin-top: 8px;
+      max-height: 230px;
+      overflow-y: auto;
+    }
+
+    .barang-card {
+      padding: 9px;
+      margin-bottom: 6px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      background: #fff;
+      cursor: pointer;
+    }
+
+    .barang-card:hover {
+      background: #f5f5f5;
+      border-color: #aaa;
+    }
+
+    .barang-nama {
+      font-weight: bold;
+      font-size: 13px;
+    }
+
+    .barang-kode {
+      margin-top: 2px;
+      font-size: 10px;
+      color: #777;
+    }
+
+    .barang-detail {
+      margin-top: 3px;
+      font-size: 11px;
+      color: #555;
+    }
+
+    .barang-harga {
+      margin-top: 3px;
+      font-size: 11px;
+    }
+
+    #infoBarang {
+      margin-top: 7px;
+      padding: 8px;
+      font-size: 11px;
+      background: #f7f7f7;
+      border-radius: 5px;
+      line-height: 1.5;
+    }
+
+    #totalArea {
+      margin-top: 10px;
+      text-align: right;
+      font-size: 16px;
+      font-weight: bold;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 18px;
-      font-size: 12px;
+      margin-top: 8px;
+      font-size: 11px;
+      background: #fff;
     }
 
-    th, td {
+    th,
+    td {
       border-bottom: 1px solid #ddd;
       padding: 7px 4px;
       text-align: left;
+      vertical-align: middle;
+    }
+
+    th {
+      font-size: 10px;
+      color: #666;
     }
 
     .angka {
@@ -71,25 +192,27 @@
     }
 
     .hapus {
-      padding: 4px 7px;
-    }
-
-    #totalArea {
-      margin-top: 12px;
-      text-align: right;
-      font-size: 16px;
-      font-weight: bold;
+      padding: 3px 6px;
+      font-size: 10px;
     }
 
     #status {
-      margin-top: 12px;
-      font-size: 13px;
+      margin-top: 10px;
+      font-size: 12px;
+      line-height: 1.5;
     }
 
-    #infoBarang {
-      margin-top: 5px;
+    #formSupplierBaru {
+      padding: 10px;
+      background: #f7f7f7;
+      border-radius: 6px;
+    }
+
+    .muted {
+      color: #777;
       font-size: 11px;
     }
+
   </style>
 </head>
 
@@ -97,140 +220,230 @@
 
 <h2>Pembelian / Stok Masuk</h2>
 
-<div class="row">
+<!-- ======================================================
+     INFORMASI PEMBELIAN
+     ====================================================== -->
 
-  <div class="col">
-   <label>Supplier *</label>
+<div class="section">
 
-<select id="supplier">
-  <option value="">Memuat supplier...</option>
-</select>
-<button
-  type="button"
-  onclick="tampilkanFormSupplier()"
-  style="margin-top:6px;"
->
-  + SUPPLIER BARU
-</button>
+  <div class="section-title">
+    Informasi Pembelian
+  </div>
 
-<div id="formSupplierBaru" style="display:none; margin-top:12px;">
+  <div class="row">
 
-  <label>Nama Supplier *</label>
-  <input id="supplierNama">
+    <div class="col">
 
-  <label>No. HP Supplier</label>
-  <input id="supplierHP">
+      <label>Supplier *</label>
 
-  <label>Alamat</label>
-  <input id="supplierAlamat">
+      <select id="supplier">
+        <option value="">Memuat supplier...</option>
+      </select>
 
-  <label>Nama Sales</label>
-  <input id="supplierSales">
+      <button
+        type="button"
+        onclick="tampilkanFormSupplier()"
+        style="margin-top:6px;"
+      >
+        + SUPPLIER BARU
+      </button>
 
-  <label>No. HP Sales</label>
-  <input id="supplierHPSales">
+    </div>
 
-  <label>Catatan</label>
-  <input id="supplierCatatan">
+    <div class="col">
+
+      <label>No. Faktur</label>
+
+      <input id="noFaktur">
+
+    </div>
+
+  </div>
+
+
+  <label>Admin *</label>
+
+  <input id="admin">
+
+
+  <!-- FORM SUPPLIER BARU -->
+
+  <div
+    id="formSupplierBaru"
+    style="display:none; margin-top:12px;"
+  >
+
+    <label>Nama Supplier *</label>
+    <input id="supplierNama">
+
+    <label>No. HP Supplier</label>
+    <input id="supplierHP">
+
+    <label>Alamat</label>
+    <input id="supplierAlamat">
+
+    <label>Nama Sales</label>
+    <input id="supplierSales">
+
+    <label>No. HP Sales</label>
+    <input id="supplierHPSales">
+
+    <label>Catatan</label>
+    <input id="supplierCatatan">
+
+    <button
+      type="button"
+      onclick="simpanSupplierDariForm()"
+      style="margin-top:10px;"
+    >
+      SIMPAN SUPPLIER
+    </button>
+
+    <button
+      type="button"
+      onclick="tutupFormSupplier()"
+      style="margin-top:6px;"
+    >
+      BATAL
+    </button>
+
+  </div>
+
+</div>
+
+
+<!-- ======================================================
+     TAMBAH BARANG
+     ====================================================== -->
+
+<div class="section">
+
+  <div class="section-title">
+    Tambah Barang
+  </div>
+
+  <label>Cari Barang</label>
+
+  <div class="search-box">
+
+    <input
+      id="cariBarang"
+      type="text"
+      placeholder="Ketik nama, kode, kata kunci, atau model motor..."
+      oninput="filterBarang()"
+      autocomplete="off"
+    >
+
+  </div>
+
+
+  <div
+    id="hasilBarang"
+  ></div>
+
+
+  <!--
+    Tetap menggunakan id="barang".
+    Field ini menyimpan KodeBarang terpilih.
+  -->
+
+  <input
+    id="barang"
+    type="hidden"
+    value=""
+  >
+
+
+  <div id="infoBarang"></div>
+
+
+  <div class="row">
+
+    <div class="col">
+
+      <label>Qty *</label>
+
+      <input
+        id="qty"
+        type="number"
+        min="1"
+        value="1"
+      >
+
+    </div>
+
+
+    <div class="col">
+
+      <label>Harga Beli / pcs *</label>
+
+      <input
+        id="hargaBeli"
+        type="number"
+        min="0"
+        step="1"
+      >
+
+    </div>
+
+  </div>
+
 
   <button
-    type="button"
-    onclick="simpanSupplierDariForm()"
-    style="margin-top:10px;"
+    id="tambah"
+    onclick="tambahItem()"
   >
-    SIMPAN SUPPLIER
-  </button>
-
-  <button
-    type="button"
-    onclick="tutupFormSupplier()"
-    style="margin-top:10px;"
-  >
-    BATAL
+    + TAMBAH ITEM
   </button>
 
 </div>
+
+
+<!-- ======================================================
+     DAFTAR PEMBELIAN
+     ====================================================== -->
+
+<div class="section">
+
+  <div class="section-title">
+    Daftar Pembelian
   </div>
 
-  <div class="col">
-    <label>No. Faktur</label>
-    <input id="noFaktur">
+  <table>
+
+    <thead>
+
+      <tr>
+
+        <th>Barang</th>
+
+        <th class="angka">
+          Qty
+        </th>
+
+        <th class="angka">
+          Harga
+        </th>
+
+        <th class="angka">
+          Subtotal
+        </th>
+
+        <th></th>
+
+      </tr>
+
+    </thead>
+
+    <tbody id="keranjang"></tbody>
+
+  </table>
+
+
+  <div id="totalArea">
+    TOTAL: Rp<span id="grandTotal">0</span>
   </div>
 
-</div>
-
-<label>Admin *</label>
-<input id="admin">
-
-
-<hr style="margin-top:18px">
-
-
-<label>Cari Barang</label>
-
-<input
-  id="cariBarang"
-  type="text"
-  placeholder="Ketik kata kunci, misalnya: oli"
-  oninput="filterBarang()"
->
-
-<label>Barang *</label>
-
-<select id="barang" onchange="barangBerubah()">
-  <option value="">Memuat barang...</option>
-</select>
-
-<div id="infoBarang"></div>
-
-<div class="row">
-
-  <div class="col">
-    <label>Qty *</label>
-    <input
-      id="qty"
-      type="number"
-      min="1"
-      value="1"
-    >
-  </div>
-
-  <div class="col">
-    <label>Harga Beli / pcs *</label>
-    <input
-      id="hargaBeli"
-      type="number"
-      min="0"
-    >
-  </div>
-
-</div>
-
-
-<button id="tambah" onclick="tambahItem()">
-  + TAMBAH ITEM
-</button>
-
-
-<table>
-
-  <thead>
-    <tr>
-      <th>Barang</th>
-      <th class="angka">Qty</th>
-      <th class="angka">Harga</th>
-      <th class="angka">Subtotal</th>
-      <th></th>
-    </tr>
-  </thead>
-
-  <tbody id="keranjang"></tbody>
-
-</table>
-
-
-<div id="totalArea">
-  TOTAL: Rp<span id="grandTotal">0</span>
 </div>
 
 
@@ -311,27 +524,18 @@ google.script.run
 
   .withSuccessHandler(function(data) {
 
-    daftarBarang = data;
+    daftarBarang = Array.isArray(data)
+      ? data
+      : [];
 
-    const select =
-      document.getElementById("barang");
+    // Jangan tampilkan 159 barang saat form pertama dibuka.
+    document.getElementById("hasilBarang")
+      .innerHTML = "";
 
-    select.innerHTML =
-      '<option value="">-- Pilih Barang --</option>';
-
-    data.forEach(function(item) {
-
-      const option =
-        document.createElement("option");
-
-      option.value = item.kode;
-
-      option.textContent =
-        item.kode + " - " + item.nama;
-
-      select.appendChild(option);
-
-    });
+    document.getElementById("infoBarang")
+      .innerHTML =
+        daftarBarang.length +
+        " barang tersedia. Ketik untuk mencari.";
 
   })
 
@@ -353,81 +557,260 @@ function filterBarang() {
       .trim()
       .toLowerCase();
 
-  const select =
+  const hasilContainer =
+    document.getElementById("hasilBarang");
+
+  const info =
+    document.getElementById("infoBarang");
+
+  const inputBarang =
     document.getElementById("barang");
 
-  select.innerHTML =
-    '<option value="">-- Pilih Barang --</option>';
+  // Reset pilihan ketika pencarian berubah
+  inputBarang.value = "";
 
-  // Pecah pencarian menjadi beberapa kata
+  hasilContainer.innerHTML = "";
+
+  // Jangan tampilkan semua barang ketika search kosong.
+  if (!keyword) {
+
+    info.innerHTML =
+      daftarBarang.length +
+      " barang tersedia. Ketik untuk mencari.";
+
+    return;
+  }
+
+  // Pecah pencarian menjadi beberapa kata.
   const kataKunci =
     keyword
       .split(/\s+/)
       .filter(kata => kata !== "");
 
-  const hasil = daftarBarang.filter(function(item) {
+  const hasil =
+    daftarBarang.filter(function(item) {
 
-    // Gabungkan kode + nama sebagai sumber pencarian
-    const teks =
-      (
-        String(item.kode || "") +
-        " " +
-        String(item.nama || "")
-      ).toLowerCase();
+      const teks =
+        [
+          item.kode,
+          item.nama,
+          item.namaPendek,
+          item.kataKunci,
+          item.kompatibilitas
+        ]
+        .map(function(value) {
+          return String(value || "").toLowerCase();
+        })
+        .join(" ");
 
-    // Semua kata harus ditemukan
-    return kataKunci.every(function(kata) {
-      return teks.includes(kata);
+      // Semua kata pencarian harus ditemukan.
+      return kataKunci.every(function(kata) {
+
+        return teks.includes(kata);
+
+      });
+
     });
 
+  info.innerHTML =
+    hasil.length +
+    " barang ditemukan";
+
+  if (hasil.length === 0) {
+
+    hasilContainer.innerHTML =
+      '<div style="' +
+      'padding:12px;' +
+      'border:1px solid #ddd;' +
+      'border-radius:6px;' +
+      'background:#fafafa;' +
+      'color:#777;' +
+      '">' +
+      'Barang tidak ditemukan.' +
+      '</div>';
+
+    return;
+  }
+
+  // Batasi hasil yang ditampilkan agar UI tetap ringan.
+  const hasilTampil =
+    hasil.slice(0, 30);
+
+  hasilTampil.forEach(function(item) {
+
+    const card =
+      document.createElement("div");
+
+    card.style.cssText =
+      "padding:10px;" +
+      "margin-bottom:7px;" +
+      "border:1px solid #ddd;" +
+      "border-radius:7px;" +
+      "background:#fff;" +
+      "cursor:pointer;";
+
+    card.onmouseenter = function() {
+      card.style.background = "#f5f5f5";
+    };
+
+    card.onmouseleave = function() {
+      card.style.background = "#fff";
+    };
+
+    const kompatibilitas =
+      String(
+        item.kompatibilitas || ""
+      ).trim();
+
+    const kompatibilitasText =
+      kompatibilitas
+        ? "Kompatibilitas: " +
+          kompatibilitas
+        : "Kompatibilitas: Universal";
+
+    card.innerHTML =
+
+      '<div style="font-weight:bold;">' +
+        escapeHtml_(item.nama) +
+      '</div>' +
+
+      '<div style="font-size:12px;color:#666;">' +
+        escapeHtml_(item.kode) +
+      '</div>' +
+
+      '<div style="font-size:12px;margin-top:3px;">' +
+        escapeHtml_(kompatibilitasText) +
+      '</div>' +
+
+      '<div style="font-size:12px;margin-top:3px;">' +
+        'Stok: ' +
+        Number(item.stok || 0).toLocaleString("id-ID") +
+        ' | Harga modal: Rp' +
+        formatRupiah_(
+          item.hargaModal || 0
+        ) +
+      '</div>';
+
+    card.onclick = function() {
+
+      pilihBarang(item);
+
+    };
+
+    hasilContainer.appendChild(card);
+
   });
 
+  if (hasil.length > 30) {
 
-  hasil.forEach(function(item) {
+    const more =
+      document.createElement("div");
 
-    const option =
-      document.createElement("option");
+    more.style.cssText =
+      "padding:8px;" +
+      "text-align:center;" +
+      "color:#777;" +
+      "font-size:12px;";
 
-    option.value = item.kode;
+    more.textContent =
+      "Menampilkan 30 dari " +
+      hasil.length +
+      " hasil. Persempit pencarian.";
 
-    option.textContent =
-      item.kode + " - " + item.nama;
-
-    select.appendChild(option);
-
-  });
-
-
-  const info =
-    document.getElementById("infoBarang");
-
-  if (keyword) {
-
-    if (hasil.length > 0) {
-
-      info.innerHTML =
-        hasil.length +
-        " barang ditemukan";
-
-    } else {
-
-      info.innerHTML =
-        "Barang tidak ditemukan";
-
-    }
-
-  } else {
-
-    info.innerHTML = "";
+    hasilContainer.appendChild(more);
 
   }
 
 }
-// ==========================================
-// BARANG DIPILIH
-// ==========================================
+
+
+function pilihBarang(item) {
+
+  const inputBarang =
+    document.getElementById("barang");
+
+  const hasilContainer =
+    document.getElementById("hasilBarang");
+
+  const info =
+    document.getElementById("infoBarang");
+
+  const hargaBeli =
+    document.getElementById("hargaBeli");
+
+  // Simpan KodeBarang.
+  inputBarang.value =
+    item.kode;
+
+  // Tampilkan barang terpilih.
+  info.innerHTML =
+    "<b>" +
+    escapeHtml_(item.nama) +
+    "</b><br>" +
+
+    "Kode: " +
+    escapeHtml_(item.kode) +
+
+    "<br>" +
+
+    "Kompatibilitas: " +
+    escapeHtml_(
+      item.kompatibilitas ||
+      "Universal"
+    ) +
+
+    "<br>" +
+
+    "Stok: " +
+    Number(item.stok || 0)
+      .toLocaleString("id-ID") +
+
+    " | Harga modal: Rp" +
+    formatRupiah_(
+      item.hargaModal || 0
+    );
+
+  // Harga modal menjadi default harga beli.
+  hargaBeli.value =
+    Number(item.hargaModal || 0);
+
+  // Tutup hasil pencarian setelah memilih.
+  hasilContainer.innerHTML = "";
+
+}
+
+
+function formatRupiah_(value) {
+
+  const number =
+    Number(value);
+
+  if (!Number.isFinite(number)) {
+    return "0";
+  }
+
+  return Math.round(number)
+    .toLocaleString("id-ID");
+
+}
+
+
+function escapeHtml_(value) {
+
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+
+}
+
 
 function barangBerubah() {
+
+  // Dipertahankan untuk kompatibilitas
+  // dengan kode lama.
 
   const kode =
     document.getElementById("barang").value;
@@ -437,26 +820,22 @@ function barangBerubah() {
       x => x.kode === kode
     );
 
-  const info =
-    document.getElementById("infoBarang");
-
   if (!item) {
 
-    info.innerHTML = "";
+    document.getElementById("infoBarang")
+      .innerHTML = "";
 
     return;
+
   }
 
-  info.innerHTML =
-    "Stok sekarang: " +
-    item.stok +
-    " | Harga modal: Rp" +
-    Number(item.hargaModal)
-      .toLocaleString("id-ID");
+  pilihBarang(item);
 
 }
 
 
+// ==========================================
+// BARANG DIPILIH
 // ==========================================
 // TAMBAH ITEM KE KERANJANG
 // ==========================================
@@ -556,16 +935,16 @@ function tambahItem() {
 
   // Reset input item
   document.getElementById("cariBarang").value = "";
-document.getElementById("barang").value = "";
-document.getElementById("qty").value = 1;
-document.getElementById("hargaBeli").value = "";
-document.getElementById("infoBarang").innerHTML = "";
+  document.getElementById("barang").value = "";
+  document.getElementById("qty").value = 1;
+  document.getElementById("hargaBeli").value = "";
+  document.getElementById("infoBarang").innerHTML =
+    "Barang berhasil ditambahkan ke keranjang.";
 
-// Kembalikan daftar semua barang
-filterBarang();
+  document.getElementById("hasilBarang").innerHTML = "";
 
-// Fokus kembali ke pencarian
-document.getElementById("cariBarang").focus();
+  // Fokus kembali ke pencarian.
+  document.getElementById("cariBarang").focus();
 
 status.innerHTML = "";
 
@@ -619,13 +998,15 @@ function renderKeranjang() {
       "</td>" +
 
       '<td class="angka">' +
-      Number(item.hargaBeli)
-        .toLocaleString("id-ID") +
+      formatRupiah_(
+        item.hargaBeli
+      ) +
       "</td>" +
 
       '<td class="angka">' +
-      Number(item.subtotal)
-        .toLocaleString("id-ID") +
+      formatRupiah_(
+        item.subtotal
+      ) +
       "</td>" +
 
       '<td>' +
@@ -643,7 +1024,7 @@ function renderKeranjang() {
 
   document.getElementById("grandTotal")
     .textContent =
-      total.toLocaleString("id-ID");
+      formatRupiah_(total);
 
 }
 
@@ -711,7 +1092,7 @@ function simpanPembelianMulti() {
 
 
   // ==========================================
-  // DATA YANG DIKIRIM KE APPS SCRIPT
+  // DATA PURCHASE ENGINE
   // ==========================================
 
   const data = {
@@ -724,7 +1105,22 @@ function simpanPembelianMulti() {
 
     keterangan: keterangan,
 
-    items: items
+    items: items.map(function(item) {
+
+      return {
+
+        kodeBarang:
+          item.kodeBarang,
+
+        qty:
+          Number(item.qty),
+
+        hargaBeli:
+          Number(item.hargaBeli)
+
+      };
+
+    })
 
   };
 
@@ -735,34 +1131,80 @@ function simpanPembelianMulti() {
     "Menyimpan pembelian...";
 
 
+  // ==========================================
+  // PURCHASE ENGINE
+  // ==========================================
+
   google.script.run
 
     .withSuccessHandler(function(result) {
+
+      const totalQty =
+        result.batchResult &&
+        result.batchResult.results
+          ? result.batchResult.results.reduce(
+              function(total, movement) {
+                return total +
+                  Number(movement.qty || 0);
+              },
+              0
+            )
+          : 0;
+
+
+      const total =
+        items.reduce(
+          function(total, item) {
+
+            return total +
+              (
+                Number(item.qty || 0) *
+                Number(item.hargaBeli || 0)
+              );
+
+          },
+          0
+        );
+
 
       status.innerHTML =
         "<b>PEMBELIAN BERHASIL</b><br><br>" +
 
         "No Pembelian: " +
-        result.noPembelian +
+        result.purchaseNumber +
 
-        "<br>Jumlah item: " +
-        result.jumlahItem +
+        "<br>Status: " +
+        result.status +
+
+        "<br>Jumlah Item: " +
+        items.length +
+
+        "<br>Total Qty: " +
+        totalQty +
 
         "<br>Total: Rp" +
-        Number(result.total)
-          .toLocaleString("id-ID");
+        total.toLocaleString("id-ID");
 
 
-      // Kosongkan keranjang
+      // ======================================
+      // RESET KERANJANG
+      // ======================================
+
       items = [];
 
       renderKeranjang();
 
 
-      // Kosongkan input transaksi
+      // ======================================
+      // RESET INPUT TRANSAKSI
+      // ======================================
+
       document.getElementById("supplier").value = "";
+
       document.getElementById("noFaktur").value = "";
+
       document.getElementById("keterangan").value = "";
+
 
       // Admin sengaja tetap
       // supaya tidak perlu mengetik berulang kali
@@ -781,9 +1223,10 @@ function simpanPembelianMulti() {
 
     })
 
-    .simpanPembelianMulti(data);
+    .submitPurchase(data);
 
 }
+
 function tampilkanFormSupplier() {
 
   document.getElementById("formSupplierBaru")

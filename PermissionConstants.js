@@ -1,0 +1,102 @@
+const Permission = {
+
+    // WORK ORDER
+    VIEW_WO :
+        "VIEW_WO",
+
+    CREATE_WO :
+        "CREATE_WO",
+
+    EDIT_WO :
+        "EDIT_WO",
+
+    ASSIGN_MEKANIK :
+        "ASSIGN_MEKANIK",
+
+    CHANGE_STATUS :
+        "CHANGE_STATUS",
+
+    COMPLETE_WO :
+        "COMPLETE_WO",
+
+    CANCEL_WO :
+        "CANCEL_WO",
+
+
+    // MASTER BARANG
+    VIEW_BARANG :
+        "VIEW_BARANG",
+
+    CREATE_BARANG :
+        "CREATE_BARANG",
+
+    EDIT_BARANG :
+        "EDIT_BARANG",
+
+    EDIT_HARGA_JUAL_BARANG :
+        "EDIT_HARGA_JUAL_BARANG",
+
+    EDIT_HARGA_MODAL_BARANG :
+        "EDIT_HARGA_MODAL_BARANG",
+
+    EDIT_STOK_MINIMUM :
+        "EDIT_STOK_MINIMUM",
+
+    DEACTIVATE_BARANG :
+        "DEACTIVATE_BARANG",
+
+
+    // MASTER JASA
+    VIEW_JASA :
+        "VIEW_JASA",
+
+    CREATE_JASA :
+        "CREATE_JASA",
+
+    EDIT_JASA :
+        "EDIT_JASA",
+
+    EDIT_HARGA_JASA :
+        "EDIT_HARGA_JASA",
+
+    DEACTIVATE_JASA :
+        "DEACTIVATE_JASA",
+
+
+    // LAPORAN
+    VIEW_REPORT :
+        "VIEW_REPORT",
+
+    VIEW_FINANCIAL_REPORT :
+        "VIEW_FINANCIAL_REPORT",
+
+    VIEW_SALES_REPORT :
+        "VIEW_SALES_REPORT",
+
+    VIEW_INVENTORY_REPORT :
+        "VIEW_INVENTORY_REPORT",
+
+    VIEW_WORK_ORDER_REPORT :
+        "VIEW_WORK_ORDER_REPORT",
+
+    VIEW_COMMISSION_REPORT :
+        "VIEW_COMMISSION_REPORT",
+
+
+    // USER / ADMIN
+    VIEW_USER :
+        "VIEW_USER",
+
+    CREATE_USER :
+        "CREATE_USER",
+
+    EDIT_USER :
+        "EDIT_USER",
+
+    DISABLE_USER :
+        "DISABLE_USER",
+
+    MANAGE_PERMISSION :
+        "MANAGE_PERMISSION"
+
+};

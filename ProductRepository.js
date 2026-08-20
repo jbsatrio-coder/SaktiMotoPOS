@@ -23,7 +23,7 @@ const ProductRepository = {
       sumber: "BARANG",
       jenis: "BARANG",
 
-      kode: r[COL_BARANG.KODE],
+      kode: r[COL_BARANG.ID],
       barcode: r[COL_BARANG.BARCODE],
       nama: r[COL_BARANG.NAMA],
 
@@ -36,23 +36,21 @@ const ProductRepository = {
     }));
 
   const jasa = JasaRepository
-    .search(keyword)
-    .filter(r => r != null)
-    .map(r => ({
+  .search(keyword)
+  .filter(r => r != null)
+  .map(r => ({
 
-      sumber: "JASA",
-      jenis: "JASA",
+    sumber: "JASA",
+    jenis: "JASA",
 
-      kode: r[COL_JASA.KODE],
-      nama: r[COL_JASA.NAMA],
+    kode: r[COL_JASA.KODE],
+    nama: r[COL_JASA.NAMA],
 
-      kategori: r[COL_JASA.KATEGORI],
+    harga: parseNumber(r[COL_JASA.HARGA]),
+    komisi: parseNumber(r[COL_JASA.KOMISI]),
+    estimasi: r[COL_JASA.ESTIMASI]
 
-      harga: parseNumber(r[COL_JASA.HARGA]),
-      komisi: parseNumber(r[COL_JASA.KOMISI]),
-      estimasi: parseNumber(r[COL_JASA.ESTIMASI])
-
-    }));
+  }));
 
   return [...barang, ...jasa]
     .sort((a, b) => a.nama.localeCompare(b.nama));
@@ -72,7 +70,7 @@ const ProductRepository = {
         sumber: "BARANG",
         jenis: "BARANG",
 
-        kode: barang[COL_BARANG.KODE],
+        kode: barang[COL_BARANG.ID],
         barcode: barang[COL_BARANG.BARCODE],
         nama: barang[COL_BARANG.NAMA],
 
@@ -90,18 +88,16 @@ const ProductRepository = {
     if (jasa) {
 
       return {
-        sumber: "JASA",
-        jenis: "JASA",
+  sumber: "JASA",
+  jenis: "JASA",
 
-        kode: jasa[COL_JASA.KODE],
-        nama: jasa[COL_JASA.NAMA],
+  kode: jasa[COL_JASA.KODE],
+  nama: jasa[COL_JASA.NAMA],
 
-        kategori: jasa[COL_JASA.KATEGORI],
-
-        harga: parseNumber(jasa[COL_JASA.HARGA]),
-        komisi: parseNumber(jasa[COL_JASA.KOMISI]),
-        estimasi: parseNumber(jasa[COL_JASA.ESTIMASI])
-      };
+  harga: parseNumber(jasa[COL_JASA.HARGA]),
+  komisi: parseNumber(jasa[COL_JASA.KOMISI]),
+  estimasi: jasa[COL_JASA.ESTIMASI]
+};
 
     }
 

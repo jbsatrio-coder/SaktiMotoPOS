@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+
+  <style>
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 16px;
+      color: #222;
+      background: #f7f7f7;
+      font-size: 13px;
+    }
+
+    h2 {
+      margin: 0 0 16px 0;
+      font-size: 20px;
+    }
+
+    .section {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: bold;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+    }
+
+    label {
+      display: block;
+      margin-top: 8px;
+      margin-bottom: 4px;
+      font-size: 11px;
+      font-weight: bold;
+      color: #555;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 13px;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      outline: none;
+      border-color: #888;
+    }
+
+    input[readonly] {
+      background: #f3f3f3;
+      color: #666;
+    }
+
+    .row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .col {
+      flex: 1;
+      min-width: 0;
+    }
+
+    button {
+      padding: 8px 12px;
+      border: 1px solid #bbb;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+      background: #fff;
+    }
+
+    button:hover {
+      background: #f2f2f2;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .pricing-result {
+      margin-top: 10px;
+      padding: 10px;
+      background: #f7f7f7;
+      border-radius: 6px;
+      line-height: 1.6;
+    }
+
+    .pricing-highlight {
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .muted {
+      color: #777;
+      font-size: 11px;
+    }
+
+    #simpan {
+      margin-top: 4px;
+      width: 100%;
+      padding: 11px;
+      font-size: 13px;
+    }
+
+    #status {
+      margin-top: 10px;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .required {
+      color: #b00000;
+    }
+
+  </style>
+</head>
+
+<body>
+
+<h2>📦 Barang Baru</h2>
+
+
+<!-- ======================================================
+     INFORMASI BARANG
+     ====================================================== -->
+
+<div class="section">
+
+  <div class="section-title">
+    Informasi Barang
+  </div>
+
+  <label>
+    Nama Barang <span class="required">*</span>
+  </label>
+
+  <input
+    id="nama"
+    type="text"
+    placeholder="Contoh: Federal Matic 10W-40 0.8L"
+  >
+
+
+  <label>
+    Nama Pendek <span class="required">*</span>
+  </label>
+
+  <input
+    id="namaPendek"
+    type="text"
+    placeholder="Contoh: Federal 10W-40"
+  >
+
+
+  <label>
+    Kata Kunci <span class="required">*</span>
+  </label>
+
+  <input
+    id="kataKunci"
+    type="text"
+    placeholder="Contoh: oli oli mesin federal matic"
+  >
+
+  <div class="muted">
+    Gunakan beberapa kata yang biasa digunakan saat mencari barang.
+  </div>
+
+
+  <div class="row">
+
+    <div class="col">
+
+      <label>
+        Kategori <span class="required">*</span>
+      </label>
+
+      <select id="kategori">
+  <option value="">-- Pilih Kategori --</option>
+</select>
+
+    </div>
+
+
+    <div class="col">
+
+      <label>
+        Subkategori
+      </label>
+
+      <input
+        id="subkategori"
+        type="text"
+        placeholder="Contoh: OLI MESIN"
+      >
+
+    </div>
+
+  </div>
+
+
+  <div class="row">
+
+    <div class="col">
+
+      <label>Merk</label>
+
+      <input
+        id="merk"
+        type="text"
+        placeholder="Contoh: FEDERAL"
+      >
+
+    </div>
+
+
+    <div class="col">
+
+      <label>Kendaraan</label>
+
+      <input
+        id="kendaraan"
+        type="text"
+        placeholder="Contoh: MATIC"
+      >
+
+    </div>
+
+  </div>
+
+
+  <label>
+    Satuan <span class="required">*</span>
+  </label>
+
+  <select id="satuan">
+
+    <option value="">-- Pilih Satuan --</option>
+
+    <option value="PCS">PCS</option>
+    <option value="BOTOL">BOTOL</option>
+    <option value="SET">SET</option>
+    <option value="UNIT">UNIT</option>
+    <option value="LITER">LITER</option>
+    <option value="METER">METER</option>
+
+  </select>
+
+</div>
+
+
+<!-- ======================================================
+     PRICING
+     ====================================================== -->
+
+<div class="section">
+
+  <div class="section-title">
+    Harga & Pricing
+  </div>
+
+
+  <div class="row">
+
+    <div class="col">
+
+      <label>
+        Harga Modal <span class="required">*</span>
+      </label>
+
+      <input
+        id="hargaModal"
+        type="number"
+        min="0"
+        step="1"
+        value="0"
+        oninput="previewPricing()"
+      >
+
+    </div>
+
+
+    <div class="col">
+
+      <label>
+        Mode Pricing
+      </label>
+
+      <select
+        id="pricingMode"
+        onchange="ubahModePricing()"
+      >
+
+        <option value="HARGA_JUAL">
+          Gunakan Harga Jual
+        </option>
+
+        <option value="MARGIN">
+          Gunakan Margin
+        </option>
+
+      </select>
+
+    </div>
+
+  </div>
+
+
+  <div id="marginArea">
+
+    <label>
+      Margin %
+    </label>
+
+    <input
+      id="margin"
+      type="number"
+      min="0"
+      max="99"
+      step="0.1"
+      value="25"
+      oninput="previewPricing()"
+    >
+
+    <div class="muted">
+      Contoh 25 berarti margin 25%.
+    </div>
+
+  </div>
+
+
+  <label>
+    Harga Jual <span class="required">*</span>
+  </label>
+
+  <input
+    id="hargaJual"
+    type="number"
+    min="0"
+    step="100"
+    value="0"
+    oninput="previewPricing()"
+  >
+
+
+  <div
+    id="pricingResult"
+    class="pricing-result"
+  >
+    Masukkan harga modal dan harga jual.
+  </div>
+
+</div>
+
+
+<!-- ======================================================
+     PERSEDIAAN
+     ====================================================== -->
+
+<div class="section">
+
+  <div class="section-title">
+    Persediaan
+  </div>
+
+
+  <div class="row">
+
+    <div class="col">
+
+      <label>
+        Stok Awal
+      </label>
+
+      <input
+        id="stok"
+        type="number"
+        min="0"
+        step="1"
+        value="0"
+      >
+
+    </div>
+
+
+    <div class="col">
+
+      <label>
+        Minimum Stok
+      </label>
+
+      <input
+        id="minStok"
+        type="number"
+        min="0"
+        step="1"
+        value="0"
+      >
+
+    </div>
+
+  </div>
+
+
+  <label>Rak</label>
+
+  <input
+    id="rak"
+    type="text"
+    placeholder="Contoh: A-01"
+  >
+
+
+  <label>Supplier</label>
+
+  <select id="supplier">
+
+    <option value="">
+      -- Pilih Supplier --
+    </option>
+
+  </select>
+
+</div>
+
+
+<!-- ======================================================
+     STATUS & CATATAN
+     ====================================================== -->
+
+<div class="section">
+
+  <div class="section-title">
+    Informasi Tambahan
+  </div>
+
+
+  <label>Status</label>
+
+  <select id="statusBarang">
+
+    <option value="AKTIF">
+      AKTIF
+    </option>
+
+    <option value="NONAKTIF">
+      NONAKTIF
+    </option>
+
+  </select>
+
+
+  <label>Catatan</label>
+
+  <textarea
+    id="catatan"
+    rows="3"
+    placeholder="Catatan tambahan..."
+  ></textarea>
+
+
+  <label>Created By</label>
+
+  <input
+    id="createdBy"
+    type="text"
+    placeholder="Nama admin"
+  >
+
+</div>
+
+
+<!-- ======================================================
+     ACTION
+     ====================================================== -->
+
+<button
+  id="simpan"
+  onclick="simpanBarang()"
+>
+  SIMPAN BARANG
+</button>
+
+
+<button
+  style="margin-top:8px;width:100%;"
+  onclick="google.script.host.close()"
+>
+  BATAL
+</button>
+
+
+<div id="status"></div>
+
+
+<script>
+
+
+// ========================================================
+// INITIAL LOAD
+// ========================================================
+
+document.addEventListener(
+  "DOMContentLoaded",
+  function() {
+
+    loadSupplier();
+
+    loadKategori();
+
+    ubahModePricing();
+
+    document
+      .getElementById("nama")
+      .focus();
+
+  }
+);
+
+
+// ========================================================
+// LOAD SUPPLIER
+// ========================================================
+
+function loadSupplier() {
+
+  google.script.run
+
+    .withSuccessHandler(function(data) {
+
+      const select =
+        document.getElementById("supplier");
+
+      select.innerHTML =
+        '<option value="">-- Pilih Supplier --</option>';
+
+      (data || []).forEach(function(item) {
+
+        const option =
+          document.createElement("option");
+
+        option.value =
+          item.id;
+
+        option.textContent =
+          item.id +
+          " - " +
+          item.nama;
+
+        select.appendChild(option);
+
+      });
+
+    })
+
+    .withFailureHandler(function(error) {
+
+      document.getElementById("status")
+        .innerHTML =
+          "Gagal memuat supplier: " +
+          error.message;
+
+    })
+
+    .getDaftarSupplier();
+
+}
+
+
+// ========================================================
+// MODE PRICING
+// ========================================================
+
+function ubahModePricing() {
+
+  const mode =
+    document.getElementById("pricingMode")
+      .value;
+
+  const margin =
+    document.getElementById("margin");
+
+  const hargaJual =
+    document.getElementById("hargaJual");
+
+
+  if (mode === "MARGIN") {
+
+    margin.disabled = false;
+
+    hargaJual.readOnly = true;
+
+    hargaJual.style.background =
+      "#f3f3f3";
+
+  } else {
+
+    margin.disabled = true;
+
+    hargaJual.readOnly = false;
+
+    hargaJual.style.background =
+      "#fff";
+
+  }
+
+
+  previewPricing();
+
+}
+
+
+// ========================================================
+// PREVIEW PRICING
+// ========================================================
+
+function previewPricing() {
+
+  const mode =
+    document.getElementById("pricingMode")
+      .value;
+
+  const hargaModal =
+    Number(
+      document.getElementById("hargaModal")
+        .value
+    ) || 0;
+
+  const marginPercent =
+    Number(
+      document.getElementById("margin")
+        .value
+    ) || 0;
+
+  const hargaJualInput =
+    document.getElementById("hargaJual");
+
+  const result =
+    document.getElementById("pricingResult");
+
+
+  if (hargaModal <= 0) {
+
+    result.innerHTML =
+      "Masukkan harga modal terlebih dahulu.";
+
+    return;
+
+  }
+
+
+  // ======================================================
+  // MODE MARGIN
+  // ======================================================
+
+  if (mode === "MARGIN") {
+
+    if (
+      marginPercent < 0 ||
+      marginPercent >= 100
+    ) {
+
+      result.innerHTML =
+        "Margin harus antara 0% sampai kurang dari 100%.";
+
+      return;
+
+    }
+
+
+    const margin =
+      marginPercent / 100;
+
+
+    const hargaSebelumPembulatan =
+      hargaModal /
+      (1 - margin);
+
+
+    const hargaJual =
+      Math.ceil(
+        hargaSebelumPembulatan / 100
+      ) * 100;
+
+
+    const profit =
+      hargaJual -
+      hargaModal;
+
+
+    const marginAktual =
+      hargaJual > 0
+        ? profit / hargaJual
+        : 0;
+
+
+    hargaJualInput.value =
+      Math.round(hargaJual);
+
+
+    result.innerHTML =
+
+      "<b>Mode Margin</b><br>" +
+
+      "Harga sebelum pembulatan: Rp" +
+      formatRupiah(
+        hargaSebelumPembulatan
+      ) +
+
+      "<br>" +
+
+      "Profit: Rp" +
+      formatRupiah(profit) +
+
+      "<br>" +
+
+      "Margin aktual: " +
+      (marginAktual * 100)
+        .toFixed(2) +
+      "%" +
+
+      "<br><br>" +
+
+      '<span class="pricing-highlight">' +
+      "Harga Jual: Rp" +
+      formatRupiah(hargaJual) +
+      "</span>";
+
+    return;
+
+  }
+
+
+  // ======================================================
+  // MODE HARGA JUAL
+  // ======================================================
+
+  const hargaJual =
+    Number(
+      hargaJualInput.value
+    ) || 0;
+
+
+  if (hargaJual <= 0) {
+
+    result.innerHTML =
+      "Masukkan harga jual.";
+
+    return;
+
+  }
+
+
+  const profit =
+    hargaJual -
+    hargaModal;
+
+
+  const marginAktual =
+    hargaJual > 0
+      ? profit / hargaJual
+      : 0;
+
+
+  result.innerHTML =
+
+    "<b>Mode Harga Pasar</b><br>" +
+
+    "Profit: Rp" +
+    formatRupiah(profit) +
+
+    "<br>" +
+
+    "Margin aktual: " +
+    (marginAktual * 100)
+      .toFixed(2) +
+    "%" +
+
+    (
+      hargaJual < hargaModal
+        ? "<br><b style='color:#b00000;'>" +
+          "PERINGATAN: harga jual di bawah modal." +
+          "</b>"
+        : ""
+    );
+
+}
+
+
+// ========================================================
+// FORMAT RUPIAH
+// ========================================================
+
+function formatRupiah(value) {
+
+  const number =
+    Number(value);
+
+  if (!Number.isFinite(number)) {
+
+    return "0";
+
+  }
+
+  return Math.round(number)
+    .toLocaleString("id-ID");
+
+}
+
+
+// ========================================================
+// VALIDASI
+// ========================================================
+
+function validasiForm(data) {
+
+  if (!data.nama.trim()) {
+
+    return "Nama Barang wajib diisi.";
+
+  }
+
+
+  if (!data.namaPendek.trim()) {
+
+    return "Nama Pendek wajib diisi.";
+
+  }
+
+
+  if (!data.kataKunci.trim()) {
+
+    return "Kata Kunci wajib diisi.";
+
+  }
+
+
+  if (!data.kategori.trim()) {
+
+    return "Kategori wajib diisi.";
+
+  }
+
+
+  if (!data.satuan.trim()) {
+
+    return "Satuan wajib dipilih.";
+
+  }
+
+
+  if (
+    !Number.isFinite(data.hargaModal) ||
+    data.hargaModal < 0
+  ) {
+
+    return "Harga modal tidak valid.";
+
+  }
+
+
+  if (
+    !Number.isFinite(data.hargaJual) ||
+    data.hargaJual <= 0
+  ) {
+
+    return "Harga jual harus lebih dari 0.";
+
+  }
+
+
+  if (
+    !Number.isFinite(data.stok) ||
+    data.stok < 0
+  ) {
+
+    return "Stok tidak valid.";
+
+  }
+
+
+  if (
+    !Number.isFinite(data.minStok) ||
+    data.minStok < 0
+  ) {
+
+    return "Minimum stok tidak valid.";
+
+  }
+
+
+  return "";
+
+}
+
+
+// ========================================================
+// SIMPAN BARANG
+// ========================================================
+
+function simpanBarang() {
+
+  const status =
+    document.getElementById("status");
+
+  const tombol =
+    document.getElementById("simpan");
+
+
+  const mode =
+    document.getElementById("pricingMode")
+      .value;
+
+
+  const marginPercent =
+    Number(
+      document.getElementById("margin").value
+    ) || 0;
+
+
+  const data = {
+
+    nama:
+      document.getElementById("nama")
+        .value.trim(),
+
+    namaPendek:
+      document.getElementById("namaPendek")
+        .value.trim(),
+
+    kataKunci:
+      document.getElementById("kataKunci")
+        .value.trim(),
+
+    kategori:
+      document.getElementById("kategori")
+        .value.trim(),
+
+    subkategori:
+      document.getElementById("subkategori")
+        .value.trim(),
+
+    merk:
+      document.getElementById("merk")
+        .value.trim(),
+
+    kendaraan:
+      document.getElementById("kendaraan")
+        .value.trim(),
+
+    satuan:
+      document.getElementById("satuan")
+        .value.trim(),
+
+    hargaModal:
+      Number(
+        document.getElementById("hargaModal")
+          .value
+      ) || 0,
+
+    margin:
+      mode === "MARGIN"
+        ? marginPercent / 100
+        : undefined,
+
+    hargaJual:
+      Number(
+        document.getElementById("hargaJual")
+          .value
+      ) || 0,
+
+    pricingMode:
+      mode,
+
+    stok:
+      Number(
+        document.getElementById("stok")
+          .value
+      ) || 0,
+
+    minStok:
+      Number(
+        document.getElementById("minStok")
+          .value
+      ) || 0,
+
+    rak:
+      document.getElementById("rak")
+        .value.trim(),
+
+    supplier:
+      document.getElementById("supplier")
+        .value.trim(),
+
+    status:
+      document.getElementById("statusBarang")
+        .value,
+
+    catatan:
+      document.getElementById("catatan")
+        .value.trim(),
+
+    createdBy:
+      document.getElementById("createdBy")
+        .value.trim() ||
+      "ADMIN"
+
+  };
+
+
+  const error =
+    validasiForm(data);
+
+
+  if (error) {
+
+    status.innerHTML =
+      "<b>VALIDASI:</b> " +
+      error;
+
+    return;
+
+  }
+
+
+  tombol.disabled = true;
+
+  status.innerHTML =
+    "Menyimpan barang...";
+
+
+  google.script.run
+
+    .withSuccessHandler(function(result) {
+
+      status.innerHTML =
+
+        "<b>BARANG BERHASIL DISIMPAN</b><br><br>" +
+
+        "Kode Barang: " +
+        result.id +
+
+        "<br>" +
+
+        "Barcode: " +
+        result.barcode +
+
+        "<br>" +
+
+        "Nama: " +
+        result.nama +
+
+        "<br>" +
+
+        "Harga Jual: Rp" +
+        formatRupiah(result.hargaJual) +
+
+        "<br>" +
+
+        "Margin: " +
+        (
+          Number(result.margin || 0) * 100
+        ).toFixed(2) +
+        "%";
+
+
+      tombol.disabled = false;
+
+    })
+
+    .withFailureHandler(function(error) {
+
+      status.innerHTML =
+        "<b>GAGAL:</b> " +
+        error.message;
+
+      tombol.disabled = false;
+
+    })
+
+    .simpanBarangBaru(data);
+
+}
+
+function loadKategori(){
+
+  const select =
+    document.getElementById("kategori");
+
+  select.innerHTML =
+    '<option value="">-- Pilih Kategori --</option>';
+
+  google.script.run
+    .withSuccessHandler(function(data){
+
+      if(!data || !data.length){
+        return;
+      }
+
+      data.forEach(function(kategori){
+
+        const option =
+          document.createElement("option");
+
+        option.value =
+          kategori.nama;
+
+        option.textContent =
+          kategori.nama;
+
+        select.appendChild(option);
+
+      });
+
+    })
+    .withFailureHandler(function(error){
+
+      console.error(
+        "Gagal memuat kategori:",
+        error
+      );
+
+    })
+    .getDaftarKategori();
+
+}
+
+</script>
+
+</body>
+</html>

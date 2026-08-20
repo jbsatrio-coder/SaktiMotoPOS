@@ -90,10 +90,10 @@
 <label>Plat Nomor *</label>
 <input id="plat" placeholder="B 1234 ABC">
 
-<label>Merk</label>
+<label>Merk *</label>
 <input id="merk" placeholder="Honda">
 
-<label>Model</label>
+<label>Model *</label>
 <input id="model" placeholder="Vario 125">
 
 <label>Tahun</label>
@@ -117,63 +117,253 @@
 
 <script>
 
-function simpan() {
+let FORM_SOURCE = "MENU";
 
-  const tombol = document.getElementById("simpan");
-  const status = document.getElementById("status");
-
-  const data = {
-    nama: document.getElementById("nama").value,
-    noHP: document.getElementById("noHP").value,
-    tanggalLahir:
-      document.getElementById("tanggalLahir").value,
-    alamat: document.getElementById("alamat").value,
-
-    plat: document.getElementById("plat").value,
-    merk: document.getElementById("merk").value,
-    model: document.getElementById("model").value,
-    tahun: document.getElementById("tahun").value,
-    warna: document.getElementById("warna").value
-  };
-
-  if (!data.nama.trim()) {
-    status.innerHTML =
-      "Nama pelanggan wajib diisi.";
-    return;
-  }
-
-  if (!data.plat.trim()) {
-    status.innerHTML =
-      "Plat nomor wajib diisi.";
-    return;
-  }
-
-  tombol.disabled = true;
-  status.innerHTML = "Menyimpan...";
+function loadFormSource(){
 
   google.script.run
 
-    .withSuccessHandler(function(result) {
+    .withSuccessHandler(
+      function(source){
 
-      status.innerHTML =
-        "Pelanggan berhasil disimpan.";
+        FORM_SOURCE =
+          source || "MENU";
 
-      setTimeout(function() {
-        google.script.host.close();
-      }, 700);
+      }
+    )
 
-    })
+    .getFormPelangganSource();
 
-    .withFailureHandler(function(error) {
+}
 
-      status.innerHTML =
-        "Gagal: " + error.message;
+loadFormSource();
 
-      tombol.disabled = false;
+/**
+ * ============================================
+ * SIMPAN CUSTOMER + VEHICLE
+ * ============================================
+ */
 
-    })
+function simpan() {
 
-    .simpanPelangganBaru(data);
+  const tombol =
+    document.getElementById("simpan");
+
+  const status =
+    document.getElementById("status");
+
+
+  const data = {
+
+    nama:
+      document
+        .getElementById("nama")
+        .value,
+
+    noHP:
+      document
+        .getElementById("noHP")
+        .value,
+
+    tanggalLahir:
+      document
+        .getElementById("tanggalLahir")
+        .value,
+
+    alamat:
+      document
+        .getElementById("alamat")
+        .value,
+
+
+    plat:
+      document
+        .getElementById("plat")
+        .value,
+
+    merk:
+      document
+        .getElementById("merk")
+        .value,
+
+    model:
+      document
+        .getElementById("model")
+        .value,
+
+    tahun:
+      document
+        .getElementById("tahun")
+        .value,
+
+    warna:
+      document
+        .getElementById("warna")
+        .value
+
+  };
+
+
+  /**
+   * ========================================
+   * VALIDASI
+   * ========================================
+   */
+
+  if(!data.nama.trim()){
+
+    status.innerHTML =
+      "Nama pelanggan wajib diisi.";
+
+    return;
+
+  }
+
+
+  if(!data.plat.trim()){
+
+    status.innerHTML =
+      "Plat nomor wajib diisi.";
+
+    return;
+
+  }
+
+
+  if(!data.merk.trim()){
+
+    status.innerHTML =
+      "Merk kendaraan wajib diisi.";
+
+    return;
+
+  }
+
+
+  if(!data.model.trim()){
+
+    status.innerHTML =
+      "Model kendaraan wajib diisi.";
+
+    return;
+
+  }
+
+
+  /**
+   * ========================================
+   * MULAI SIMPAN
+   * ========================================
+   */
+
+  tombol.disabled = true;
+
+  status.innerHTML =
+    "Menyimpan...";
+
+
+  google.script.run
+
+    .withSuccessHandler(
+      function(result){
+
+        /**
+         * ==================================
+         * DARI WORK ORDER
+         * ==================================
+         */
+
+        if(
+          FORM_SOURCE ===
+          "WORK_ORDER"
+        ){
+
+          google.script.run
+
+            .withSuccessHandler(
+              function(){
+
+                status.innerHTML =
+                  "Pelanggan berhasil disimpan.";
+
+                setTimeout(
+                  function(){
+
+                    google.script.host.close();
+
+                  },
+                  300
+                );
+
+              }
+            )
+
+            .withFailureHandler(
+              function(error){
+
+                status.innerHTML =
+                  "Gagal menyiapkan Work Order: " +
+                  (
+                    error.message ||
+                    error
+                  );
+
+                tombol.disabled = false;
+
+              }
+            )
+
+            .setPendingWorkOrderCustomer(
+              result
+            );
+
+
+          return;
+
+        }
+
+
+        /**
+         * ==================================
+         * DARI MENU UTAMA
+         * ==================================
+         */
+
+        status.innerHTML =
+          "Pelanggan berhasil disimpan.";
+
+
+        setTimeout(
+          function(){
+
+            google.script.host.close();
+
+          },
+          700
+        );
+
+      }
+    )
+
+    .withFailureHandler(
+      function(error){
+
+        status.innerHTML =
+          "Gagal: " +
+          (
+            error.message ||
+            error
+          );
+
+        tombol.disabled = false;
+
+      }
+    )
+
+    .createCustomerWithVehicle(
+      data
+    );
+
 }
 
 </script>

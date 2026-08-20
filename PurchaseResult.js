@@ -10,7 +10,11 @@
 
 const PurchaseResult = {
 
-    create(batchResult, purchaseDocument){
+    create(
+        batchResult,
+        purchaseDocument,
+        status
+    ){
 
         return {
 
@@ -18,6 +22,7 @@ const PurchaseResult = {
                 purchaseDocument.header.nomor,
 
             status :
+                status ||
                 PurchaseStatus.POSTED,
 
             headerSaved : true,

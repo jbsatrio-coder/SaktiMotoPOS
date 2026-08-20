@@ -74,32 +74,59 @@ function updateSummary(data){
   let qc = 0;
   let selesai = 0;
 
+
   (data || []).forEach(function(wo){
 
     const status =
-      String(wo.status || "")
-        .trim()
-        .toUpperCase();
+      String(
+        wo.status || ""
+      )
+      .trim()
+      .toUpperCase();
+
+
+    // ==========================================
+    // MENUNGGU
+    //
+    // Kategori dashboard:
+    // MENUNGGU_DIAGNOSA
+    // MENUNGGU_APPROVAL
+    //
+    // DRAFT TIDAK DIHITUNG
+    // ==========================================
 
     if(
-      status === "DRAFT" ||
-      status === "MENUNGGU" ||
-      status === "DIAGNOSA" ||
-      status === "MENUNGGU APPROVAL"
+      status === "MENUNGGU_DIAGNOSA" ||
+      status === "MENUNGGU_APPROVAL"
     ){
 
       menunggu++;
 
     }
 
+
+    // ==========================================
+    // PROSES
+    //
+    // DALAM_PENGERJAAN
+    // MENUNGGU_SPAREPART
+    // ==========================================
+
     else if(
       status === "DALAM_PENGERJAAN" ||
-      status === "PROSES"
+      status === "MENUNGGU_SPAREPART"
     ){
 
       proses++;
 
     }
+
+
+    // ==========================================
+    // QC
+    //
+    // Disiapkan untuk status QC.
+    // ==========================================
 
     else if(
       status === "QC"
@@ -109,9 +136,13 @@ function updateSummary(data){
 
     }
 
+
+    // ==========================================
+    // SELESAI
+    // ==========================================
+
     else if(
-      status === "SELESAI" ||
-      status === "SIAP DIAMBIL"
+      status === "SELESAI"
     ){
 
       selesai++;
@@ -121,16 +152,31 @@ function updateSummary(data){
   });
 
 
-  document.getElementById("sumMenunggu").textContent =
+  // ==========================================
+  // UPDATE SUMMARY UI
+  // ==========================================
+
+  document.getElementById(
+    "sumMenunggu"
+  ).textContent =
     menunggu;
 
-  document.getElementById("sumProses").textContent =
+
+  document.getElementById(
+    "sumProses"
+  ).textContent =
     proses;
 
-  document.getElementById("sumQC").textContent =
+
+  document.getElementById(
+    "sumQC"
+  ).textContent =
     qc;
 
-  document.getElementById("sumSelesai").textContent =
+
+  document.getElementById(
+    "sumSelesai"
+  ).textContent =
     selesai;
 
 }
@@ -357,129 +403,782 @@ function filterWO() {
  */
 function renderWO(data) {
 
-  const div = document.getElementById("listWO");
+  const div =
+    document.getElementById("listWO");
 
   div.innerHTML = "";
 
-  if (!data || data.length == 0) {
+
+  if(!data || data.length === 0){
 
     div.innerHTML = `
-
       <div class="col-12">
 
         <div class="alert alert-warning">
-
           Tidak ada Work Order
-
         </div>
 
       </div>
-
     `;
 
     return;
 
   }
 
-  data.forEach(function (wo) {
 
-    div.innerHTML += `
+  // ============================================
+// PEMISAHAN STATUS
+//
+// ACTIVE QUEUE:
+// - MENUNGGU_DIAGNOSA
+// - MENUNGGU_APPROVAL
+// - DALAM_PENGERJAAN
+// - MENUNGGU_SPAREPART
+// - SELESAI
+//
+// DRAFT tidak masuk antrean.
+// SUDAH_DIAMBIL dan DIBATALKAN juga tidak.
+//
+// ============================================
 
-    <div class="col-md-6 col-lg-4">
+const activeStatuses = [
 
-      <div class="wo-card p-3">
+  "MENUNGGU_DIAGNOSA",
 
-        <div class="d-flex justify-content-between">
+  "MENUNGGU_APPROVAL",
 
-          <h5 class="text-danger fw-bold">
+  "DALAM_PENGERJAAN",
 
-            ${wo.noWO}
+  "MENUNGGU_SPAREPART",
 
-          </h5>
+  "SELESAI"
 
-          <span class="status ${getStatusClass(wo.status)}">
+];
 
-    ${wo.status}
 
-</span>
+const draftData =
+  data.filter(function(wo){
 
-        </div>
+    const status =
+      String(
+        wo.status || ""
+      )
+      .trim()
+      .toUpperCase();
 
-        <hr>
-
-        <div class="info-label">
-
-          No Polisi
-
-        </div>
-
-        <div class="info-value">
-
-          ${wo.plat}
-
-        </div>
-
-        <br>
-
-        <div class="info-label">
-
-          Pelanggan
-
-        </div>
-
-        <div class="info-value">
-
-          ${wo.nama}
-
-        </div>
-
-        <br>
-
-        <div class="info-label">
-
-          Kendaraan
-
-        </div>
-
-        <div class="info-value">
-
-          ${wo.merk} ${wo.model}
-
-        </div>
-
-        <br>
-
-        <div class="info-label">
-
-          No HP
-
-        </div>
-
-        <div class="info-value">
-
-          ${wo.hp || "-"}
-        </div>
-
-        <br>
-
-        <button
-          class="btn btn-danger btn-detail mt-2"
-          onclick="bukaDetailWO('${wo.noWO}')">
-
-          DETAIL
-
-        </button>
-
-      </div>
-
-    </div>
-
-    `;
+    return status === "DRAFT";
 
   });
 
+
+const visibleData =
+  data.filter(function(wo){
+
+    const status =
+      String(
+        wo.status || ""
+      )
+      .trim()
+      .toUpperCase();
+
+    return activeStatuses.includes(
+      status
+    );
+
+  });
+
+
+// ============================================
+// JUMLAH DRAFT
+// ============================================
+
+const draftCount =
+  draftData.length;
+
+
+  // ============================================
+  // SORTING ANTRIAN
+  //
+  // 1. URGENT lebih dahulu
+  // 2. Dalam priority yang sama,
+  //    WO paling lama lebih dahulu
+  // ============================================
+
+  visibleData.sort(
+    function(a,b){
+
+      const priorityA =
+        String(
+          a.prioritas || ""
+        )
+        .trim()
+        .toUpperCase();
+
+      const priorityB =
+        String(
+          b.prioritas || ""
+        )
+        .trim()
+        .toUpperCase();
+
+
+      const urgentA =
+        priorityA === "URGENT"
+          ? 1
+          : 0;
+
+
+      const urgentB =
+        priorityB === "URGENT"
+          ? 1
+          : 0;
+
+
+      // URGENT selalu di atas NORMAL
+
+      if(
+        urgentA !== urgentB
+      ){
+
+        return urgentB - urgentA;
+
+      }
+
+
+      // ========================================
+      // PRIORITY SAMA
+      // YANG LEBIH LAMA DI ATAS
+      // ========================================
+
+      const timeA =
+        getWOTimeValue(a);
+
+      const timeB =
+        getWOTimeValue(b);
+
+
+      return timeA - timeB;
+
+    }
+  );
+
+
+  if(
+    visibleData.length === 0
+  ){
+
+    div.innerHTML = `
+      <div class="col-12">
+
+        <div class="alert alert-success">
+          Tidak ada Work Order aktif.
+        </div>
+
+      </div>
+    `;
+
+    return;
+
+  }
+
+
+  // ============================================
+  // RENDER CARD
+  // ============================================
+
+  visibleData.forEach(
+    function(wo,index){
+
+      const status =
+        String(
+          wo.status || ""
+        )
+        .trim()
+        .toUpperCase();
+
+
+      const priority =
+        String(
+          wo.prioritas || ""
+        )
+        .trim()
+        .toUpperCase();
+
+
+      const isUrgent =
+        priority === "URGENT";
+
+
+      const masukTime =
+        getWOTimeValue(wo);
+
+
+      const agingText =
+        formatWOAge(
+          masukTime
+        );
+
+
+
+      const nomorAntrian =
+        String(
+          index + 1
+        )
+        .padStart(
+          2,
+          "0"
+        );
+
+
+      // ========================================
+      // PRIORITY BADGE
+      // ========================================
+
+      const priorityHTML =
+        isUrgent
+          ? `
+            <span style="
+              background:#dc3545;
+              color:white;
+              padding:4px 9px;
+              border-radius:20px;
+              font-size:11px;
+              font-weight:700;
+            ">
+              🔴 URGENT
+            </span>
+          `
+          : `
+            <span style="
+              background:#e9ecef;
+              color:#555;
+              padding:4px 9px;
+              border-radius:20px;
+              font-size:11px;
+              font-weight:600;
+            ">
+              NORMAL
+            </span>
+          `;
+
+
+
+      // ========================================
+      // KELUHAN
+      //
+      // Saat ini keluhan disimpan dalam CATATAN
+      // dengan format:
+      //
+      // Keluhan: xxx
+      // Catatan: xxx
+      // ========================================
+
+      const catatan =
+        String(
+          wo.catatan || ""
+        ).trim();
+
+
+      let keluhan =
+        catatan;
+
+
+      if(
+        catatan
+          .toLowerCase()
+          .startsWith("keluhan:")
+      ){
+
+        keluhan =
+          catatan
+            .split("\n")[0]
+            .replace(
+              /^keluhan:\s*/i,
+              ""
+            )
+            .trim();
+
+      }
+
+
+      if(!keluhan){
+
+        keluhan = "-";
+
+      }
+
+
+      // ========================================
+      // MEKANIK
+      // ========================================
+
+      const mekanik =
+        String(
+          wo.mekanikNama || ""
+        ).trim();
+
+
+      // ========================================
+      // CARD
+      // ========================================
+
+      div.innerHTML += `
+
+        <div class="col-md-6 col-lg-4">
+
+          <div class="wo-card p-3">
+
+            <!-- HEADER -->
+
+            <div style="
+              display:flex;
+              justify-content:space-between;
+              align-items:flex-start;
+              gap:10px;
+            ">
+
+              <div>
+
+                <div style="
+                  font-size:24px;
+                  font-weight:800;
+                  color:#dc3545;
+                ">
+                  #${nomorAntrian}
+                </div>
+
+
+                <div style="
+                  font-size:12px;
+                  color:#777;
+                  margin-top:2px;
+                ">
+
+                  ${escapeHtmlWO(
+                    wo.noWO || "-"
+                  )}
+
+                </div>
+
+              </div>
+
+
+              <div style="
+                text-align:right;
+              ">
+
+                <div style="
+                  margin-bottom:5px;
+                ">
+
+                  ${priorityHTML}
+
+
+                </div>
+
+
+                <span class="status ${
+                  getStatusClass(
+                    wo.status
+                  )
+                }">
+
+                  ${escapeHtmlWO(
+                    wo.status || "-"
+                  )}
+
+                </span>
+
+              </div>
+
+            </div>
+
+
+            <hr>
+
+
+            <!-- KENDARAAN -->
+
+            <div class="info-label">
+              Kendaraan
+            </div>
+
+            <div class="info-value">
+
+              ${escapeHtmlWO(
+                (
+                  (wo.merk || "") +
+                  " " +
+                  (wo.model || "")
+                ).trim() || "-"
+              )}
+
+            </div>
+
+
+            <br>
+
+
+            <!-- PLAT -->
+
+            <div class="info-label">
+              No Polisi
+            </div>
+
+            <div class="info-value">
+
+              ${escapeHtmlWO(
+                wo.plat || "-"
+              )}
+
+            </div>
+
+
+            <br>
+
+
+            <!-- PELANGGAN -->
+
+            <div class="info-label">
+              Pelanggan
+            </div>
+
+            <div class="info-value">
+
+              ${escapeHtmlWO(
+                wo.nama || "-"
+              )}
+
+            </div>
+
+
+            <br>
+
+
+            <!-- KELUHAN -->
+
+            <div class="info-label">
+              Keluhan
+            </div>
+
+            <div
+              class="info-value"
+              style="
+                color:#333;
+                line-height:1.45;
+              "
+            >
+
+              ${escapeHtmlWO(
+                keluhan
+              )}
+
+            </div>
+
+
+            <br>
+
+
+            <!-- MEKANIK -->
+
+            <div class="info-label">
+              Mekanik
+            </div>
+
+            <div class="info-value">
+
+              🔧 ${
+                escapeHtmlWO(
+                  mekanik ||
+                  "Belum ditugaskan"
+                )
+              }
+
+            </div>
+
+
+            <br>
+
+
+            <!-- SEJAK MASUK -->
+
+            <div style="
+              display:flex;
+              justify-content:space-between;
+              align-items:center;
+              background:#f8f9fa;
+              padding:9px 10px;
+              border-radius:8px;
+              margin-bottom:12px;
+            ">
+
+              <div>
+
+                <div style="
+                  font-size:11px;
+                  color:#888;
+                ">
+                  MASUK
+                </div>
+
+                <div style="
+                  font-size:12px;
+                  font-weight:600;
+                ">
+
+                  ${formatWOMasuk(wo)}
+
+                </div>
+
+              </div>
+
+
+              <div style="
+                text-align:right;
+              ">
+
+                <div style="
+                  font-size:11px;
+                  color:#888;
+                ">
+                  SEJAK MASUK
+                </div>
+
+                <div style="
+                  font-size:13px;
+                  font-weight:700;
+                ">
+
+                  ⏱ ${agingText}
+ 
+                </div>
+
+              </div>
+
+            </div>
+
+
+            <!-- DETAIL -->
+
+            <button
+              class="btn btn-danger btn-detail mt-2"
+              onclick="bukaDetailWO('${escapeHtmlWO(
+                wo.noWO || ""
+              )}')"
+            >
+
+              DETAIL
+
+            </button>
+
+          </div>
+
+        </div>
+
+      `;
+
+    }
+  );
+
 }
 
+function getWOTimeValue(wo){
+
+  const raw =
+    String(
+      wo.dibuatPada || ""
+    ).trim();
+
+
+  if(!raw){
+
+    return 0;
+
+  }
+
+
+  const value =
+    new Date(raw).getTime();
+
+
+  if(
+    isNaN(value)
+  ){
+
+    return 0;
+
+  }
+
+
+  return value;
+
+}
+
+
+function formatWOAge(
+  masukTime
+){
+
+  if(!masukTime){
+
+    return "-";
+
+  }
+
+
+  const diff =
+    Math.max(
+      0,
+      Date.now() - masukTime
+    );
+
+
+  const totalMinutes =
+    Math.floor(
+      diff / 60000
+    );
+
+
+  const days =
+    Math.floor(
+      totalMinutes / 1440
+    );
+
+
+  const hours =
+    Math.floor(
+      (
+        totalMinutes % 1440
+      ) / 60
+    );
+
+
+  const minutes =
+    totalMinutes % 60;
+
+
+  if(days > 0){
+
+    return (
+      days +
+      " hari " +
+      hours +
+      " jam"
+    );
+
+  }
+
+
+  if(hours > 0){
+
+    return (
+      hours +
+      " jam " +
+      minutes +
+      " mnt"
+    );
+
+  }
+
+
+  return (
+    minutes +
+    " menit"
+  );
+
+}
+
+
+function isWOInap(
+  masukTime
+){
+
+  if(!masukTime){
+
+    return false;
+
+  }
+
+
+  const diff =
+    Date.now() -
+    masukTime;
+
+
+  // Lebih dari 24 jam
+
+  return diff >=
+    (
+      24 *
+      60 *
+      60 *
+      1000
+    );
+
+}
+
+
+function formatWOMasuk(wo){
+
+  const raw =
+    String(
+      wo.dibuatPada || ""
+    ).trim();
+
+
+  if(!raw){
+
+    return "-";
+
+  }
+
+
+  const date =
+    new Date(raw);
+
+
+  if(
+    isNaN(
+      date.getTime()
+    )
+  ){
+
+    return escapeHtmlWO(
+      raw
+    );
+
+  }
+
+
+  const tanggal =
+    String(
+      date.getDate()
+    ).padStart(2,"0") +
+    "/" +
+    String(
+      date.getMonth() + 1
+    ).padStart(2,"0") +
+    "/" +
+    date.getFullYear();
+
+
+  const jam =
+    String(
+      date.getHours()
+    ).padStart(2,"0") +
+    ":" +
+    String(
+      date.getMinutes()
+    ).padStart(2,"0");
+
+
+  return (
+    tanggal +
+    " " +
+    jam
+  );
+
+}
 
 /**
  * Buka Detail
@@ -1052,10 +1751,28 @@ function bukaDetailWO(noWO){
 
               PEKERJAAN / JASA
 
-            </div>
+</div>
+
+<button
+  id="btnTambahJasaWO"
+  style="
+    width:100%;
+    border:0;
+    background:#0d6efd;
+    color:white;
+    padding:12px;
+    border-radius:8px;
+    font-size:15px;
+    font-weight:600;
+    cursor:pointer;
+    margin-bottom:15px;
+  "
+>
+  ＋ TAMBAH JASA
+</button>
 
 
-            ${jasaHTML}
+${jasaHTML}
 
 
           </div>
@@ -1119,6 +1836,15 @@ function bukaDetailWO(noWO){
       document.body.appendChild(
         overlay
       );
+
+      document
+  .getElementById("btnTambahJasaWO")
+  .onclick =
+    function(){
+
+      bukaFormTambahJasaWO();
+
+    };
 
 
       // ============================================
@@ -1379,6 +2105,760 @@ function escapeHtmlWO(value){
     .replace(/>/g,"&gt;")
     .replace(/"/g,"&quot;")
     .replace(/'/g,"&#039;");
+
+}
+
+function bukaFormTambahJasaWO(){
+
+  let daftarJasaWO = [];
+
+  const overlay =
+    document.createElement("div");
+
+  overlay.id =
+    "tambahJasaWOOverlay";
+
+  overlay.style.cssText = `
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.55);
+    z-index:100000;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:30px;
+  `;
+
+
+  overlay.innerHTML = `
+
+    <div style="
+      width:100%;
+      max-width:520px;
+      background:white;
+      border-radius:14px;
+      overflow:hidden;
+    ">
+
+      <div style="
+        background:#0d6efd;
+        color:white;
+        padding:18px 22px;
+        font-size:20px;
+        font-weight:700;
+      ">
+        ＋ TAMBAH PEKERJAAN / JASA
+      </div>
+
+
+      <div style="
+        padding:22px;
+      ">
+
+        <!-- JASA -->
+
+        <label style="
+          display:block;
+          font-weight:600;
+          margin-bottom:6px;
+        ">
+          Jasa
+        </label>
+
+
+        <input
+          id="tambahJasaSearch"
+          type="text"
+          placeholder="🔍 Cari jasa..."
+          autocomplete="off"
+          style="
+            width:100%;
+            padding:12px;
+            border:1px solid #ced4da;
+            border-radius:8px;
+            box-sizing:border-box;
+            font-size:15px;
+          "
+        >
+
+
+        <!-- QUICK CATEGORY -->
+
+        <div
+          id="tambahJasaQuick"
+          style="
+            display:flex;
+            flex-wrap:wrap;
+            gap:7px;
+            margin-top:10px;
+            margin-bottom:10px;
+          "
+        >
+
+          <button
+            type="button"
+            class="jasaQuickBtn"
+            data-keyword="oli"
+          >
+            Oli
+          </button>
+
+          <button
+            type="button"
+            class="jasaQuickBtn"
+            data-keyword="rem"
+          >
+            Rem
+          </button>
+
+          <button
+            type="button"
+            class="jasaQuickBtn"
+            data-keyword="mesin"
+          >
+            Mesin
+          </button>
+
+          <button
+            type="button"
+            class="jasaQuickBtn"
+            data-keyword="kaki"
+          >
+            Kaki-kaki
+          </button>
+
+          <button
+            type="button"
+            class="jasaQuickBtn"
+            data-keyword="kelistrikan"
+          >
+            Kelistrikan
+          </button>
+
+          <button
+            type="button"
+            class="jasaQuickBtn"
+            data-keyword="service"
+          >
+            Service
+          </button>
+
+        </div>
+
+
+        <!-- HASIL SEARCH -->
+
+        <div
+          id="tambahJasaResults"
+          style="
+            max-height:220px;
+            overflow-y:auto;
+            border:1px solid #e5e5e5;
+            border-radius:8px;
+            display:none;
+            margin-bottom:15px;
+          "
+        ></div>
+
+
+        <!-- ID JASA -->
+
+        <input
+          type="hidden"
+          id="tambahJasaId"
+        >
+
+
+        <!-- HARGA -->
+
+        <label style="
+          display:block;
+          font-weight:600;
+          margin-bottom:6px;
+        ">
+          Harga
+        </label>
+
+
+        <input
+          id="tambahJasaHarga"
+          type="text"
+          readonly
+          value="Rp 0"
+          style="
+            width:100%;
+            padding:11px;
+            border:1px solid #ced4da;
+            border-radius:8px;
+            margin-bottom:15px;
+            box-sizing:border-box;
+            background:#f5f5f5;
+          "
+        >
+
+
+        <!-- QTY -->
+
+        <label style="
+          display:block;
+          font-weight:600;
+          margin-bottom:6px;
+        ">
+          Qty
+        </label>
+
+
+        <input
+          id="tambahJasaQty"
+          type="number"
+          min="1"
+          value="1"
+          style="
+            width:100%;
+            padding:11px;
+            border:1px solid #ced4da;
+            border-radius:8px;
+            margin-bottom:15px;
+            box-sizing:border-box;
+          "
+        >
+
+
+        <!-- MEKANIK -->
+
+        <label style="
+          display:block;
+          font-weight:600;
+          margin-bottom:6px;
+        ">
+          Mekanik
+        </label>
+
+
+        <select
+          id="tambahJasaMekanik"
+          style="
+            width:100%;
+            padding:11px;
+            border:1px solid #ced4da;
+            border-radius:8px;
+            margin-bottom:20px;
+          "
+        >
+
+          <option value="">
+            Memuat mekanik...
+          </option>
+
+        </select>
+
+
+        <!-- STATUS -->
+
+        <div
+          id="tambahJasaStatus"
+          style="
+            margin-bottom:15px;
+            font-size:13px;
+          "
+        ></div>
+
+
+        <!-- BUTTON -->
+
+        <div style="
+          display:flex;
+          gap:10px;
+        ">
+
+          <button
+            type="button"
+            id="btnBatalTambahJasa"
+            style="
+              flex:1;
+              border:0;
+              background:#6c757d;
+              color:white;
+              padding:12px;
+              border-radius:8px;
+              font-weight:600;
+              cursor:pointer;
+            "
+          >
+            BATAL
+          </button>
+
+
+          <button
+            type="button"
+            id="btnSimpanTambahJasa"
+            style="
+              flex:1;
+              border:0;
+              background:#198754;
+              color:white;
+              padding:12px;
+              border-radius:8px;
+              font-weight:600;
+              cursor:pointer;
+            "
+          >
+            SIMPAN
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  `;
+
+
+  document.body.appendChild(
+    overlay
+  );
+
+
+  // ============================================
+  // SEARCH
+  // ============================================
+
+  document
+    .getElementById("tambahJasaSearch")
+    .oninput =
+      function(){
+
+        filterJasaWO(
+          this.value
+        );
+
+      };
+
+
+  // ============================================
+  // QUICK CATEGORY
+  // ============================================
+
+  document
+    .querySelectorAll(
+      "#tambahJasaQuick .jasaQuickBtn"
+    )
+    .forEach(
+      function(button){
+
+        button.style.cssText = `
+          border:1px solid #0d6efd;
+          background:white;
+          color:#0d6efd;
+          padding:6px 10px;
+          border-radius:20px;
+          cursor:pointer;
+          font-size:12px;
+        `;
+
+
+        button.onclick =
+          function(){
+
+            const keyword =
+              this.dataset.keyword || "";
+
+
+            const search =
+              document.getElementById(
+                "tambahJasaSearch"
+              );
+
+
+            search.value =
+              keyword;
+
+
+            filterJasaWO(
+              keyword
+            );
+
+          };
+
+      }
+    );
+
+
+  // ============================================
+  // LOAD MASTER JASA
+  // ============================================
+
+  google.script.run
+
+    .withSuccessHandler(
+      function(data){
+
+        daftarJasaWO =
+          data || [];
+
+
+        window.daftarJasaWO =
+          daftarJasaWO;
+
+
+        document.getElementById(
+          "tambahJasaStatus"
+        ).textContent =
+          daftarJasaWO.length +
+          " jasa tersedia.";
+
+      }
+    )
+
+    .withFailureHandler(
+      function(err){
+
+        document.getElementById(
+          "tambahJasaStatus"
+        ).textContent =
+          "Gagal memuat Master Jasa: " +
+          (
+            err.message ||
+            err
+          );
+
+      }
+    )
+
+    .getMasterJasaWO();
+
+
+  // ============================================
+  // LOAD MASTER MEKANIK
+  // ============================================
+
+  google.script.run
+
+    .withSuccessHandler(
+      function(data){
+
+        const select =
+          document.getElementById(
+            "tambahJasaMekanik"
+          );
+
+
+        select.innerHTML =
+          '<option value="">-- Pilih Mekanik --</option>';
+
+
+        (data || []).forEach(
+          function(row){
+
+            const id =
+              String(
+                row[0] || ""
+              );
+
+
+            const nama =
+              String(
+                row[1] || ""
+              );
+
+
+            if(!id || !nama){
+              return;
+            }
+
+
+            const option =
+              document.createElement(
+                "option"
+              );
+
+
+            option.value =
+              id;
+
+
+            option.textContent =
+              nama;
+
+
+            select.appendChild(
+              option
+            );
+
+          }
+        );
+
+      }
+    )
+
+    .withFailureHandler(
+      function(err){
+
+        document.getElementById(
+          "tambahJasaStatus"
+        ).textContent =
+          "Gagal memuat Master Mekanik: " +
+          (
+            err.message ||
+            err
+          );
+
+      }
+    )
+
+    .getMasterMekanik();
+
+
+  // ============================================
+  // BATAL
+  // ============================================
+
+  document
+    .getElementById(
+      "btnBatalTambahJasa"
+    )
+    .onclick =
+      function(){
+
+        overlay.remove();
+
+      };
+
+
+  // ============================================
+  // SIMPAN
+  // SEMENTARA BELUM CONNECT KE SERVICE
+  // ============================================
+
+  document
+    .getElementById(
+      "btnSimpanTambahJasa"
+    )
+    .onclick =
+      function(){
+
+        const jasaId =
+          document.getElementById(
+            "tambahJasaId"
+          ).value;
+
+
+        const jasaNama =
+          document.getElementById(
+            "tambahJasaSearch"
+          ).value;
+
+
+        const mekanikId =
+          document.getElementById(
+            "tambahJasaMekanik"
+          ).value;
+
+
+        const qty =
+          document.getElementById(
+            "tambahJasaQty"
+          ).value;
+
+
+        const status =
+          document.getElementById(
+            "tambahJasaStatus"
+          );
+
+
+        if(!jasaId){
+
+          status.textContent =
+            "Pilih jasa terlebih dahulu.";
+
+          return;
+
+        }
+
+
+        if(!qty || Number(qty) <= 0){
+
+          status.textContent =
+            "Qty harus lebih besar dari 0.";
+
+          return;
+
+        }
+
+
+        status.textContent =
+          "Jasa \"" +
+          jasaNama +
+          "\" siap disimpan.";
+
+      };
+
+}
+
+function renderHasilJasaWO(
+  daftar
+){
+
+  const container =
+    document.getElementById(
+      "tambahJasaResults"
+    );
+
+  if(!container){
+    return;
+  }
+
+  container.innerHTML = "";
+
+  if(!daftar || !daftar.length){
+
+    container.style.display =
+      "none";
+
+    return;
+
+  }
+
+  daftar.forEach(
+    function(item){
+
+      const div =
+        document.createElement(
+          "div"
+        );
+
+      div.style.cssText = `
+        padding:11px 13px;
+        border-bottom:1px solid #eee;
+        cursor:pointer;
+        background:white;
+      `;
+
+      div.innerHTML = `
+        <div style="
+          font-weight:600;
+          font-size:14px;
+        ">
+          ${escapeHtmlWO(item.nama)}
+        </div>
+
+        <div style="
+          color:#777;
+          font-size:12px;
+          margin-top:3px;
+        ">
+          Rp ${Number(
+            item.harga || 0
+          ).toLocaleString("id-ID")}
+        </div>
+      `;
+
+      div.onmouseenter =
+        function(){
+          div.style.background =
+            "#f5f5f5";
+        };
+
+      div.onmouseleave =
+        function(){
+          div.style.background =
+            "white";
+        };
+
+      div.onclick =
+        function(){
+
+          pilihJasaUntukWO(
+            item
+          );
+
+        };
+
+      container.appendChild(
+        div
+      );
+
+    }
+  );
+
+  container.style.display =
+    "block";
+
+}
+
+function filterJasaWO(
+  keyword
+){
+
+  const daftar =
+    window.daftarJasaWO || [];
+
+  const q =
+    String(
+      keyword || ""
+    )
+    .trim()
+    .toLowerCase();
+
+  if(!q){
+
+    renderHasilJasaWO(
+      []
+    );
+
+    return;
+
+  }
+
+  const hasil =
+    daftar.filter(
+      function(item){
+
+        return String(
+          item.nama || ""
+        )
+        .toLowerCase()
+        .includes(q);
+
+      }
+    );
+
+  renderHasilJasaWO(
+    hasil
+  );
+
+}
+
+function pilihJasaUntukWO(
+  item
+){
+
+  document.getElementById(
+    "tambahJasaId"
+  ).value =
+    item.id || "";
+
+  document.getElementById(
+    "tambahJasaSearch"
+  ).value =
+    item.nama || "";
+
+  document.getElementById(
+    "tambahJasaHarga"
+  ).value =
+    "Rp " +
+    Number(
+      item.harga || 0
+    ).toLocaleString(
+      "id-ID"
+    );
+
+  document.getElementById(
+    "tambahJasaResults"
+  ).style.display =
+    "none";
 
 }
 

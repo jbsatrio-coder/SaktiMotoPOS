@@ -9,7 +9,36 @@ const WorkOrderJasaService = {
 
     create(request){
 
-        this.validate(request);
+    PermissionService.require(
+        Permission.EDIT_WO
+    );
+
+    this.validate(request);
+
+    /**
+ * ========================================
+ * PERMISSION CHECK
+ * ASSIGN MEKANIK
+ * ========================================
+ *
+ * EDIT_WO diperlukan untuk membuat WO Jasa.
+ *
+ * Jika request sekaligus melakukan assignment
+ * mekanik, maka user juga harus memiliki
+ * ASSIGN_MEKANIK.
+ * ========================================
+ */
+
+if(
+    request.mekanikId !== undefined &&
+    String(request.mekanikId || "").trim() !== ""
+){
+
+    PermissionService.require(
+        Permission.ASSIGN_MEKANIK
+    );
+
+}
 
         const workOrder =
 
@@ -22,6 +51,17 @@ const WorkOrderJasaService = {
             this.loadJasa(
                 request
             );
+
+            if(
+    request.mekanikId !== undefined &&
+    request.mekanikId !== ""
+){
+
+    PermissionService.require(
+        Permission.ASSIGN_MEKANIK
+    );
+
+}
 
         const mekanik =
 
@@ -76,6 +116,34 @@ const WorkOrderJasaService = {
 
     }
 
+        /**
+     * ========================================
+     * PERMISSION CHECK
+     * ========================================
+     *
+     * Semua perubahan WO Jasa membutuhkan
+     * EDIT_WO.
+     *
+     * Jika request mengubah mekanik
+     * (assign maupun unassign), maka juga
+     * membutuhkan ASSIGN_MEKANIK.
+     * ========================================
+     */
+
+    PermissionService.require(
+        Permission.EDIT_WO
+    );
+
+
+    if(
+        request.mekanikId !== undefined
+    ){
+
+        PermissionService.require(
+            Permission.ASSIGN_MEKANIK
+        );
+
+    }
 
     /**
      * ========================================
@@ -122,6 +190,30 @@ const WorkOrderJasaService = {
 
     }
 
+    /**
+ * ========================================
+ * PERMISSION CHECK
+ * ========================================
+ */
+
+const hasEditRequest =
+    request.qty !== undefined ||
+    request.diskon !== undefined ||
+    request.keluhan !== undefined ||
+    request.diagnosa !== undefined ||
+    request.catatan !== undefined ||
+    request.mekanikId !== undefined;
+
+
+if(
+    hasEditRequest
+){
+
+    PermissionService.require(
+        Permission.EDIT_WO
+    );
+
+}
 
     /**
      * ========================================
@@ -190,12 +282,54 @@ const WorkOrderJasaService = {
  * ========================================
  */
 
+/**
+ * ========================================
+ * UPDATE MEKANIK
+ * ========================================
+ */
+
 if(
     request.mekanikId !== undefined
 ){
 
+    const currentMekanikId =
+        String(
+            row[
+                COL_WO_JASA.MEKANIK_ID
+            ] || ""
+        )
+        .trim();
+
+    const requestedMekanikId =
+        String(
+            request.mekanikId || ""
+        )
+        .trim();
+
+
+    /**
+     * ====================================
+     * ASSIGN / UNASSIGN MEKANIK
+     * ====================================
+     *
+     * Hanya membutuhkan ASSIGN_MEKANIK
+     * jika nilai mekanik benar-benar berubah.
+     */
+
     if(
-        request.mekanikId === ""
+        requestedMekanikId !==
+        currentMekanikId
+    ){
+
+        PermissionService.require(
+            Permission.ASSIGN_MEKANIK
+        );
+
+    }
+
+
+    if(
+        requestedMekanikId === ""
     ){
 
         row[
@@ -514,6 +648,20 @@ changeStatus(
 
     }
 
+    /**
+ * ========================================
+ * PERMISSION CHECK
+ * ========================================
+ *
+ * Perubahan status Work Order Jasa
+ * membutuhkan permission EDIT_WO.
+ * ========================================
+ */
+
+PermissionService.require(
+    Permission.EDIT_WO
+);
+
 
     /**
      * ========================================
@@ -696,6 +844,20 @@ changeStatus(
         );
 
     }
+
+    /**
+ * ========================================
+ * PERMISSION CHECK
+ * ========================================
+ *
+ * Perubahan status Work Order Jasa
+ * membutuhkan permission EDIT_WO.
+ * ========================================
+ */
+
+PermissionService.require(
+    Permission.EDIT_WO
+);
 
 
     /**

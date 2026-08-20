@@ -1,136 +1,231 @@
 /**
  * ============================================
  * Purchase Repository
- * Version : 1.0.0
- * Sprint  : 4D.2
+ * Version : 1.1.0
+ * Sprint  : 4D.4
  * ============================================
  */
 
 const PurchaseRepository = {
 
-    SHEET_HEADER : "22_Pembelian",
-
-    SHEET_DETAIL : "23_DetailPembelian",
-
     /**
-     * Header Sheet
+     * ==========================================
+     * SHEET
+     * ==========================================
      */
+
     getHeaderSheet(){
 
         return SpreadsheetApp
             .getActiveSpreadsheet()
             .getSheetByName(
-                this.SHEET_HEADER
+                CONFIG.SHEET.PEMBELIAN
             );
 
     },
 
-    /**
-     * Detail Sheet
-     */
     getDetailSheet(){
 
         return SpreadsheetApp
             .getActiveSpreadsheet()
             .getSheetByName(
-                this.SHEET_DETAIL
+                CONFIG.SHEET.DETAIL_PEMBELIAN
             );
 
     },
-/**
- * Simpan Header Purchase
- */
-saveHeader(purchaseDocument){
 
-    const sheet =
-        this.getHeaderSheet();
 
-    const totalItem =
-        purchaseDocument.items.length;
+    /**
+     * ==========================================
+     * SAVE HEADER
+     * ==========================================
+     */
 
-    const totalQty =
-        purchaseDocument.items.reduce(
+    saveHeader(purchaseDocument){
 
-            (total, item) =>
+        const sheet =
+            this.getHeaderSheet();
 
-                total + Number(item.qty),
+        const totalItem =
+            purchaseDocument.items.length;
 
-            0
+        const totalQty =
+            purchaseDocument.items.reduce(
 
+                (total, item) =>
+
+                    total + Number(item.qty || 0),
+
+                0
+
+            );
+
+        sheet.appendRow([
+
+            purchaseDocument.header.nomor,       // A ID Pembelian
+
+            purchaseDocument.header.tanggal,     // B Tanggal
+
+            purchaseDocument.header.supplier,    // C Supplier
+
+            purchaseDocument.header.noFaktur || "", // D No.Faktur
+
+            totalItem,                            // E TotalItem
+
+            totalQty,                             // F TotalQty
+
+            purchaseDocument.status,              // G Status
+
+            purchaseDocument.header.admin,        // H Admin
+
+            purchaseDocument.header.keterangan || "", // I Keterangan
+
+            new Date()                            // J CreatedAt
+
+        ]);
+
+        Logger.log(
+            "[PURCHASE HEADER] OK"
         );
 
-        
+    },
 
-    sheet.appendRow([
 
-        purchaseDocument.header.nomor,
+    /**
+     * ==========================================
+     * UPDATE PURCHASE STATUS
+     * ==========================================
+     */
 
-        purchaseDocument.header.tanggal,
+    updateStatus(purchaseNumber, status){
 
-        purchaseDocument.header.supplier,
+        const sheet =
+            this.getHeaderSheet();
 
-        totalItem,
+        const lastRow =
+            sheet.getLastRow();
 
-        totalQty,
+        if(lastRow < 2){
+            throw new Error(
+                "Purchase Header masih kosong."
+            );
+        }
 
-        purchaseDocument.status,
+        const data =
+            sheet
+                .getRange(
+                    2,
+                    1,
+                    lastRow - 1,
+                    1
+                )
+                .getDisplayValues();
 
-        purchaseDocument.header.admin,
+        let targetRow = 0;
 
-        new Date()
+        for(let i = 0; i < data.length; i++){
 
-    ]);
+            if(
+                String(data[i][0]).trim() ===
+                String(purchaseNumber).trim()
+            ){
 
-    Logger.log(
+                targetRow = i + 2;
+                break;
 
-        "[PURCHASE HEADER] OK"
+            }
 
-    );
+        }
 
-},
+        if(targetRow === 0){
 
-/**
- * Simpan Detail Purchase
- */
-saveItems(purchaseDocument){
+            throw new Error(
+                "Purchase tidak ditemukan : " +
+                purchaseNumber
+            );
 
-    const sheet =
-        this.getDetailSheet();
+        }
 
-    const rows = purchaseDocument.items.map(item => [
+        // G = Status
+        sheet
+            .getRange(
+                targetRow,
+                7
+            )
+            .setValue(status);
 
-        purchaseDocument.header.nomor,
+        Logger.log(
+            "[PURCHASE STATUS] " +
+            purchaseNumber +
+            " -> " +
+            status
+        );
 
-        item.kodeBarang,
+        return true;
 
-        item.qty,
+    },
 
-        item.hargaBeli,
 
-        item.qty * item.hargaBeli
 
-    ]);
+    /**
+     * ==========================================
+     * SAVE DETAIL
+     * ==========================================
+     */
 
-    if(rows.length > 0){
+    saveItems(purchaseDocument){
 
-        sheet.getRange(
+        const sheet =
+            this.getDetailSheet();
 
-            sheet.getLastRow() + 1,
+        const rows =
+            purchaseDocument.items.map(item => [
 
-            1,
+                purchaseDocument.header.nomor,    // A
 
-            rows.length,
+                item.kodeBarang,                  // B
 
-            rows[0].length
+                Number(item.qty || 0),            // C
 
-        ).setValues(rows);
+                Number(item.hargaBeli || 0),      // D
+
+                Number(item.qty || 0) *
+                Number(item.hargaBeli || 0)       // E
+
+            ]);
+
+        if(rows.length > 0){
+
+            sheet
+                .getRange(
+
+                    sheet.getLastRow() + 1,
+
+                    1,
+
+                    rows.length,
+
+                    rows[0].length
+
+                )
+                .setValues(rows);
+
+        }
+
+        Logger.log(
+            "[PURCHASE DETAIL] OK"
+        );
 
     }
 
-    Logger.log("[PURCHASE DETAIL] OK");
-
-},
 };
+
+
+/**
+ * ============================================
+ * TEST
+ * ============================================
+ */
 
 function testPurchaseRepository(){
 
@@ -140,21 +235,26 @@ function testPurchaseRepository(){
     const detail =
         PurchaseRepository.getDetailSheet();
 
-    Logger.log(header.getName());
+    Logger.log(
+        "HEADER: " +
+        header.getName()
+    );
 
-    Logger.log(detail.getName());
+    Logger.log(
+        "DETAIL: " +
+        detail.getName()
+    );
 
 }
-
 function testSavePurchaseHeader(){
 
-    PurchaseRepository.saveHeader({
+    const purchaseDocument = {
 
         header : {
 
-            nomor : "PO-TEST-001",
+            nomor : "PO-TEST-HEADER-001",
 
-            tanggal : "2026-08-06",
+            tanggal : "2026-08-17",
 
             supplier : "SUP001",
 
@@ -165,66 +265,118 @@ function testSavePurchaseHeader(){
         items : [
 
             {
-
                 kodeBarang : "BRG000114",
-
                 qty : 5,
-
                 hargaBeli : 20000
-
             },
 
             {
-
                 kodeBarang : "BRG000115",
-
                 qty : 2,
-
                 hargaBeli : 15000
-
             }
 
         ],
 
-       status : PurchaseStatus.NEW
-    });
+        status : PurchaseStatus.NEW
+
+    };
+
+    PurchaseRepository.saveHeader(
+        purchaseDocument
+    );
+
+    Logger.log(
+        "[TEST] Purchase Header berhasil disimpan."
+    );
 
 }
 
 function testSavePurchaseItems(){
 
-    PurchaseRepository.saveItems({
+    const purchaseDocument = {
 
         header : {
 
-            nomor : "PO-TEST-001"
+            nomor : "PO-TEST-HEADER-001"
 
         },
 
         items : [
 
             {
-
                 kodeBarang : "BRG000114",
-
                 qty : 5,
-
                 hargaBeli : 20000
-
             },
 
             {
-
                 kodeBarang : "BRG000115",
-
                 qty : 2,
-
                 hargaBeli : 15000
-
             }
 
         ]
 
-    });
+    };
+
+    PurchaseRepository.saveItems(
+        purchaseDocument
+    );
+
+    Logger.log(
+        "[TEST] Purchase Detail berhasil disimpan."
+    );
+
+}
+
+function testSavePurchaseHeaderWithInvoice(){
+
+    const purchaseDocument = {
+
+        header : {
+
+            nomor : "PO-TEST-HEADER-002",
+
+            tanggal : "2026-08-17",
+
+            supplier : "SUP001",
+
+            noFaktur : "FAKTUR-TEST-002",
+
+            admin : "Developer",
+
+            keterangan :
+                "Pembelian oli dan sparepart"
+
+        },
+
+        items : [
+
+            {
+                kodeBarang : "BRG000114",
+                qty : 5,
+                hargaBeli : 20000
+            },
+
+            {
+                kodeBarang : "BRG000115",
+                qty : 2,
+                hargaBeli : 15000
+            }
+
+        ],
+
+        status : PurchaseStatus.NEW
+
+    };
+
+    PurchaseRepository.saveHeader(
+        purchaseDocument
+    );
+
+    Logger.log(
+        "[TEST] Header dengan NoFaktur + Keterangan berhasil disimpan."
+    );
 
 }

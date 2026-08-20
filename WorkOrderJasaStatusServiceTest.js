@@ -1,5 +1,29 @@
 /**
  * ============================================
+ * COMPLETION GATE INTEGRATION FIXTURE
+ * ============================================
+ */
+
+let completionGateFixture = {
+
+    workOrderId :
+        "",
+
+    jasa1Id :
+        "",
+
+    jasa2Id :
+        "",
+
+    jasa3Id :
+        ""
+
+};
+
+
+
+/**
+ * ============================================
  * Work Order Jasa Status Service Test
  * Version : 1.0.0
  * ============================================
@@ -2186,5 +2210,839 @@ function testCompletionGateJasa3Cleanup(){
     Logger.log(
         "================================"
     );
+
+}
+
+function testCompletionGateIntegration(){
+
+    Logger.log(
+        "================================"
+    );
+
+    Logger.log(
+        "WORK ORDER JASA COMPLETION GATE"
+    );
+
+    Logger.log(
+        "DETERMINISTIC INTEGRATION TEST"
+    );
+
+    Logger.log(
+        "================================"
+    );
+
+
+    /**
+     * ========================================
+     * RESET FIXTURE
+     * ========================================
+     */
+
+    completionGateFixture = {
+
+        workOrderId :
+            "",
+
+        jasa1Id :
+            "",
+
+        jasa2Id :
+            "",
+
+        jasa3Id :
+            ""
+
+    };
+
+
+    try {
+
+        /**
+         * ========================================
+         * 1. CREATE WORK ORDER
+         * ========================================
+         */
+
+        Logger.log(
+            "--------------------------------"
+        );
+
+        Logger.log(
+            "STEP 1: CREATE WORK ORDER"
+        );
+
+        Logger.log(
+            "--------------------------------"
+        );
+
+
+        const workOrderResult =
+            WorkOrderService.create({
+
+                customerId :
+                    "CUS2608160002",
+
+                vehicleId :
+                    "VEH2608160002",
+
+                kilometerMasuk :
+                    18000,
+
+                prioritas :
+                    WorkOrderPriority.NORMAL,
+
+                admin :
+                    "Completion Gate Test",
+
+                catatan :
+                    "Dedicated Completion Gate Integration Test",
+
+                jenisTransaksi :
+                    WorkOrderType.SERVICE
+
+            });
+
+
+        Logger.log(
+            "WORK ORDER RESULT:"
+        );
+
+        Logger.log(
+            workOrderResult
+        );
+
+
+        if(
+            !workOrderResult ||
+            !workOrderResult.workOrderId
+        ){
+
+            throw new Error(
+                "Gagal membuat Work Order fixture."
+            );
+
+        }
+
+
+        completionGateFixture.workOrderId =
+            workOrderResult.workOrderId;
+
+
+        Logger.log(
+            "WORK ORDER ID:"
+        );
+
+        Logger.log(
+            completionGateFixture.workOrderId
+        );
+
+
+        /**
+         * ========================================
+         * 2. CREATE JASA #1
+         * ========================================
+         */
+
+        Logger.log(
+            "--------------------------------"
+        );
+
+        Logger.log(
+            "STEP 2: CREATE JASA #1"
+        );
+
+        Logger.log(
+            "--------------------------------"
+        );
+
+
+        const jasa1 =
+            WorkOrderJasaService.create({
+
+                workOrderId :
+                    completionGateFixture.workOrderId,
+
+                jasaId :
+                    "JAS000001",
+
+                qty :
+                    1,
+
+                diskon :
+                    0,
+
+                mekanikId :
+                    "",
+
+                keluhan :
+                    "Completion Gate Integration Jasa 1",
+
+                diagnosa :
+                    "Test jasa pertama",
+
+                catatan :
+                    "Completion Gate Integration Test"
+
+            });
+
+
+        Logger.log(
+            "JASA #1 RESULT:"
+        );
+
+        Logger.log(
+            jasa1
+        );
+
+
+        if(
+            !jasa1 ||
+            !jasa1.workOrderJasaId
+        ){
+
+            throw new Error(
+                "Gagal membuat Jasa #1 fixture."
+            );
+
+        }
+
+
+        completionGateFixture.jasa1Id =
+            jasa1.workOrderJasaId;
+
+
+        /**
+         * ========================================
+         * 3. CREATE JASA #2
+         * ========================================
+         */
+
+        Logger.log(
+            "--------------------------------"
+        );
+
+        Logger.log(
+            "STEP 3: CREATE JASA #2"
+        );
+
+        Logger.log(
+            "--------------------------------"
+        );
+
+
+        const jasa2 =
+            WorkOrderJasaService.create({
+
+                workOrderId :
+                    completionGateFixture.workOrderId,
+
+                jasaId :
+                    "JAS000002",
+
+                qty :
+                    1,
+
+                diskon :
+                    0,
+
+                mekanikId :
+                    "",
+
+                keluhan :
+                    "Completion Gate Integration Jasa 2",
+
+                diagnosa :
+                    "Test jasa kedua",
+
+                catatan :
+                    "Completion Gate Integration Test"
+
+            });
+
+
+        Logger.log(
+            "JASA #2 RESULT:"
+        );
+
+        Logger.log(
+            jasa2
+        );
+
+
+        if(
+            !jasa2 ||
+            !jasa2.workOrderJasaId
+        ){
+
+            throw new Error(
+                "Gagal membuat Jasa #2 fixture."
+            );
+
+        }
+
+
+        completionGateFixture.jasa2Id =
+            jasa2.workOrderJasaId;
+
+
+        /**
+         * ========================================
+         * 4. JASA #1 → PROGRESS
+         * ========================================
+         */
+
+        Logger.log(
+            "--------------------------------"
+        );
+
+        Logger.log(
+            "STEP 4: JASA #1 OPEN → PROGRESS"
+        );
+
+        Logger.log(
+            "--------------------------------"
+        );
+
+
+        const jasa1Progress =
+            WorkOrderJasaService.changeStatus(
+
+                completionGateFixture.jasa1Id,
+
+                WorkOrderJasaStatus.PROGRESS
+
+            );
+
+
+        Logger.log(
+            jasa1Progress
+        );
+
+
+        if(
+            !jasa1Progress ||
+            !jasa1Progress.success ||
+            jasa1Progress.status !==
+                WorkOrderJasaStatus.PROGRESS
+        ){
+
+            throw new Error(
+                "Jasa #1 gagal masuk PROGRESS."
+            );
+
+        }
+
+
+        /**
+         * ========================================
+         * 5. JASA #1 → DONE
+         * ========================================
+         */
+
+        Logger.log(
+            "--------------------------------"
+        );
+
+        Logger.log(
+            "STEP 5: JASA #1 PROGRESS → DONE"
+        );
+
+        Logger.log(
+            "--------------------------------"
+        );
+
+
+        const jasa1Done =
+            WorkOrderJasaService.changeStatus(
+
+                completionGateFixture.jasa1Id,
+
+                WorkOrderJasaStatus.DONE
+
+            );
+
+
+        Logger.log(
+            jasa1Done
+        );
+
+
+        if(
+            !jasa1Done ||
+            !jasa1Done.success ||
+            jasa1Done.status !==
+                WorkOrderJasaStatus.DONE
+        ){
+
+            throw new Error(
+                "Jasa #1 gagal menjadi DONE."
+            );
+
+        }
+
+
+        /**
+         * ========================================
+         * 6. JASA #2 → PROGRESS
+         * ========================================
+         */
+
+        Logger.log(
+            "--------------------------------"
+        );
+
+        Logger.log(
+            "STEP 6: JASA #2 OPEN → PROGRESS"
+        );
+
+        Logger.log(
+            "--------------------------------"
+        );
+
+
+        const jasa2Progress =
+            WorkOrderJasaService.changeStatus(
+
+                completionGateFixture.jasa2Id,
+
+                WorkOrderJasaStatus.PROGRESS
+
+            );
+
+
+        Logger.log(
+            jasa2Progress
+        );
+
+
+        if(
+            !jasa2Progress ||
+            !jasa2Progress.success ||
+            jasa2Progress.status !==
+                WorkOrderJasaStatus.PROGRESS
+        ){
+
+            throw new Error(
+                "Jasa #2 gagal masuk PROGRESS."
+            );
+
+        }
+
+
+        /**
+         * ========================================
+         * 7. JASA #2 → DONE
+         * ========================================
+         */
+
+        Logger.log(
+            "--------------------------------"
+        );
+
+        Logger.log(
+            "STEP 7: JASA #2 PROGRESS → DONE"
+        );
+
+        Logger.log(
+            "--------------------------------"
+        );
+
+
+        const jasa2Done =
+            WorkOrderJasaService.changeStatus(
+
+                completionGateFixture.jasa2Id,
+
+                WorkOrderJasaStatus.DONE
+
+            );
+
+
+        Logger.log(
+            jasa2Done
+        );
+
+
+        if(
+            !jasa2Done ||
+            !jasa2Done.success ||
+            jasa2Done.status !==
+                WorkOrderJasaStatus.DONE
+        ){
+
+            throw new Error(
+                "Jasa #2 gagal menjadi DONE."
+            );
+
+        }
+
+
+        /**
+         * ========================================
+         * 8. COMPLETION GATE SUCCESS
+         * ========================================
+         */
+
+        Logger.log(
+            "--------------------------------"
+        );
+
+        Logger.log(
+            "STEP 8: COMPLETION GATE SUCCESS"
+        );
+
+        Logger.log(
+            "--------------------------------"
+        );
+
+
+        const successCompletion =
+            WorkOrderStatusService.canComplete(
+
+                completionGateFixture.workOrderId
+
+            );
+
+
+        Logger.log(
+            "COMPLETION RESULT:"
+        );
+
+        Logger.log(
+            successCompletion
+        );
+
+
+        if(
+            !successCompletion ||
+            successCompletion.canComplete !== true
+        ){
+
+            throw new Error(
+                "Completion Gate seharusnya TRUE."
+            );
+
+        }
+
+
+        if(
+            !successCompletion.jasa ||
+            successCompletion.jasa.total !== 2 ||
+            successCompletion.jasa.selesai !== 2 ||
+            successCompletion.jasa.belumSelesai !== 0
+        ){
+
+            throw new Error(
+                "Data Completion Gate SUCCESS tidak sesuai."
+            );
+
+        }
+
+
+        Logger.log(
+            "COMPLETION SUCCESS PASS"
+        );
+
+
+        /**
+         * ========================================
+         * 9. CREATE JASA #3
+         * ========================================
+         */
+
+        Logger.log(
+            "--------------------------------"
+        );
+
+        Logger.log(
+            "STEP 9: CREATE JASA #3"
+        );
+
+        Logger.log(
+            "--------------------------------"
+        );
+
+
+        const jasa3 =
+            WorkOrderJasaService.create({
+
+                workOrderId :
+                    completionGateFixture.workOrderId,
+
+                jasaId :
+                    "JAS000003",
+
+                qty :
+                    1,
+
+                diskon :
+                    0,
+
+                mekanikId :
+                    "",
+
+                keluhan :
+                    "Completion Gate Failure Jasa 3",
+
+                diagnosa :
+                    "Jasa belum selesai",
+
+                catatan :
+                    "Completion Gate Failure Integration Test"
+
+            });
+
+
+        Logger.log(
+            "JASA #3 RESULT:"
+        );
+
+        Logger.log(
+            jasa3
+        );
+
+
+        if(
+            !jasa3 ||
+            !jasa3.workOrderJasaId
+        ){
+
+            throw new Error(
+                "Gagal membuat Jasa #3 fixture."
+            );
+
+        }
+
+
+        completionGateFixture.jasa3Id =
+            jasa3.workOrderJasaId;
+
+
+        /**
+         * ========================================
+         * 10. JASA #3 → PROGRESS
+         * ========================================
+         */
+
+        Logger.log(
+            "--------------------------------"
+        );
+
+        Logger.log(
+            "STEP 10: JASA #3 OPEN → PROGRESS"
+        );
+
+        Logger.log(
+            "--------------------------------"
+        );
+
+
+        const jasa3Progress =
+            WorkOrderJasaService.changeStatus(
+
+                completionGateFixture.jasa3Id,
+
+                WorkOrderJasaStatus.PROGRESS
+
+            );
+
+
+        Logger.log(
+            jasa3Progress
+        );
+
+
+        if(
+            !jasa3Progress ||
+            !jasa3Progress.success ||
+            jasa3Progress.status !==
+                WorkOrderJasaStatus.PROGRESS
+        ){
+
+            throw new Error(
+                "Jasa #3 gagal masuk PROGRESS."
+            );
+
+        }
+
+
+        /**
+         * ========================================
+         * 11. COMPLETION GATE FAILURE
+         * ========================================
+         */
+
+        Logger.log(
+            "--------------------------------"
+        );
+
+        Logger.log(
+            "STEP 11: COMPLETION GATE FAILURE"
+        );
+
+        Logger.log(
+            "--------------------------------"
+        );
+
+
+        const failureCompletion =
+            WorkOrderStatusService.canComplete(
+
+                completionGateFixture.workOrderId
+
+            );
+
+
+        Logger.log(
+            "COMPLETION RESULT:"
+        );
+
+        Logger.log(
+            failureCompletion
+        );
+
+
+        if(
+            !failureCompletion ||
+            failureCompletion.canComplete !== false
+        ){
+
+            throw new Error(
+                "Completion Gate seharusnya FALSE."
+            );
+
+        }
+
+
+        if(
+            !failureCompletion.jasa ||
+            failureCompletion.jasa.total !== 3 ||
+            failureCompletion.jasa.selesai !== 2 ||
+            failureCompletion.jasa.belumSelesai !== 1
+        ){
+
+            throw new Error(
+                "Data Completion Gate FAILURE tidak sesuai."
+            );
+
+        }
+
+
+        Logger.log(
+            "COMPLETION FAILURE PASS"
+        );
+
+
+        /**
+         * ========================================
+         * 12. CLEANUP
+         * ========================================
+         *
+         * Jasa #3 masih PROGRESS.
+         *
+         * Ubah menjadi CANCEL agar fixture
+         * tidak meninggalkan pekerjaan aktif.
+         * ========================================
+         */
+
+        Logger.log(
+            "--------------------------------"
+        );
+
+        Logger.log(
+            "STEP 12: CLEANUP"
+        );
+
+        Logger.log(
+            "--------------------------------"
+        );
+
+
+        const cleanupResult =
+            WorkOrderJasaService.changeStatus(
+
+                completionGateFixture.jasa3Id,
+
+                WorkOrderJasaStatus.CANCEL
+
+            );
+
+
+        Logger.log(
+            "CLEANUP RESULT:"
+        );
+
+        Logger.log(
+            cleanupResult
+        );
+
+
+        if(
+            !cleanupResult ||
+            !cleanupResult.success ||
+            cleanupResult.status !==
+                WorkOrderJasaStatus.CANCEL
+        ){
+
+            throw new Error(
+                "Cleanup Jasa #3 gagal."
+            );
+
+        }
+
+
+        Logger.log(
+            "CLEANUP PASS"
+        );
+
+
+        /**
+         * ========================================
+         * FINAL
+         * ========================================
+         */
+
+        Logger.log(
+            "================================"
+        );
+
+        Logger.log(
+            "WORK ORDER JASA COMPLETION GATE"
+        );
+
+        Logger.log(
+            "DETERMINISTIC INTEGRATION TEST PASS"
+        );
+
+        Logger.log(
+            "================================"
+        );
+
+
+    } finally {
+
+        /**
+         * ========================================
+         * RESET LOCAL FIXTURE STATE
+         * ========================================
+         */
+
+        completionGateFixture = {
+
+            workOrderId :
+                "",
+
+            jasa1Id :
+                "",
+
+            jasa2Id :
+                "",
+
+            jasa3Id :
+                ""
+
+        };
+
+    }
 
 }

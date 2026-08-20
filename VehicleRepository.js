@@ -145,6 +145,59 @@ const VehicleRepository = {
 
     },
 
+/**
+ * ============================================
+ * Cari Vehicle berdasarkan Nomor Polisi
+ * ============================================
+ */
+findByPlate(plate){
+
+    const keyword =
+        String(
+            plate || ""
+        )
+        .trim()
+        .replace(/\s+/g, "")
+        .toUpperCase();
+
+    if(!keyword){
+
+        return null;
+
+    }
+
+    const vehicles =
+        this.findAll();
+
+    for(let i = 0; i < vehicles.length; i++){
+
+        const vehicle =
+            vehicles[i];
+
+        const existingPlate =
+            String(
+                vehicle[
+                    COL_VEHICLE.PLATE
+                ] || ""
+            )
+            .trim()
+            .replace(/\s+/g, "")
+            .toUpperCase();
+
+        if(
+            existingPlate === keyword
+        ){
+
+            return vehicle;
+
+        }
+
+    }
+
+    return null;
+
+},
+
     /**
      * Menyimpan kendaraan baru
      */

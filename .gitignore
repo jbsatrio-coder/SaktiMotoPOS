@@ -1,0 +1,10 @@
+# macOS
+.DS_Store
+
+# Local backup files
+*.bak*
+*.backup*
+*.tmp
+
+# Local clasp configuration
+.clasp.json
