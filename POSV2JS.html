@@ -16,6 +16,20 @@ function parseNumber(value){
 }
 // Cart dipindahkan ke POSCart
 let searchResult = [];
+let currentSalesSubmissionId = createSalesSubmissionId_();
+let salesSubmitInFlight = false;
+
+function createSalesSubmissionId_(){
+  if(window.crypto && typeof window.crypto.randomUUID === "function"){
+    return window.crypto.randomUUID();
+  }
+  if(window.crypto && typeof window.crypto.getRandomValues === "function"){
+    const values = new Uint32Array(4);
+    window.crypto.getRandomValues(values);
+    return "sales-" + Array.prototype.map.call(values, function(value){ return value.toString(16); }).join("-");
+  }
+  return "sales-" + Math.random().toString(36).slice(2) + "-" + Date.now().toString(36);
+}
 
 const POSState = {
 
@@ -311,7 +325,15 @@ function updatePayment(){
 }
 function saveTransaction() {
 
+  if(salesSubmitInFlight){
+    return;
+  }
+
+  salesSubmitInFlight = true;
+
   const payload = {
+
+    submissionId: currentSalesSubmissionId,
 
     pelanggan: POSState.pelanggan,
 
@@ -350,6 +372,9 @@ btn.textContent = "Menyimpan...";
 
   .withSuccessHandler(function(result){
 
+    salesSubmitInFlight = false;
+    currentSalesSubmissionId = createSalesSubmissionId_();
+
     alert(
       "✅ Transaksi berhasil!\n\n" +
       result.transactionNumber
@@ -361,6 +386,7 @@ btn.textContent = "Menyimpan...";
 
   .withFailureHandler(function(err){
 
+    salesSubmitInFlight = false;
     btn.disabled = false;
     btn.textContent = "Simpan";
 
@@ -415,7 +441,7 @@ function updateSaveButton(){
 
     const adaItem = POSCart.getCart().length > 0;
 
-    btn.disabled = !(adaItem && bayar >= total);
+    btn.disabled = salesSubmitInFlight || !(adaItem && bayar >= total);
 
 }
 </script>
