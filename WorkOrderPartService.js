@@ -1619,11 +1619,10 @@ cancel(workOrderPartId){
  * Mengurangi stok untuk seluruh
  * WorkOrderPart dalam satu Work Order.
  *
- * WorkOrderPart yang sudah pernah
- * di-consume akan dilewati.
- *
- * Proses stock-out menggunakan
- * StockLedgerService.recordOutBatchAtomic()
+ * Caller produksi canonical Step 2D.
+ * Planner dan executor melakukan validasi ulang
+ * di dalam ScriptLock; legacy grouped ledger
+ * ditolak tanpa mutation.
  * ========================================
  */
 consumeStockBatch(workOrderId){
@@ -1637,308 +1636,92 @@ consumeStockBatch(workOrderId){
     }
 
 
-    /**
-     * ====================================
-     * AMBIL SEMUA WORK ORDER PART
-     * ====================================
-     */
+    const requestedWorkOrderId =
+        String(workOrderId).trim();
 
-    const workOrderParts =
-        WorkOrderPartRepository
-            .findByWorkOrderId(
-                workOrderId
-            );
-
-    Logger.log(
-    "=== CONSUME STOCK BATCH DEBUG ==="
-);
-
-Logger.log(
-    "WORK ORDER ID:"
-);
-
-Logger.log(
-    workOrderId
-);
-
-Logger.log(
-    "TOTAL WORK ORDER PART:"
-);
-
-Logger.log(
-    workOrderParts.length
-);
-
-
-    if(
-        !workOrderParts ||
-        workOrderParts.length === 0
-    ){
-
-        return {
-
-            success :
-                true,
-
-            totalItem :
-                0,
-
-            items :
-                []
-
-        };
-
-    }
-
-
-    /**
-     * ====================================
-     * BUILD STOCK OUT ITEMS
-     * ====================================
-     */
-
-    const stockItems = [];
-
-    const skippedItems = [];
-
-
-    for(
-        let i = 0;
-        i < workOrderParts.length;
-        i++
-    ){
-
-        const part =
-            workOrderParts[i];
-
-
-        /**
-         * ================================
-         * HANYA PART AKTIF
-         * ================================
-         */
-
-        const status =
-            part[
-                COL_WORK_ORDER_PART
-                    .STATUS
-            ];
-
-            Logger.log(
-    "WOP BATCH CHECK:"
-);
-
-Logger.log(
-    part[
-        COL_WORK_ORDER_PART.ID
-    ]
-);
-
-Logger.log(
-    "STATUS:"
-);
-
-Logger.log(
-    status
-);
-
-Logger.log(
-    "EXPECTED:"
-);
-
-Logger.log(
-    WorkOrderPartStatus.PROGRESS
-);
-
-Logger.log(
-    "STATUS MATCH:"
-);
-
-Logger.log(
-    status ===
-    WorkOrderPartStatus.PROGRESS
-);
-
-
-        if(
-    status !==
-    WorkOrderPartStatus.PROGRESS
-){
-
-    continue;
-
-}
-
-
-        /**
-         * ================================
-         * AMBIL WORK ORDER PART ID
-         * ================================
-         */
-
-        const workOrderPartId =
-            part[
-                COL_WORK_ORDER_PART
-                    .ID
-            ];
-
-
-        /**
-         * ================================
-         * CEK IDEMPOTENCY
-         * ================================
-         */
-
-        if(
-            this.isStockOutRecorded(
-                workOrderPartId
-            )
-        ){
-
-            skippedItems.push({
-
-                workOrderPartId :
-                    workOrderPartId,
-
-                reason :
-                    "Stock Out sudah tercatat."
-
-            });
-
-
-            continue;
-
-        }
-
-
-        /**
-         * ================================
-         * BUILD REQUEST
-         * ================================
-         */
-
-        const request =
-            this.buildStockOutRequest(
-                part
-            );
-
-
-        /**
-         * ================================
-         * REFERENSI HARUS WOP ID
-         * ================================
-         */
-
-        request.referensi =
-            workOrderPartId;
-
-
-        /**
-         * Batch lama menggabungkan qty berdasarkan
-         * barang. Identity per WorkOrderPart belum
-         * dapat dipersist secara aman pada batch
-         * gabungan tanpa mengubah behaviour ledger.
-         *
-         * Step 1 membatasi canonical identity pada
-         * consumeStock() satu WorkOrderPart.
-         */
-        delete request.canonicalIdentity;
-        delete request.idempotencyKey;
-
-
-        stockItems.push(
-            request
+    const plan =
+        this.planCanonicalStockOutBatch(
+            requestedWorkOrderId
         );
 
-    }
-
-
-    /**
-     * ====================================
-     * TIDAK ADA ITEM BARU
-     * ====================================
-     */
-
-    if(
-        stockItems.length === 0
-    ){
-
-        Logger.log(
-    "FINAL STOCK ITEMS BEFORE ATOMIC:"
-);
-
-Logger.log(
-    stockItems.length
-);
-
-Logger.log(
-    JSON.stringify(
-        stockItems
-    )
-);
-
-Logger.log(
-    "FINAL SKIPPED ITEMS:"
-);
-
-Logger.log(
-    JSON.stringify(
-        skippedItems
-    )
-);
+    if(plan.lines.length === 0){
 
         return {
-
-            success :
-                true,
-
-            totalItem :
-                0,
-
-            items :
-                [],
-
-            skippedItems :
-                skippedItems
-
+            success : true,
+            totalItem : 0,
+            items : [],
+            skippedItems : [],
+            alreadyRecorded : false,
+            newItemCount : 0,
+            existingItemCount : 0
         };
 
     }
 
+    const batch = {
+        workOrderId : requestedWorkOrderId,
+        lines : plan.lines.map(
+            function(line){
 
-    /**
-     * ====================================
-     * ATOMIC STOCK OUT
-     * ====================================
-     */
+                return {
+                    transactionId : line.transactionId,
+                    transactionType : line.transactionType,
+                    sourceDocumentType : line.sourceDocumentType,
+                    sourceDocumentId : line.sourceDocumentId,
+                    sourceLineId : line.sourceLineId,
+                    idempotencyKey : line.idempotencyKey,
+                    barangId : line.barangId,
+                    qty : line.qty,
+                    referensi : line.referensi
+                };
+
+            }
+        )
+    };
 
     const stockResult =
         StockLedgerService
-            .recordOutBatchAtomic(
-                stockItems
+            .recordCanonicalWopOutBatchAtomic(
+                batch
             );
 
+    const newItems =
+        stockResult.items.filter(
+            function(item){
 
-    /**
-     * ====================================
-     * RETURN
-     * ====================================
-     */
+                return item.alreadyRecorded !== true;
+
+            }
+        );
+
+    const skippedItems =
+        stockResult.items.filter(
+            function(item){
+
+                return item.alreadyRecorded === true;
+
+            }
+        ).map(
+            function(item){
+
+                return {
+                    workOrderPartId :
+                        item.transaction.sourceLineId,
+                    reason :
+                        "Stock Out sudah tercatat."
+                };
+
+            }
+        );
 
     return {
-
-        success :
-            stockResult.success,
-
-        totalItem :
-            stockResult.totalItem,
-
-        items :
-            stockResult.items,
-
-        skippedItems :
-            skippedItems
-
+        success : stockResult.success,
+        totalItem : newItems.length,
+        items : newItems,
+        skippedItems : skippedItems,
+        alreadyRecorded : stockResult.alreadyRecorded,
+        newItemCount : stockResult.newItemCount,
+        existingItemCount : stockResult.existingItemCount
     };
 
 },
