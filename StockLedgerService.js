@@ -817,6 +817,59 @@ const StockLedgerService = {
 
             /**
              * ====================================
+             * CANONICAL IDEMPOTENCY CHECK V1
+             * ====================================
+             *
+             * Dilakukan DI DALAM lock agar retry
+             * WorkOrderPart tidak dapat membuat
+             * double stock-out secara concurrent.
+             *
+             * Optional supaya caller lama tetap
+             * menggunakan behaviour sebelumnya.
+             */
+
+            const existingTransactions =
+                this.findExistingCanonicalStockOuts_(
+                    items
+                );
+
+
+            if(
+                existingTransactions.length > 0
+            ){
+
+                if(
+                    existingTransactions.length !==
+                    items.length
+                ){
+
+                    throw new Error(
+                        "Batch Stock Out berisi campuran transaction baru dan transaction yang sudah tercatat."
+                    );
+
+                }
+
+
+                return {
+
+                    success :
+                        true,
+
+                    alreadyRecorded :
+                        true,
+
+                    totalItem :
+                        existingTransactions.length,
+
+                    items :
+                        existingTransactions
+
+                };
+
+            }
+
+            /**
+             * ====================================
              * 1. VALIDASI SELURUH BATCH
              * ====================================
              */
@@ -1142,6 +1195,294 @@ const StockLedgerService = {
             lock.releaseLock();
 
         }
+
+    },
+
+    /**
+     * ============================================
+     * FIND EXISTING CANONICAL STOCK OUTS
+     * ============================================
+     *
+     * Ledger schema belum berubah. Untuk WOP V1,
+     * `referensi` tetap sourceLineId / WorkOrderPart ID.
+     */
+    findExistingCanonicalStockOuts_(items){
+
+        const existing = [];
+
+
+        for(
+            let i = 0;
+            i < items.length;
+            i++
+        ){
+
+            const item =
+                items[i];
+
+            const identity =
+                item && item.canonicalIdentity;
+
+
+            if(!identity){
+
+                continue;
+
+            }
+
+
+            this.validateCanonicalStockOutIdentity_(
+                item,
+                identity
+            );
+
+
+            const workOrderPart =
+                WorkOrderPartRepository.findById(
+                    identity.sourceLineId
+                );
+
+
+            this.validateCanonicalStockOutSource_(
+                item,
+                identity,
+                workOrderPart
+            );
+
+
+            const ledgerRows =
+                StockLedgerRepository
+                    .findByReferensi(
+                        identity.sourceLineId
+                    );
+
+            const stockOutRows =
+                ledgerRows.filter(
+                    function(row){
+
+                        return (
+                            Number(
+                                row[
+                                    COL_STOK.QTYKELUAR
+                                ]
+                            ) || 0
+                        ) > 0;
+
+                    }
+                );
+
+
+            if(stockOutRows.length === 0){
+
+                continue;
+
+            }
+
+
+            if(stockOutRows.length > 1){
+
+                throw new Error(
+                    "Conflict canonical Stock Out: ditemukan lebih dari satu ledger OUT untuk " +
+                    identity.idempotencyKey
+                );
+
+            }
+
+
+            const ledger =
+                stockOutRows[0];
+
+            const ledgerBarangId =
+                String(
+                    ledger[
+                        COL_STOK.BARANG_ID
+                    ] || ""
+                ).trim();
+
+            const ledgerQty =
+                Number(
+                    ledger[
+                        COL_STOK.QTYKELUAR
+                    ]
+                ) || 0;
+
+            const ledgerMovementType =
+                String(
+                    ledger[
+                        COL_STOK.JENISMUTASI
+                    ] || ""
+                ).trim();
+
+
+            if(
+                ledgerMovementType !==
+                "SERVICE" ||
+                ledgerBarangId !==
+                String(item.barangId || "").trim() ||
+                ledgerQty !==
+                Number(item.qty || 0)
+            ){
+
+                throw new Error(
+                    "Conflict canonical Stock Out untuk " +
+                    identity.idempotencyKey +
+                    ". Ledger existing tidak sesuai dengan canonical WOP OUT."
+                );
+
+            }
+
+
+            existing.push({
+
+                success :
+                    true,
+
+                alreadyRecorded :
+                    true,
+
+                stockLedgerId :
+                    ledger[
+                        COL_STOK.ID
+                    ],
+
+                barangId :
+                    ledgerBarangId,
+
+                qtyKeluar :
+                    ledgerQty,
+
+                stokAwal :
+                    Number(
+                        ledger[
+                            COL_STOK.STOKAWAL
+                        ]
+                    ) || 0,
+
+                stokAkhir :
+                    Number(
+                        ledger[
+                            COL_STOK.STOKAKHIR
+                        ]
+                    ) || 0,
+
+                transaction :
+                    identity
+
+            });
+
+        }
+
+
+        return existing;
+
+    },
+
+    /**
+     * ============================================
+     * VALIDATE CANONICAL WOP OUT IDENTITY
+     * ============================================
+     */
+    validateCanonicalStockOutIdentity_(
+        item,
+        identity
+    ){
+
+        const sourceLineId =
+            String(
+                identity.sourceLineId || ""
+            ).trim();
+
+        const expectedKey =
+            "WOP:" +
+            sourceLineId +
+            ":OUT";
+
+
+        if(
+            identity.transactionType !==
+            "WO_PART_OUT" ||
+            identity.sourceDocumentType !==
+            "WORK_ORDER_PART" ||
+            !sourceLineId ||
+            identity.transactionId !== expectedKey ||
+            identity.idempotencyKey !== expectedKey ||
+            String(item.idempotencyKey || "").trim() !== expectedKey ||
+            String(item.referensi || "").trim() !== sourceLineId
+        ){
+
+            throw new Error(
+                "Canonical identity WorkOrderPart Stock Out tidak valid."
+            );
+
+        }
+
+
+        return true;
+
+    },
+
+    /**
+     * ============================================
+     * VALIDATE AUTHORITATIVE WOP SOURCE
+     * ============================================
+     *
+     * Ledger lama tidak menyimpan seluruh metadata
+     * canonical. Source of truth untuk Step 1 adalah
+     * WorkOrderPart yang direferensikan oleh ledger.
+     */
+    validateCanonicalStockOutSource_(
+        item,
+        identity,
+        workOrderPart
+    ){
+
+        if(!workOrderPart){
+
+            throw new Error(
+                "Conflict canonical Stock Out: WorkOrderPart source tidak ditemukan."
+            );
+
+        }
+
+
+        const sourceWorkOrderId =
+            String(
+                workOrderPart[
+                    COL_WORK_ORDER_PART.WORK_ORDER_ID
+                ] || ""
+            ).trim();
+
+        const sourceBarangId =
+            String(
+                workOrderPart[
+                    COL_WORK_ORDER_PART.BARANG_ID
+                ] || ""
+            ).trim();
+
+        const sourceQty =
+            Number(
+                workOrderPart[
+                    COL_WORK_ORDER_PART.QTY
+                ]
+            ) || 0;
+
+
+        if(
+            String(
+                identity.sourceDocumentId || ""
+            ).trim() !== sourceWorkOrderId ||
+            String(item.barangId || "").trim() !== sourceBarangId ||
+            Number(item.qty || 0) !== sourceQty
+        ){
+
+            throw new Error(
+                "Conflict canonical Stock Out: payload tidak sesuai dengan WorkOrderPart authoritative."
+            );
+
+        }
+
+
+        return true;
 
     },
 

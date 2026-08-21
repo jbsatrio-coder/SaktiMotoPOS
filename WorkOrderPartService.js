@@ -460,7 +460,7 @@ changeStatus(
  * Method ini TIDAK mengurangi stok.
  * ========================================
  */
-buildStockOutRequest(workOrderPart){
+    buildStockOutRequest(workOrderPart){
 
     if(!workOrderPart){
 
@@ -512,6 +512,13 @@ buildStockOutRequest(workOrderPart){
         workOrderPart[
             COL_WORK_ORDER_PART
                 .CATATAN
+        ];
+
+
+    const workOrderPartId =
+        workOrderPart[
+            COL_WORK_ORDER_PART
+                .ID
         ];
 
 
@@ -582,7 +589,168 @@ buildStockOutRequest(workOrderPart){
             "Pemakaian Part Work Order",
 
         admin :
-            "SYSTEM"
+            "SYSTEM",
+
+
+        /**
+         * ====================================
+         * CANONICAL TRANSACTION IDENTITY V1
+         * ====================================
+         *
+         * Identity ini sengaja tidak mengubah
+         * schema 14_Stok.
+         *
+         * Referensi ledger tetap WorkOrderPart ID
+         * agar behaviour audit dan reversal lama
+         * tetap kompatibel.
+         */
+        canonicalIdentity :
+            this.buildStockOutTransactionIdentity(
+                workOrderId,
+                workOrderPartId
+            ),
+
+        idempotencyKey :
+            "WOP:" +
+            String(workOrderPartId || "").trim() +
+            ":OUT"
+
+    };
+
+},
+
+/**
+ * ========================================
+ * BUILD CANONICAL STOCK-OUT IDENTITY
+ * ========================================
+ *
+ * Transaction ID bersifat deterministic untuk
+ * satu business operation WorkOrderPart OUT.
+ * Stock Ledger ID tetap merupakan ID audit row.
+ */
+buildStockOutTransactionIdentity(
+    workOrderId,
+    workOrderPartId
+){
+
+    const sourceDocumentId =
+        String(workOrderId || "").trim();
+
+    const sourceLineId =
+        String(workOrderPartId || "").trim();
+
+    if(!sourceLineId){
+
+        throw new Error(
+            "WorkOrderPart ID wajib diisi untuk Stock Out."
+        );
+
+    }
+
+    const idempotencyKey =
+        "WOP:" +
+        sourceLineId +
+        ":OUT";
+
+    return {
+
+        transactionId :
+            idempotencyKey,
+
+        transactionType :
+            "WO_PART_OUT",
+
+        sourceDocumentType :
+            "WORK_ORDER_PART",
+
+        sourceDocumentId :
+            sourceDocumentId,
+
+        sourceLineId :
+            sourceLineId,
+
+        idempotencyKey :
+            idempotencyKey
+
+    };
+
+},
+
+/**
+ * ========================================
+ * READ EXISTING CANONICAL STOCK-OUT RESULT
+ * ========================================
+ */
+getRecordedStockOutTransaction(
+    workOrderPartId,
+    identity
+){
+
+    const ledgerRows =
+        StockLedgerRepository
+            .findByReferensi(
+                workOrderPartId
+            );
+
+    const stockOutRows =
+        ledgerRows.filter(
+            function(row){
+
+                return (
+                    Number(
+                        row[
+                            COL_STOK.QTYKELUAR
+                        ]
+                    ) || 0
+                ) > 0;
+
+            }
+        );
+
+    if(stockOutRows.length !== 1){
+
+        return null;
+
+    }
+
+    const ledger =
+        stockOutRows[0];
+
+    return {
+
+        transaction :
+            identity,
+
+        stockLedgerId :
+            ledger[
+                COL_STOK.ID
+            ],
+
+        barangId :
+            ledger[
+                COL_STOK.BARANG_ID
+            ],
+
+        qtyKeluar :
+            Number(
+                ledger[
+                    COL_STOK.QTYKELUAR
+                ]
+            ) || 0,
+
+        stokAwal :
+            Number(
+                ledger[
+                    COL_STOK.STOKAWAL
+                ]
+            ) || 0,
+
+        stokAkhir :
+            Number(
+                ledger[
+                    COL_STOK.STOKAKHIR
+                ]
+            ) || 0
 
     };
 
@@ -683,34 +851,6 @@ consumeStock(workOrderPartId){
 
     /**
      * ====================================
-     * CEK SUDAH STOCK OUT ATAU BELUM
-     * ====================================
-     */
-
-    if(
-        this.isStockOutRecorded(
-            workOrderPartId
-        )
-    ){
-
-        return {
-
-            success :
-                true,
-
-            alreadyRecorded :
-                true,
-
-            workOrderPartId :
-                workOrderPartId
-
-        };
-
-    }
-
-
-    /**
-     * ====================================
      * BUILD STOCK OUT REQUEST
      * ====================================
      */
@@ -730,6 +870,10 @@ consumeStock(workOrderPartId){
 
     request.referensi =
         workOrderPartId;
+
+
+    const identity =
+        request.canonicalIdentity;
 
 
     /**
@@ -752,10 +896,21 @@ consumeStock(workOrderPartId){
             result.success,
 
         alreadyRecorded :
-            false,
+            result.alreadyRecorded === true,
 
         workOrderPartId :
             workOrderPartId,
+
+        transaction :
+            identity,
+
+        existingTransaction :
+            result.alreadyRecorded === true
+                ? this.getRecordedStockOutTransaction(
+                    workOrderPartId,
+                    identity
+                )
+                : null,
 
         stockResult :
             result
@@ -1157,6 +1312,19 @@ Logger.log(
             workOrderPartId;
 
 
+        /**
+         * Batch lama menggabungkan qty berdasarkan
+         * barang. Identity per WorkOrderPart belum
+         * dapat dipersist secara aman pada batch
+         * gabungan tanpa mengubah behaviour ledger.
+         *
+         * Step 1 membatasi canonical identity pada
+         * consumeStock() satu WorkOrderPart.
+         */
+        delete request.canonicalIdentity;
+        delete request.idempotencyKey;
+
+
         stockItems.push(
             request
         );
@@ -1255,4 +1423,3 @@ Logger.log(
 },
 
 };
-

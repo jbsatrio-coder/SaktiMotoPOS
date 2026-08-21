@@ -4193,10 +4193,10 @@ function testWorkOrderPartCancelAfterStockOut(){
         WorkOrderService.create({
 
             customerId :
-                "CUS999999",
+                "CUS2608160002",
 
             vehicleId :
-                "VEH2608060003",
+                "VEH2608160002",
 
             kilometerMasuk :
                 16000,
@@ -5221,10 +5221,10 @@ function testWorkOrderPartCancelDuplicateReversal(){
         WorkOrderService.create({
 
             customerId :
-                "CUS999999",
+                "CUS2608160002",
 
             vehicleId :
-                "VEH2608060003",
+                "VEH2608160002",
 
             kilometerMasuk :
                 16000,
@@ -9304,6 +9304,565 @@ vehicleId :
     Logger.log(
         "================================"
     );
+
+}
+
+/**
+ * ============================================
+ * CANONICAL WOP STOCK-OUT IDENTITY REGRESSION
+ * ============================================
+ *
+ * Covers Step 1:
+ * - normal stock-out
+ * - deterministic transaction identity
+ * - retry returns existing transaction
+ * - incompatible retry is rejected
+ * - cancellation creates one reversal
+ * - duplicate reversal is rejected
+ *
+ * Atomic partial-failure rollback remains covered
+ * by testStockLedgerServiceRecordOutBatchAtomicRollback().
+ * ============================================
+ */
+function testCanonicalWopStockOutIdentityRegression(){
+
+    const barangId =
+        "BRG000001";
+
+    const stockBefore =
+        BarangRepository.getStock(
+            barangId
+        );
+
+    const workOrderResult =
+        WorkOrderService.create({
+
+            customerId :
+                "CUS2608160002",
+
+            vehicleId :
+                "VEH2608160002",
+
+            kilometerMasuk :
+                16000,
+
+            admin :
+                "Developer",
+
+            jenisTransaksi :
+                WorkOrderType.SERVICE,
+
+            prioritas :
+                WorkOrderPriority.NORMAL,
+
+            catatan :
+                "Canonical WOP Stock-Out Identity Regression"
+
+        });
+
+    const workOrderId =
+        workOrderResult.workOrderId;
+
+    const workOrderPartResult =
+        WorkOrderPartService.create({
+
+            workOrderId :
+                workOrderId,
+
+            barangId :
+                barangId,
+
+            qty :
+                1,
+
+            harga :
+                55000,
+
+            diskon :
+                0,
+
+            catatan :
+                "Canonical identity test"
+
+        });
+
+    const workOrderPartId =
+        workOrderPartResult.workOrderPartId;
+
+    WorkOrderPartService.changeStatus(
+        workOrderPartId,
+        WorkOrderPartStatus.PROGRESS
+    );
+
+
+    const firstResult =
+        WorkOrderPartService.consumeStock(
+            workOrderPartId
+        );
+
+    const stockAfterFirst =
+        BarangRepository.getStock(
+            barangId
+        );
+
+    const ledgersAfterFirst =
+        StockLedgerRepository.findByReferensi(
+            workOrderPartId
+        );
+
+    const outLedgersAfterFirst =
+        ledgersAfterFirst.filter(
+            function(row){
+
+                return (
+                    Number(
+                        row[
+                            COL_STOK.QTYKELUAR
+                        ]
+                    ) || 0
+                ) > 0;
+
+            }
+        );
+
+    const expectedKey =
+        "WOP:" +
+        workOrderPartId +
+        ":OUT";
+
+    if(
+        stockAfterFirst !==
+        stockBefore - 1
+    ){
+
+        throw new Error(
+            "Canonical stock-out tidak mengurangi stok tepat satu kali."
+        );
+
+    }
+
+    if(outLedgersAfterFirst.length !== 1){
+
+        throw new Error(
+            "Canonical stock-out harus membuat tepat satu ledger OUT."
+        );
+
+    }
+
+    if(
+        !firstResult.transaction ||
+        firstResult.transaction.transactionId !== expectedKey ||
+        firstResult.transaction.transactionType !== "WO_PART_OUT" ||
+        firstResult.transaction.sourceDocumentType !== "WORK_ORDER_PART" ||
+        firstResult.transaction.sourceDocumentId !== workOrderId ||
+        firstResult.transaction.sourceLineId !== workOrderPartId ||
+        firstResult.transaction.idempotencyKey !== expectedKey
+    ){
+
+        throw new Error(
+            "Canonical transaction identity WorkOrderPart tidak sesuai."
+        );
+
+    }
+
+
+    const retryResult =
+        WorkOrderPartService.consumeStock(
+            workOrderPartId
+        );
+
+    const stockAfterRetry =
+        BarangRepository.getStock(
+            barangId
+        );
+
+    const outLedgersAfterRetry =
+        StockLedgerRepository
+            .findByReferensi(
+                workOrderPartId
+            )
+            .filter(
+                function(row){
+
+                    return (
+                        Number(
+                            row[
+                                COL_STOK.QTYKELUAR
+                            ]
+                        ) || 0
+                    ) > 0;
+
+                }
+            );
+
+    if(
+        retryResult.alreadyRecorded !== true ||
+        !retryResult.existingTransaction ||
+        retryResult.existingTransaction.transaction.idempotencyKey !== expectedKey
+    ){
+
+        throw new Error(
+            "Retry canonical WOP harus mengembalikan transaction yang sudah ada."
+        );
+
+    }
+
+    if(
+        stockAfterRetry !== stockAfterFirst ||
+        outLedgersAfterRetry.length !== 1
+    ){
+
+        throw new Error(
+            "Retry canonical WOP mengubah stok atau membuat ledger OUT baru."
+        );
+
+    }
+
+
+    const workOrderPart =
+        WorkOrderPartRepository.findById(
+            workOrderPartId
+        );
+
+    const conflictRequest =
+        WorkOrderPartService.buildStockOutRequest(
+            workOrderPart
+        );
+
+    conflictRequest.referensi =
+        workOrderPartId;
+
+    conflictRequest.qty =
+        2;
+
+    let conflictRejected =
+        false;
+
+    try{
+
+        StockLedgerService.recordOutBatchAtomic([
+            conflictRequest
+        ]);
+
+    }
+    catch(error){
+
+        conflictRejected =
+            String(error.message || "")
+                .includes("Conflict canonical Stock Out");
+
+    }
+
+    if(!conflictRejected){
+
+        throw new Error(
+            "Payload retry yang tidak kompatibel harus ditolak."
+        );
+
+    }
+
+    if(
+        BarangRepository.getStock(barangId) !==
+        stockAfterRetry
+    ){
+
+        throw new Error(
+            "Conflict canonical WOP tidak boleh mengubah stok."
+        );
+
+    }
+
+
+    const assertCanonicalConflict =
+        function(mutateRequest, label){
+
+            const request =
+                WorkOrderPartService.buildStockOutRequest(
+                    workOrderPart
+                );
+
+            request.referensi =
+                workOrderPartId;
+
+            mutateRequest(request);
+
+            let rejected =
+                false;
+
+            try{
+
+                StockLedgerService.recordOutBatchAtomic([
+                    request
+                ]);
+
+            }
+            catch(error){
+
+                rejected =
+                    String(error.message || "")
+                        .toLowerCase()
+                        .includes("canonical");
+
+            }
+
+            if(!rejected){
+
+                throw new Error(
+                    "Conflict canonical WOP harus ditolak: " +
+                    label
+                );
+
+            }
+
+            if(
+                BarangRepository.getStock(barangId) !==
+                stockAfterRetry
+            ){
+
+                throw new Error(
+                    "Conflict canonical WOP mengubah stok: " +
+                    label
+                );
+
+            }
+
+        };
+
+
+    assertCanonicalConflict(
+        function(request){
+
+            request.canonicalIdentity.sourceDocumentId =
+                "WO-CONFLICT";
+
+        },
+        "sourceDocumentId"
+    );
+
+    assertCanonicalConflict(
+        function(request){
+
+            request.canonicalIdentity.transactionType =
+                "SALE";
+
+        },
+        "transactionType"
+    );
+
+    assertCanonicalConflict(
+        function(request){
+
+            request.canonicalIdentity.sourceDocumentType =
+                "SALES";
+
+        },
+        "sourceDocumentType"
+    );
+
+    assertCanonicalConflict(
+        function(request){
+
+            request.referensi =
+                "WOP-CONFLICT";
+
+        },
+        "sourceLineId / ledger Referensi"
+    );
+
+    assertCanonicalConflict(
+        function(request){
+
+            request.barangId =
+                "BRG000002";
+
+        },
+        "barangId"
+    );
+
+
+    const originalFindByReferensi =
+        StockLedgerRepository.findByReferensi;
+
+    let nonWoLedgerRejected =
+        false;
+
+    try{
+
+        StockLedgerRepository.findByReferensi =
+            function(reference){
+
+                const rows =
+                    originalFindByReferensi.call(
+                        this,
+                        reference
+                    );
+
+                return rows.map(
+                    function(row){
+
+                        const copy =
+                            row.slice();
+
+                        copy[
+                            COL_STOK.JENISMUTASI
+                        ] = "SALE";
+
+                        return copy;
+
+                    }
+                );
+
+            };
+
+        StockLedgerService.recordOutBatchAtomic([
+            WorkOrderPartService.buildStockOutRequest(
+                workOrderPart
+            )
+        ].map(function(request){
+
+            request.referensi =
+                workOrderPartId;
+
+            return request;
+
+        }));
+
+    }
+    catch(error){
+
+        nonWoLedgerRejected =
+            String(error.message || "")
+                .toLowerCase()
+                .includes("canonical");
+
+    }
+    finally{
+
+        StockLedgerRepository.findByReferensi =
+            originalFindByReferensi;
+
+    }
+
+    if(!nonWoLedgerRejected){
+
+        throw new Error(
+            "Ledger non-WO dengan Referensi sama harus ditolak."
+        );
+
+    }
+
+
+    WorkOrderPartService.cancel(
+        workOrderPartId
+    );
+
+    const stockAfterCancel =
+        BarangRepository.getStock(
+            barangId
+        );
+
+    const ledgersAfterCancel =
+        StockLedgerRepository.findByReferensi(
+            workOrderPartId
+        );
+
+    const outCount =
+        ledgersAfterCancel.filter(
+            function(row){
+
+                return (
+                    Number(
+                        row[
+                            COL_STOK.QTYKELUAR
+                        ]
+                    ) || 0
+                ) > 0;
+
+            }
+        ).length;
+
+    const reversalCount =
+        ledgersAfterCancel.filter(
+            function(row){
+
+                return String(
+                    row[
+                        COL_STOK.JENISMUTASI
+                    ] || ""
+                ).trim() === "REVERSAL";
+
+            }
+        ).length;
+
+    if(
+        stockAfterCancel !== stockBefore ||
+        outCount !== 1 ||
+        reversalCount !== 1
+    ){
+
+        throw new Error(
+            "Cancellation canonical WOP tidak mempertahankan OUT/reversal atau stok baseline."
+        );
+
+    }
+
+
+    let duplicateReversalRejected =
+        false;
+
+    try{
+
+        StockLedgerReversalService
+            .reverseByWorkOrderPartId(
+                workOrderPartId
+            );
+
+    }
+    catch(error){
+
+        duplicateReversalRejected =
+            String(error.message || "")
+                .includes("sudah pernah direversal");
+
+    }
+
+    if(
+        !duplicateReversalRejected ||
+        BarangRepository.getStock(barangId) !== stockBefore
+    ){
+
+        throw new Error(
+            "Duplicate reversal canonical WOP harus ditolak tanpa mengubah stok."
+        );
+
+    }
+
+    Logger.log(
+        "CANONICAL WOP STOCK-OUT IDENTITY REGRESSION PASS"
+    );
+
+}
+
+function runCanonicalWopInventoryStep1Regression(){
+
+    testCanonicalWopStockOutIdentityRegression();
+
+    testStockLedgerServiceRecordOutBatchAtomicRollback();
+
+    Logger.log(
+        "CANONICAL WOP INVENTORY STEP 1 REGRESSION PASS"
+    );
+
+}
+
+function runCanonicalWopInventoryStep1RegressionCli(){
+
+    runCanonicalWopInventoryStep1Regression();
+
+    return {
+        success : true,
+        message : "CANONICAL WOP INVENTORY STEP 1 REGRESSION PASS"
+    };
 
 }
 
