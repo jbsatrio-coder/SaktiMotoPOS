@@ -42,7 +42,7 @@ function generateRunningNumber_(prefix) {
 
     let sh =
       ss.getSheetByName(
-        "99_RunningNumber"
+        CONFIG.SHEET.RUNNING_NUMBER
       );
 
 
@@ -54,7 +54,7 @@ function generateRunningNumber_(prefix) {
 
       sh =
         ss.insertSheet(
-          "99_RunningNumber"
+          CONFIG.SHEET.RUNNING_NUMBER
         );
 
       sh

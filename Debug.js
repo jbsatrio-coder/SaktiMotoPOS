@@ -72,7 +72,7 @@ function testSheetBarang() {
 function testCellType() {
 
   const sh = SpreadsheetApp.getActive()
-    .getSheetByName("02_MasterBarang");
+    .getSheetByName(CONFIG.SHEET.BARANG);
 
   Logger.log(sh.getRange("N2").getValue());
   Logger.log(typeof sh.getRange("N2").getValue());
@@ -96,11 +96,11 @@ function auditMasterJasaHeader(){
 
   const ss = SpreadsheetApp.getActiveSpreadsheet();
 
-  const sh = ss.getSheetByName("08_MasterJasa");
+  const sh = ss.getSheetByName(CONFIG.SHEET.JASA);
 
   if(!sh){
 
-    Logger.log("08_MasterJasa TIDAK DITEMUKAN.");
+    Logger.log(CONFIG.SHEET.JASA + " TIDAK DITEMUKAN.");
     return;
 
   }

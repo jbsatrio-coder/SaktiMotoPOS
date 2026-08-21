@@ -13,7 +13,7 @@ function cleanupMasterKategori(){
         sheet.getLastRow();
 
     const backupName =
-        "03_MasterKategori_BACKUP_" +
+        CONFIG.SHEET.KATEGORI + "_BACKUP_" +
         Utilities.formatDate(
             new Date(),
             Session.getScriptTimeZone(),

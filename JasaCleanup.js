@@ -360,7 +360,7 @@ function cleanupTestJasaClean() {
   if (!sheet) {
 
     throw new Error(
-      "Sheet 08_MasterJasa tidak ditemukan."
+      "Sheet " + CONFIG.SHEET.JASA + " tidak ditemukan."
     );
 
   }

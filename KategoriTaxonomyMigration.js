@@ -47,11 +47,11 @@ function migrateKategoriTaxonomy(){
 
 
         const backupKategoriName =
-            "03_MasterKategori_BACKUP_" +
+            CONFIG.SHEET.KATEGORI + "_BACKUP_" +
             timestamp;
 
         const backupBarangName =
-            "02_MasterBarang_BACKUP_KATEGORI_" +
+            CONFIG.SHEET.BARANG + "_BACKUP_KATEGORI_" +
             timestamp;
 
 

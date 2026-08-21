@@ -86,7 +86,7 @@ function migrateWorkOrderPartRemoveKodeBarang(){
     if(lastColumn !== 14){
 
         throw new Error(
-            "Struktur 19_WorkOrderPart tidak sesuai. " +
+            "Struktur " + CONFIG.SHEET.WORK_ORDER_PART + " tidak sesuai. " +
             "Ditemukan " +
             lastColumn +
             " kolom, seharusnya 14."

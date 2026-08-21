@@ -493,7 +493,7 @@ google.script.run
       const option =
         document.createElement("option");
 
-      // Yang disimpan ke 13_Pembelian tetap NamaSupplier
+      // Legacy `13_Pembelian` retained NamaSupplier; modern purchase uses submitPurchase().
       option.value = item.nama;
 
       option.textContent =

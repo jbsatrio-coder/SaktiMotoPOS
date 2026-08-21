@@ -1369,7 +1369,8 @@ pelanggan
 
   if (!idPelanggan) {
     throw new Error(
-      "Data pelanggan sudah ditulis, tetapi IDPelanggan tidak terbentuk. Periksa ARRAYFORMULA di 06_MasterPelanggan!A2."
+      "Data pelanggan sudah ditulis, tetapi IDPelanggan tidak terbentuk. Periksa ARRAYFORMULA di " +
+      CONFIG.SHEET.PELANGGAN + "!A2."
     );
   }
 
@@ -1410,7 +1411,8 @@ pelanggan
 
   if (!idKendaraan) {
     throw new Error(
-      "Kendaraan tersimpan, tetapi IDKendaraan tidak terbentuk. Periksa ARRAYFORMULA di 07_MasterKendaraan!A2."
+      "Kendaraan tersimpan, tetapi IDKendaraan tidak terbentuk. Periksa ARRAYFORMULA di " +
+      CONFIG.SHEET.VEHICLE + "!A2."
     );
   }
 
@@ -2752,7 +2754,7 @@ function simpanPembelianMulti(data) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
 
   const pembelian =
-    ss.getSheetByName("13_Pembelian_Legacy");
+    ss.getSheetByName(CONFIG.SHEET.PEMBELIAN_LEGACY);
 
   const masterBarang =
     ss.getSheetByName(CONFIG.SHEET.BARANG);
@@ -3195,7 +3197,9 @@ function getDaftarSupplier() {
   const sheet = ss.getSheetByName(CONFIG.SHEET.SUPPLIER);
 
   if (!sheet) {
-    throw new Error("Sheet 05_MasterSupplier tidak ditemukan.");
+    throw new Error(
+      "Sheet " + CONFIG.SHEET.SUPPLIER + " tidak ditemukan."
+    );
   }
 
   if (sheet.getLastRow() < 2) {
@@ -3237,7 +3241,9 @@ function simpanSupplierBaru(data) {
   const sheet = ss.getSheetByName(CONFIG.SHEET.SUPPLIER);
 
   if (!sheet) {
-    throw new Error("Sheet 05_MasterSupplier tidak ditemukan.");
+    throw new Error(
+      "Sheet " + CONFIG.SHEET.SUPPLIER + " tidak ditemukan."
+    );
   }
 
   const nama = String(data.nama || "").trim();
@@ -3595,10 +3601,11 @@ function cetakUlangStruk() {
   const ui = SpreadsheetApp.getUi();
   const sheet = ss.getActiveSheet();
 
-  // Pastikan dijalankan dari 11_Penjualan
-  if (sheet.getName() !== "11_Penjualan") {
+  // Pastikan dijalankan dari sheet Penjualan yang configured.
+  if (sheet.getName() !== CONFIG.SHEET.PENJUALAN) {
     ui.alert(
-      "Silakan buka sheet 11_Penjualan dan pilih transaksi yang ingin dicetak."
+      "Silakan buka sheet " + CONFIG.SHEET.PENJUALAN +
+      " dan pilih transaksi yang ingin dicetak."
     );
     return;
   }

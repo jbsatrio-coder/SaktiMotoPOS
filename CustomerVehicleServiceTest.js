@@ -109,14 +109,14 @@ function inspectCustomerVehicleSheets(){
         SpreadsheetApp.getActiveSpreadsheet();
 
     const customerSheet =
-        ss.getSheetByName("06_MasterPelanggan");
+        ss.getSheetByName(CONFIG.SHEET.PELANGGAN);
 
     const vehicleSheet =
-        ss.getSheetByName("07_MasterKendaraan");
+        ss.getSheetByName(CONFIG.SHEET.VEHICLE);
 
 
     Logger.log(
-        "===== 06_MasterPelanggan ====="
+        "===== " + CONFIG.SHEET.PELANGGAN + " ====="
     );
 
     Logger.log(
@@ -139,7 +139,7 @@ function inspectCustomerVehicleSheets(){
 
 
     Logger.log(
-        "===== 07_MasterKendaraan ====="
+        "===== " + CONFIG.SHEET.VEHICLE + " ====="
     );
 
     Logger.log(
@@ -167,10 +167,10 @@ function auditLegacyCustomerVehicleData(){
         SpreadsheetApp.getActiveSpreadsheet();
 
     const customerSheet =
-        ss.getSheetByName("06_MasterPelanggan");
+        ss.getSheetByName(CONFIG.SHEET.PELANGGAN);
 
     const vehicleSheet =
-        ss.getSheetByName("07_MasterKendaraan");
+        ss.getSheetByName(CONFIG.SHEET.VEHICLE);
 
 
     /*
@@ -379,10 +379,10 @@ function auditLegacyDetail(){
         SpreadsheetApp.getActiveSpreadsheet();
 
     const customerSheet =
-        ss.getSheetByName("06_MasterPelanggan");
+        ss.getSheetByName(CONFIG.SHEET.PELANGGAN);
 
     const vehicleSheet =
-        ss.getSheetByName("07_MasterKendaraan");
+        ss.getSheetByName(CONFIG.SHEET.VEHICLE);
 
 
     /*
@@ -605,13 +605,13 @@ function resetMasterKendaraanForDevelopment(){
 
     const sh =
         ss.getSheetByName(
-            "07_MasterKendaraan"
+            CONFIG.SHEET.VEHICLE
         );
 
     if(!sh){
 
         throw new Error(
-            "Sheet 07_MasterKendaraan tidak ditemukan."
+            "Sheet " + CONFIG.SHEET.VEHICLE + " tidak ditemukan."
         );
 
     }
@@ -676,7 +676,7 @@ function resetMasterKendaraanForDevelopment(){
         throw new Error(
 
             "RESET DIBATALKAN. " +
-            "Header 07_MasterKendaraan " +
+            "Header " + CONFIG.SHEET.VEHICLE + " " +
             "tidak sesuai struktur canonical."
 
         );
@@ -712,7 +712,7 @@ function resetMasterKendaraanForDevelopment(){
 
 
     Logger.log(
-        "07_MasterKendaraan berhasil di-reset."
+        CONFIG.SHEET.VEHICLE + " berhasil di-reset."
     );
 
     Logger.log(
@@ -736,13 +736,13 @@ function resetMasterPelangganForDevelopment(){
 
     const sh =
         ss.getSheetByName(
-            "06_MasterPelanggan"
+            CONFIG.SHEET.PELANGGAN
         );
 
     if(!sh){
 
         throw new Error(
-            "Sheet 06_MasterPelanggan tidak ditemukan."
+            "Sheet " + CONFIG.SHEET.PELANGGAN + " tidak ditemukan."
         );
 
     }
@@ -803,7 +803,7 @@ function resetMasterPelangganForDevelopment(){
         throw new Error(
 
             "RESET DIBATALKAN. " +
-            "Header 06_MasterPelanggan " +
+            "Header " + CONFIG.SHEET.PELANGGAN + " " +
             "tidak sesuai struktur canonical."
 
         );
@@ -839,7 +839,7 @@ function resetMasterPelangganForDevelopment(){
 
 
     Logger.log(
-        "06_MasterPelanggan berhasil di-reset."
+        CONFIG.SHEET.PELANGGAN + " berhasil di-reset."
     );
 
     Logger.log(
@@ -909,12 +909,12 @@ function verifyLatestUITestRecord(){
 
     const customerSheet =
         ss.getSheetByName(
-            "06_MasterPelanggan"
+            CONFIG.SHEET.PELANGGAN
         );
 
     const vehicleSheet =
         ss.getSheetByName(
-            "07_MasterKendaraan"
+            CONFIG.SHEET.VEHICLE
         );
 
 
