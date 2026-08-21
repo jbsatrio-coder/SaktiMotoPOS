@@ -9868,6 +9868,822 @@ function runCanonicalWopInventoryStep1RegressionCli(){
 
 /**
  * ============================================
+ * CANONICAL WOP INVENTORY STEP 2A
+ * BATCH CHARACTERIZATION REGRESSION
+ * ============================================
+ *
+ * Test-only characterization for the legacy
+ * consumeStockBatch() path. These tests do not
+ * implement canonical batch behavior.
+ * ============================================
+ */
+
+function assertCanonicalWopStep2A_(condition, message){
+
+    if(!condition){
+
+        throw new Error(
+            "Step 2A characterization gagal: " +
+            message
+        );
+
+    }
+
+}
+
+function getCanonicalWopStep2AOutLedgers_(workOrderPartId){
+
+    return StockLedgerRepository
+        .findByReferensi(
+            workOrderPartId
+        )
+        .filter(
+            function(ledger){
+
+                return (
+                    Number(
+                        ledger[
+                            COL_STOK.QTYKELUAR
+                        ]
+                    ) || 0
+                ) > 0;
+
+            }
+        );
+
+}
+
+function getCanonicalWopStep2AAlternativeBarangId_(){
+
+    const primaryBarangId =
+        "BRG000001";
+
+    const candidates =
+        BarangRepository.findAll();
+
+    for(
+        let i = 0;
+        i < candidates.length;
+        i++
+    ){
+
+        const barang =
+            candidates[i];
+
+        const barangId =
+            String(
+                barang[
+                    COL_BARANG.ID
+                ] || ""
+            ).trim();
+
+        const status =
+            String(
+                barang[
+                    COL_BARANG.STATUS
+                ] || ""
+            ).trim();
+
+        const stock =
+            Number(
+                barang[
+                    COL_BARANG.STOK
+                ]
+            ) || 0;
+
+        if(
+            barangId &&
+            barangId !== primaryBarangId &&
+            status === BarangStatus.AKTIF &&
+            stock >= 1
+        ){
+
+            return barangId;
+
+        }
+
+    }
+
+    throw new Error(
+        "Step 2A membutuhkan barang aktif selain BRG000001 dengan stok minimal 1."
+    );
+
+}
+
+function createCanonicalWopStep2AWorkOrder_(label){
+
+    const result =
+        WorkOrderService.create({
+
+            customerId :
+                "CUS2608160002",
+
+            vehicleId :
+                "VEH2608160002",
+
+            kilometerMasuk :
+                16000,
+
+            admin :
+                "Developer",
+
+            jenisTransaksi :
+                WorkOrderType.SERVICE,
+
+            prioritas :
+                WorkOrderPriority.NORMAL,
+
+            catatan :
+                "Canonical WOP Step 2A - " + label
+
+        });
+
+    assertCanonicalWopStep2A_(
+        !!result.workOrderId,
+        "Work Order fixture gagal dibuat."
+    );
+
+    return result.workOrderId;
+
+}
+
+function createCanonicalWopStep2AProgressPart_(
+    workOrderId,
+    barangId,
+    qty,
+    label
+){
+
+    const result =
+        WorkOrderPartService.create({
+
+            workOrderId :
+                workOrderId,
+
+            barangId :
+                barangId,
+
+            qty :
+                qty,
+
+            harga :
+                55000,
+
+            diskon :
+                0,
+
+            catatan :
+                "Canonical WOP Step 2A - " + label
+
+        });
+
+    const workOrderPartId =
+        result.workOrderPartId;
+
+    assertCanonicalWopStep2A_(
+        !!workOrderPartId,
+        "WorkOrderPart fixture gagal dibuat."
+    );
+
+    WorkOrderPartService.changeStatus(
+        workOrderPartId,
+        WorkOrderPartStatus.PROGRESS
+    );
+
+    return workOrderPartId;
+
+}
+
+function cleanupCanonicalWopStep2AParts_(workOrderPartIds){
+
+    for(
+        let i = 0;
+        i < workOrderPartIds.length;
+        i++
+    ){
+
+        const workOrderPartId =
+            workOrderPartIds[i];
+
+        const part =
+            WorkOrderPartRepository.findById(
+                workOrderPartId
+            );
+
+        if(!part){
+
+            continue;
+
+        }
+
+        const status =
+            part[
+                COL_WORK_ORDER_PART.STATUS
+            ];
+
+        if(status !== WorkOrderPartStatus.CANCEL){
+
+            WorkOrderPartService.cancel(
+                workOrderPartId
+            );
+
+        }
+
+    }
+
+}
+
+function testCanonicalWopStep2ATwoWopDifferentBarang(){
+
+    const primaryBarangId =
+        "BRG000001";
+
+    const alternativeBarangId =
+        getCanonicalWopStep2AAlternativeBarangId_();
+
+    const primaryStockBefore =
+        BarangRepository.getStock(
+            primaryBarangId
+        );
+
+    const alternativeStockBefore =
+        BarangRepository.getStock(
+            alternativeBarangId
+        );
+
+    assertCanonicalWopStep2A_(
+        primaryStockBefore >= 1 &&
+        alternativeStockBefore >= 1,
+        "Stok fixture dua barang tidak mencukupi."
+    );
+
+    const workOrderId =
+        createCanonicalWopStep2AWorkOrder_(
+            "two different barang"
+        );
+
+    const workOrderPartA =
+        createCanonicalWopStep2AProgressPart_(
+            workOrderId,
+            primaryBarangId,
+            1,
+            "different barang A"
+        );
+
+    const workOrderPartB =
+        createCanonicalWopStep2AProgressPart_(
+            workOrderId,
+            alternativeBarangId,
+            1,
+            "different barang B"
+        );
+
+    try{
+
+        const result =
+            WorkOrderPartService.consumeStockBatch(
+                workOrderId
+            );
+
+        const outA =
+            getCanonicalWopStep2AOutLedgers_(
+                workOrderPartA
+            );
+
+        const outB =
+            getCanonicalWopStep2AOutLedgers_(
+                workOrderPartB
+            );
+
+        assertCanonicalWopStep2A_(
+            result.success === true &&
+            result.totalItem === 2,
+            "Batch dua barang harus menghasilkan dua item ledger legacy."
+        );
+
+        assertCanonicalWopStep2A_(
+            BarangRepository.getStock(primaryBarangId) ===
+            primaryStockBefore - 1 &&
+            BarangRepository.getStock(alternativeBarangId) ===
+            alternativeStockBefore - 1,
+            "Batch dua barang harus mengurangi masing-masing stok satu."
+        );
+
+        assertCanonicalWopStep2A_(
+            outA.length === 1 &&
+            outB.length === 1 &&
+            Number(outA[0][COL_STOK.QTYKELUAR]) === 1 &&
+            Number(outB[0][COL_STOK.QTYKELUAR]) === 1,
+            "Batch dua barang harus tetap traceable per WOP."
+        );
+
+    }
+    finally{
+
+        cleanupCanonicalWopStep2AParts_([
+            workOrderPartA,
+            workOrderPartB
+        ]);
+
+        assertCanonicalWopStep2A_(
+            BarangRepository.getStock(primaryBarangId) ===
+            primaryStockBefore &&
+            BarangRepository.getStock(alternativeBarangId) ===
+            alternativeStockBefore,
+            "Cleanup dua barang harus mengembalikan stok baseline."
+        );
+
+    }
+
+}
+
+function testCanonicalWopStep2ATwoWopSameBarangLegacyCharacterization(){
+
+    const barangId =
+        "BRG000001";
+
+    const stockBefore =
+        BarangRepository.getStock(
+            barangId
+        );
+
+    assertCanonicalWopStep2A_(
+        stockBefore >= 3,
+        "Stok BRG000001 harus minimal 3 untuk karakterisasi grouped ledger."
+    );
+
+    const workOrderId =
+        createCanonicalWopStep2AWorkOrder_(
+            "same barang grouped ledger"
+        );
+
+    const workOrderPartA =
+        createCanonicalWopStep2AProgressPart_(
+            workOrderId,
+            barangId,
+            1,
+            "same barang A"
+        );
+
+    const workOrderPartB =
+        createCanonicalWopStep2AProgressPart_(
+            workOrderId,
+            barangId,
+            2,
+            "same barang B"
+        );
+
+    try{
+
+        const result =
+            WorkOrderPartService.consumeStockBatch(
+                workOrderId
+            );
+
+        const outA =
+            getCanonicalWopStep2AOutLedgers_(
+                workOrderPartA
+            );
+
+        const outB =
+            getCanonicalWopStep2AOutLedgers_(
+                workOrderPartB
+            );
+
+        assertCanonicalWopStep2A_(
+            result.success === true &&
+            result.totalItem === 1,
+            "Legacy batch harus menggabungkan WOP barang sama menjadi satu item."
+        );
+
+        assertCanonicalWopStep2A_(
+            BarangRepository.getStock(barangId) ===
+            stockBefore - 3,
+            "Legacy grouped batch harus mengurangi total qty 3."
+        );
+
+        assertCanonicalWopStep2A_(
+            outA.length === 1 &&
+            Number(outA[0][COL_STOK.QTYKELUAR]) === 3 &&
+            outB.length === 0,
+            "Legacy grouped ledger harus hanya direferensikan oleh WOP-A dengan qty 3."
+        );
+
+    }
+    finally{
+
+        cleanupCanonicalWopStep2AParts_([
+            workOrderPartA,
+            workOrderPartB
+        ]);
+
+        assertCanonicalWopStep2A_(
+            BarangRepository.getStock(barangId) === stockBefore,
+            "Cleanup grouped ledger harus mengembalikan stok baseline."
+        );
+
+    }
+
+}
+
+function testCanonicalWopStep2ARetryBatch(){
+
+    const primaryBarangId =
+        "BRG000001";
+
+    const alternativeBarangId =
+        getCanonicalWopStep2AAlternativeBarangId_();
+
+    const primaryStockBefore =
+        BarangRepository.getStock(primaryBarangId);
+
+    const alternativeStockBefore =
+        BarangRepository.getStock(alternativeBarangId);
+
+    assertCanonicalWopStep2A_(
+        primaryStockBefore >= 1 &&
+        alternativeStockBefore >= 1,
+        "Stok fixture retry batch tidak mencukupi."
+    );
+
+    const workOrderId =
+        createCanonicalWopStep2AWorkOrder_(
+            "retry batch"
+        );
+
+    const workOrderPartA =
+        createCanonicalWopStep2AProgressPart_(
+            workOrderId,
+            primaryBarangId,
+            1,
+            "retry A"
+        );
+
+    const workOrderPartB =
+        createCanonicalWopStep2AProgressPart_(
+            workOrderId,
+            alternativeBarangId,
+            1,
+            "retry B"
+        );
+
+    try{
+
+        WorkOrderPartService.consumeStockBatch(
+            workOrderId
+        );
+
+        const primaryStockBeforeRetry =
+            BarangRepository.getStock(primaryBarangId);
+
+        const alternativeStockBeforeRetry =
+            BarangRepository.getStock(alternativeBarangId);
+
+        const outCountBeforeRetry =
+            getCanonicalWopStep2AOutLedgers_(workOrderPartA).length +
+            getCanonicalWopStep2AOutLedgers_(workOrderPartB).length;
+
+        const retryResult =
+            WorkOrderPartService.consumeStockBatch(
+                workOrderId
+            );
+
+        const outCountAfterRetry =
+            getCanonicalWopStep2AOutLedgers_(workOrderPartA).length +
+            getCanonicalWopStep2AOutLedgers_(workOrderPartB).length;
+
+        const skippedIds =
+            (retryResult.skippedItems || [])
+                .map(function(item){
+
+                    return item.workOrderPartId;
+
+                })
+                .sort();
+
+        assertCanonicalWopStep2A_(
+            retryResult.success === true &&
+            retryResult.totalItem === 0 &&
+            skippedIds.length === 2 &&
+            skippedIds[0] === workOrderPartA &&
+            skippedIds[1] === workOrderPartB,
+            "Retry batch legacy harus menandai dua WOP sebagai sudah tercatat."
+        );
+
+        assertCanonicalWopStep2A_(
+            BarangRepository.getStock(primaryBarangId) ===
+            primaryStockBeforeRetry &&
+            BarangRepository.getStock(alternativeBarangId) ===
+            alternativeStockBeforeRetry &&
+            outCountAfterRetry === outCountBeforeRetry,
+            "Retry batch tidak boleh mengubah stok atau membuat ledger baru."
+        );
+
+    }
+    finally{
+
+        cleanupCanonicalWopStep2AParts_([
+            workOrderPartA,
+            workOrderPartB
+        ]);
+
+        assertCanonicalWopStep2A_(
+            BarangRepository.getStock(primaryBarangId) ===
+            primaryStockBefore &&
+            BarangRepository.getStock(alternativeBarangId) ===
+            alternativeStockBefore,
+            "Cleanup retry batch harus mengembalikan stok baseline."
+        );
+
+    }
+
+}
+
+function testCanonicalWopStep2APartialExisting(){
+
+    const primaryBarangId =
+        "BRG000001";
+
+    const alternativeBarangId =
+        getCanonicalWopStep2AAlternativeBarangId_();
+
+    const primaryStockBefore =
+        BarangRepository.getStock(primaryBarangId);
+
+    const alternativeStockBefore =
+        BarangRepository.getStock(alternativeBarangId);
+
+    assertCanonicalWopStep2A_(
+        primaryStockBefore >= 1 &&
+        alternativeStockBefore >= 1,
+        "Stok fixture partial-existing tidak mencukupi."
+    );
+
+    const workOrderId =
+        createCanonicalWopStep2AWorkOrder_(
+            "partial existing"
+        );
+
+    const workOrderPartA =
+        createCanonicalWopStep2AProgressPart_(
+            workOrderId,
+            primaryBarangId,
+            1,
+            "partial existing A"
+        );
+
+    const workOrderPartB =
+        createCanonicalWopStep2AProgressPart_(
+            workOrderId,
+            alternativeBarangId,
+            1,
+            "partial existing B"
+        );
+
+    try{
+
+        WorkOrderPartService.consumeStock(
+            workOrderPartA
+        );
+
+        const primaryStockAfterSingle =
+            BarangRepository.getStock(primaryBarangId);
+
+        const result =
+            WorkOrderPartService.consumeStockBatch(
+                workOrderId
+            );
+
+        assertCanonicalWopStep2A_(
+            result.success === true &&
+            result.totalItem === 1 &&
+            result.skippedItems.length === 1 &&
+            result.skippedItems[0].workOrderPartId === workOrderPartA,
+            "Batch partial-existing harus melewati WOP-A dan memproses WOP-B."
+        );
+
+        assertCanonicalWopStep2A_(
+            BarangRepository.getStock(primaryBarangId) ===
+            primaryStockAfterSingle &&
+            BarangRepository.getStock(alternativeBarangId) ===
+            alternativeStockBefore - 1,
+            "WOP existing tidak boleh mengurangi stok dua kali."
+        );
+
+        assertCanonicalWopStep2A_(
+            getCanonicalWopStep2AOutLedgers_(workOrderPartA).length === 1 &&
+            getCanonicalWopStep2AOutLedgers_(workOrderPartB).length === 1,
+            "Partial-existing harus menyisakan satu OUT ledger per WOP."
+        );
+
+    }
+    finally{
+
+        cleanupCanonicalWopStep2AParts_([
+            workOrderPartA,
+            workOrderPartB
+        ]);
+
+        assertCanonicalWopStep2A_(
+            BarangRepository.getStock(primaryBarangId) ===
+            primaryStockBefore &&
+            BarangRepository.getStock(alternativeBarangId) ===
+            alternativeStockBefore,
+            "Cleanup partial-existing harus mengembalikan stok baseline."
+        );
+
+    }
+
+}
+
+function testCanonicalWopStep2AInsufficientAggregateStock(){
+
+    const barangId =
+        "BRG000001";
+
+    const stockBefore =
+        BarangRepository.getStock(barangId);
+
+    const workOrderId =
+        createCanonicalWopStep2AWorkOrder_(
+            "insufficient aggregate stock"
+        );
+
+    const workOrderPartA =
+        createCanonicalWopStep2AProgressPart_(
+            workOrderId,
+            barangId,
+            Math.max(1, stockBefore + 1),
+            "insufficient aggregate A"
+        );
+
+    const workOrderPartB =
+        createCanonicalWopStep2AProgressPart_(
+            workOrderId,
+            barangId,
+            1,
+            "insufficient aggregate B"
+        );
+
+    try{
+
+        let errorCaught = false;
+
+        try{
+
+            WorkOrderPartService.consumeStockBatch(
+                workOrderId
+            );
+
+        }
+        catch(error){
+
+            errorCaught = true;
+
+        }
+
+        assertCanonicalWopStep2A_(
+            errorCaught,
+            "Batch insufficient aggregate stock harus melempar error."
+        );
+
+        assertCanonicalWopStep2A_(
+            BarangRepository.getStock(barangId) === stockBefore &&
+            getCanonicalWopStep2AOutLedgers_(workOrderPartA).length === 0 &&
+            getCanonicalWopStep2AOutLedgers_(workOrderPartB).length === 0,
+            "Batch insufficient aggregate stock tidak boleh meninggalkan stok atau ledger parsial."
+        );
+
+    }
+    finally{
+
+        cleanupCanonicalWopStep2AParts_([
+            workOrderPartA,
+            workOrderPartB
+        ]);
+
+        assertCanonicalWopStep2A_(
+            BarangRepository.getStock(barangId) === stockBefore,
+            "Cleanup insufficient aggregate harus mempertahankan stok baseline."
+        );
+
+    }
+
+}
+
+function testCanonicalWopStep2ACancelSameBarangLegacyCharacterization(){
+
+    const barangId =
+        "BRG000001";
+
+    const stockBefore =
+        BarangRepository.getStock(barangId);
+
+    assertCanonicalWopStep2A_(
+        stockBefore >= 3,
+        "Stok BRG000001 harus minimal 3 untuk karakterisasi cancellation legacy."
+    );
+
+    const workOrderId =
+        createCanonicalWopStep2AWorkOrder_(
+            "same barang cancellation risk"
+        );
+
+    const workOrderPartA =
+        createCanonicalWopStep2AProgressPart_(
+            workOrderId,
+            barangId,
+            1,
+            "cancellation legacy A"
+        );
+
+    const workOrderPartB =
+        createCanonicalWopStep2AProgressPart_(
+            workOrderId,
+            barangId,
+            2,
+            "cancellation legacy B"
+        );
+
+    try{
+
+        WorkOrderPartService.consumeStockBatch(
+            workOrderId
+        );
+
+        const cancelB =
+            WorkOrderPartService.cancel(
+                workOrderPartB
+            );
+
+        const stockAfterCancelB =
+            BarangRepository.getStock(barangId);
+
+        assertCanonicalWopStep2A_(
+            cancelB.stockOutRecorded === false &&
+            cancelB.reversal === null &&
+            stockAfterCancelB === stockBefore - 3,
+            "Legacy WOP-B tidak menemukan OUT; cancel B tidak memulihkan qty 2."
+        );
+
+        const cancelA =
+            WorkOrderPartService.cancel(
+                workOrderPartA
+            );
+
+        assertCanonicalWopStep2A_(
+            cancelA.stockOutRecorded === true &&
+            cancelA.reversal &&
+            cancelA.reversal.qtyReversal === 3 &&
+            BarangRepository.getStock(barangId) === stockBefore,
+            "Legacy WOP-A mereversal seluruh qty grouped 3, bukan qty individual 1."
+        );
+
+    }
+    finally{
+
+        cleanupCanonicalWopStep2AParts_([
+            workOrderPartA,
+            workOrderPartB
+        ]);
+
+        assertCanonicalWopStep2A_(
+            BarangRepository.getStock(barangId) === stockBefore,
+            "Cleanup cancellation characterization harus mengembalikan stok baseline."
+        );
+
+    }
+
+}
+
+function runCanonicalWopInventoryStep2ACharacterization(){
+
+    testCanonicalWopStep2ATwoWopDifferentBarang();
+    testCanonicalWopStep2ATwoWopSameBarangLegacyCharacterization();
+    testCanonicalWopStep2ARetryBatch();
+    testCanonicalWopStep2APartialExisting();
+    testCanonicalWopStep2AInsufficientAggregateStock();
+    testCanonicalWopStep2ACancelSameBarangLegacyCharacterization();
+
+    Logger.log(
+        "CANONICAL WOP INVENTORY STEP 2A CHARACTERIZATION PASS"
+    );
+
+}
+
+function runCanonicalWopInventoryStep2ACharacterizationCli(){
+
+    runCanonicalWopInventoryStep2ACharacterization();
+
+    return {
+        success : true,
+        message : "CANONICAL WOP INVENTORY STEP 2A CHARACTERIZATION PASS"
+    };
+
+}
+
+/**
+ * ============================================
  * TEST: Work Order Cancel Cascade
  * Stock Reversal Regression V1
  * ============================================
