@@ -678,6 +678,508 @@ buildStockOutTransactionIdentity(
 
 /**
  * ========================================
+ * PLAN CANONICAL STOCK OUT BATCH
+ * ========================================
+ *
+ * Read-only planner for Canonical Inventory
+ * Step 2B. It deliberately does not call any
+ * stock mutation or ledger write method.
+ *
+ * Existing individual SERVICE OUT ledgers do
+ * not persist their writer identity. Therefore
+ * an individual ledger that fully matches its
+ * authoritative WOP is classified as
+ * EXISTING_CANONICAL by reconstructed contract.
+ * Its historical origin cannot be proven
+ * without a schema change.
+ * ========================================
+ */
+planCanonicalStockOutBatch(workOrderId){
+
+    const requestedWorkOrderId =
+        String(workOrderId || "").trim();
+
+    if(!requestedWorkOrderId){
+
+        throw new Error(
+            "Work Order ID wajib diisi."
+        );
+
+    }
+
+    const workOrderParts =
+        WorkOrderPartRepository
+            .findByWorkOrderId(
+                requestedWorkOrderId
+            );
+
+    const seenWorkOrderPartIds = {};
+    const invalidLines = [];
+    const candidateParts = [];
+
+    for(
+        let i = 0;
+        i < workOrderParts.length;
+        i++
+    ){
+
+        const part =
+            workOrderParts[i];
+
+        const workOrderPartId =
+            String(
+                part[
+                    COL_WORK_ORDER_PART.ID
+                ] || ""
+            ).trim();
+
+        if(!workOrderPartId){
+
+            invalidLines.push({
+                reason :
+                    "WorkOrderPart ID wajib diisi."
+            });
+
+            continue;
+
+        }
+
+        if(seenWorkOrderPartIds[workOrderPartId]){
+
+            throw new Error(
+                "Duplicate WorkOrderPart ID pada canonical batch planner: " +
+                workOrderPartId
+            );
+
+        }
+
+        seenWorkOrderPartIds[workOrderPartId] =
+            true;
+
+        const sourceWorkOrderId =
+            String(
+                part[
+                    COL_WORK_ORDER_PART.WORK_ORDER_ID
+                ] || ""
+            ).trim();
+
+        if(sourceWorkOrderId !== requestedWorkOrderId){
+
+            invalidLines.push({
+                workOrderPartId :
+                    workOrderPartId,
+                reason :
+                    "WorkOrderPart tidak dimiliki Work Order yang diminta."
+            });
+
+            continue;
+
+        }
+
+        if(
+            part[
+                COL_WORK_ORDER_PART.STATUS
+            ] !== WorkOrderPartStatus.PROGRESS
+        ){
+
+            continue;
+
+        }
+
+        const barangId =
+            String(
+                part[
+                    COL_WORK_ORDER_PART.BARANG_ID
+                ] || ""
+            ).trim();
+
+        const qty =
+            Number(
+                part[
+                    COL_WORK_ORDER_PART.QTY
+                ]
+            );
+
+        if(
+            !barangId ||
+            !Number.isFinite(qty) ||
+            qty <= 0
+        ){
+
+            invalidLines.push({
+                workOrderPartId :
+                    workOrderPartId,
+                reason :
+                    "Barang ID dan qty WorkOrderPart harus valid."
+            });
+
+            continue;
+
+        }
+
+        candidateParts.push({
+            workOrderPartId :
+                workOrderPartId,
+            workOrderId :
+                sourceWorkOrderId,
+            barangId :
+                barangId,
+            qty :
+                qty,
+            namaBarang :
+                part[
+                    COL_WORK_ORDER_PART.NAMA_BARANG_SNAPSHOT
+                ] || "",
+            part :
+                part
+        });
+
+    }
+
+    candidateParts.sort(
+        function(left, right){
+
+            return left.workOrderPartId.localeCompare(
+                right.workOrderPartId
+            );
+
+        }
+    );
+
+    const perBarangById = {};
+
+    for(
+        let i = 0;
+        i < candidateParts.length;
+        i++
+    ){
+
+        const candidate =
+            candidateParts[i];
+
+        if(!perBarangById[candidate.barangId]){
+
+            perBarangById[candidate.barangId] = {
+                barangId :
+                    candidate.barangId,
+                totalQtyRequired :
+                    0,
+                sourceLineIds :
+                    []
+            };
+
+        }
+
+        perBarangById[candidate.barangId]
+            .totalQtyRequired += candidate.qty;
+
+        perBarangById[candidate.barangId]
+            .sourceLineIds.push(
+                candidate.workOrderPartId
+            );
+
+    }
+
+    const ledgerRowsByWorkOrderPartId = {};
+
+    for(
+        let i = 0;
+        i < candidateParts.length;
+        i++
+    ){
+
+        const candidate =
+            candidateParts[i];
+
+        ledgerRowsByWorkOrderPartId[
+            candidate.workOrderPartId
+        ] = StockLedgerRepository
+            .findByReferensi(
+                candidate.workOrderPartId
+            );
+
+    }
+
+    const legacyAmbiguousBarangIds = {};
+
+    Object.keys(perBarangById).forEach(
+        function(barangId){
+
+            const summary =
+                perBarangById[barangId];
+
+            if(summary.sourceLineIds.length < 2){
+
+                return;
+
+            }
+
+            for(
+                let i = 0;
+                i < summary.sourceLineIds.length;
+                i++
+            ){
+
+                const sourceLineId =
+                    summary.sourceLineIds[i];
+
+                const rows =
+                    ledgerRowsByWorkOrderPartId[
+                        sourceLineId
+                    ];
+
+                const groupedLedgerFound =
+                    rows.some(
+                        function(row){
+
+                            return (
+                                Number(
+                                    row[
+                                        COL_STOK.QTYKELUAR
+                                    ]
+                                ) || 0
+                            ) === summary.totalQtyRequired &&
+                            String(
+                                row[
+                                    COL_STOK.BARANG_ID
+                                ] || ""
+                            ).trim() === barangId &&
+                            String(
+                                row[
+                                    COL_STOK.JENISMUTASI
+                                ] || ""
+                            ).trim() === "SERVICE";
+
+                        }
+                    );
+
+                if(groupedLedgerFound){
+
+                    legacyAmbiguousBarangIds[barangId] =
+                        true;
+
+                    return;
+
+                }
+
+            }
+
+        }
+    );
+
+    const lines = [];
+    const newLines = [];
+    const existingLines = [];
+    const legacyCompatibleLines = [];
+    const legacyAmbiguousLines = [];
+    const conflictLines = [];
+
+    for(
+        let i = 0;
+        i < candidateParts.length;
+        i++
+    ){
+
+        const candidate =
+            candidateParts[i];
+
+        const identity =
+            this.buildStockOutTransactionIdentity(
+                candidate.workOrderId,
+                candidate.workOrderPartId
+            );
+
+        const rows =
+            ledgerRowsByWorkOrderPartId[
+                candidate.workOrderPartId
+            ];
+
+        const stockOutRows =
+            rows.filter(
+                function(row){
+
+                    return (
+                        Number(
+                            row[
+                                COL_STOK.QTYKELUAR
+                            ]
+                        ) || 0
+                    ) > 0;
+
+                }
+            );
+
+        const line = {
+            transactionId :
+                identity.transactionId,
+            transactionType :
+                identity.transactionType,
+            sourceDocumentType :
+                identity.sourceDocumentType,
+            sourceDocumentId :
+                identity.sourceDocumentId,
+            sourceLineId :
+                identity.sourceLineId,
+            idempotencyKey :
+                identity.idempotencyKey,
+            barangId :
+                candidate.barangId,
+            qty :
+                candidate.qty,
+            referensi :
+                candidate.workOrderPartId,
+            classification :
+                "NEW",
+            classificationReason :
+                "Belum ada Stock Ledger OUT untuk WorkOrderPart ini."
+        };
+
+        if(legacyAmbiguousBarangIds[candidate.barangId]){
+
+            line.classification =
+                "LEGACY_AMBIGUOUS";
+
+            line.classificationReason =
+                "Ditemukan SERVICE OUT agregat untuk lebih dari satu WorkOrderPart dengan barang sama.";
+
+            legacyAmbiguousLines.push(line);
+
+        }
+        else if(stockOutRows.length === 0){
+
+            if(rows.length > 0){
+
+                line.classification =
+                    "CONFLICT";
+
+                line.classificationReason =
+                    "Referensi ledger ada tetapi tidak memiliki OUT yang dapat divalidasi.";
+
+                conflictLines.push(line);
+
+            }
+            else{
+
+                newLines.push(line);
+
+            }
+
+        }
+        else if(stockOutRows.length !== 1){
+
+            line.classification =
+                "CONFLICT";
+
+            line.classificationReason =
+                "Ditemukan lebih dari satu Stock Ledger OUT untuk WorkOrderPart."
+
+            conflictLines.push(line);
+
+        }
+        else{
+
+            const ledger =
+                stockOutRows[0];
+
+            const ledgerBarangId =
+                String(
+                    ledger[
+                        COL_STOK.BARANG_ID
+                    ] || ""
+                ).trim();
+
+            const ledgerQty =
+                Number(
+                    ledger[
+                        COL_STOK.QTYKELUAR
+                    ]
+                ) || 0;
+
+            const ledgerMovementType =
+                String(
+                    ledger[
+                        COL_STOK.JENISMUTASI
+                    ] || ""
+                ).trim();
+
+            if(
+                ledgerMovementType !== "SERVICE" ||
+                ledgerBarangId !== candidate.barangId ||
+                ledgerQty !== candidate.qty
+            ){
+
+                line.classification =
+                    "CONFLICT";
+
+                line.classificationReason =
+                    "Stock Ledger OUT tidak sesuai dengan barang, qty, atau jenis mutasi WorkOrderPart authoritative.";
+
+                conflictLines.push(line);
+
+            }
+            else{
+
+                line.classification =
+                    "EXISTING_CANONICAL";
+
+                line.classificationReason =
+                    "Individual SERVICE OUT sesuai contract canonical yang direkonstruksi dari WorkOrderPart authoritative; provenance writer tidak dipersist."
+
+                line.stockLedgerId =
+                    ledger[
+                        COL_STOK.ID
+                    ];
+
+                existingLines.push(line);
+
+            }
+
+        }
+
+        lines.push(line);
+
+    }
+
+    const perBarangSummary =
+        Object.keys(perBarangById)
+            .sort()
+            .map(
+                function(barangId){
+
+                    return perBarangById[barangId];
+
+                }
+            );
+
+    return {
+        workOrderId :
+            requestedWorkOrderId,
+        lines :
+            lines,
+        newLines :
+            newLines,
+        existingLines :
+            existingLines,
+        legacyCompatibleLines :
+            legacyCompatibleLines,
+        legacyAmbiguousLines :
+            legacyAmbiguousLines,
+        conflictLines :
+            conflictLines,
+        invalidLines :
+            invalidLines,
+        perBarangSummary :
+            perBarangSummary,
+        canExecuteCanonicalBatch :
+            invalidLines.length === 0 &&
+            legacyAmbiguousLines.length === 0 &&
+            conflictLines.length === 0
+    };
+
+},
+
+/**
+ * ========================================
  * READ EXISTING CANONICAL STOCK-OUT RESULT
  * ========================================
  */
