@@ -17,34 +17,34 @@ const CONFIG = {
   SHEET: {
 
     SETTING:
-      "01_Setting",
+      "Setting",
 
     BARANG:
-      "02_MasterBarang",
+      "MasterBarang",
 
     KATEGORI:
-      "03_MasterKategori",
+      "MasterKategori",
 
     MERK:
-      "04_MasterMerk",
+      "MasterMerk",
 
     MODEL:
       "MasterModel",
 
     SUPPLIER:
-      "05_MasterSupplier",
+      "MasterSupplier",
 
     PELANGGAN:
-      "06_MasterPelanggan",
+      "MasterPelanggan",
 
     VEHICLE:
-      "07_MasterKendaraan",
+      "MasterKendaraan",
 
     JASA:
-      "08_MasterJasa",
+      "MasterJasa",
 
     MEKANIK:
-      "09_MasterMekanik",
+      "MasterMekanik",
 
     MASTER_USER:
       "MasterUser",
@@ -53,52 +53,52 @@ const CONFIG = {
       "RolePermission",
 
     POS:
-      "10_POS",
+      "POS",
 
     PENJUALAN:
-      "11_Penjualan",
+      "Penjualan",
 
     DETAIL_PENJUALAN:
-      "12_DetailPenjualan",
+      "DetailPenjualan",
 
     PEMBELIAN_LEGACY:
       "13_Pembelian_Legacy",
 
     STOK:
-      "14_Stok",
+      "Stok",
 
     DASHBOARD:
-      "15_Dashboard",
+      "Dashboard",
 
     KOMISI_MEKANIK:
-      "16_KomisiMekanik",
+      "KomisiMekanik",
 
     WORK_ORDER:
-      "17_WorkOrder",
+      "WorkOrder",
 
     WORK_ORDER_JASA:
-      "18_WorkOrderJasa",
+      "WorkOrderJasa",
 
     WORK_ORDER_PART:
-      "19_WorkOrderPart",
+      "WorkOrderPart",
 
     MASTER_KELUHAN:
-      "19_MasterKeluhan",
+      "MasterKeluhan",
 
     MASTER_STATUS_WO:
-      "20_MasterStatusWO",
+      "MasterStatusWO",
 
     LAPORAN:
-      "21_Laporan",
+      "Laporan",
 
     PEMBELIAN:
-      "22_Pembelian",
+      "Pembelian",
 
     DETAIL_PEMBELIAN:
-      "23_DetailPembelian",
+      "DetailPembelian",
 
     RUNNING_NUMBER:
-      "99_RunningNumber"
+      "RunningNumber"
 
   },
 
