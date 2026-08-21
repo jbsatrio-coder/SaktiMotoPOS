@@ -21,6 +21,19 @@ const RunningNumberService = {
 
     }
 
+    ,
+
+    // Internal only. Caller MUST already own ScriptLock.
+    generateNoLock_(documentType){
+
+        return generateRunningNumberNoLock_(
+
+            documentType
+
+        );
+
+    }
+
 };
 
 function testRunningNumberService(){

@@ -8,6 +8,111 @@
 
 const PurchaseService = {
 
+    testHooks_ : null,
+
+    setTestHooksForTest_(hooks){
+        this.testHooks_ = hooks || null;
+    },
+
+    updateCanonicalStatus_(purchaseNumber, status){
+        if(this.testHooks_ && typeof this.testHooks_.beforeStatusUpdate === "function"){
+            this.testHooks_.beforeStatusUpdate(purchaseNumber, status);
+        }
+        return PurchaseRepository.updateStatus(purchaseNumber, status);
+    },
+
+    getCanonicalPurchaseDocument_(purchaseNumber){
+        const record = PurchaseRepository.findByPurchaseNumber(purchaseNumber);
+        if(!record){
+            throw new Error("Purchase canonical tidak ditemukan: " + purchaseNumber);
+        }
+        return {
+            header : {
+                nomor : record.purchaseNumber,
+                tanggal : record.row[1],
+                supplier : record.row[2],
+                noFaktur : record.row[3],
+                admin : record.row[7],
+                keterangan : record.row[8],
+                submissionId : record.submissionId,
+                idempotencyKey : record.idempotencyKey,
+                transactionId : record.transactionId,
+                payloadFingerprint : record.payloadFingerprint
+            },
+            items : PurchaseRepository.findItemsByPurchaseNumber(record.purchaseNumber),
+            status : record.status
+        };
+    },
+
+    createCanonicalPurchaseResult_(receipt, purchaseDocument, status, options){
+        const batchResult = {
+            success : true,
+            results : receipt.lines.map(function(line){
+                return {
+                    kodeBarang : line.barangId,
+                    qty : line.qty,
+                    stokAwal : line.stokAwal,
+                    stokAkhir : line.stokAkhir,
+                    ledgerId : line.ledgerId
+                };
+            })
+        };
+        const result = PurchaseResult.create(batchResult, purchaseDocument, status);
+        result.alreadyRecorded = receipt.alreadyRecorded === true;
+        result.resumed = options && options.resumed === true;
+        result.transactionId = receipt.transactionId;
+        result.idempotencyKey = receipt.idempotencyKey;
+        result.submissionId = purchaseDocument.header.submissionId;
+        result.ledgerIds = receipt.ledgerIds.slice();
+        return result;
+    },
+
+    receiveCanonicalPurchase_(purchase){
+        const prepared = prepareCanonicalPurchaseSubmission(purchase);
+        const purchaseDocument = this.getCanonicalPurchaseDocument_(prepared.purchaseNumber);
+        const currentStatus = String(purchaseDocument.status || "").trim();
+        let receipt = null;
+        let inventoryCommitted = false;
+
+        if(currentStatus === PurchaseStatus.POSTED){
+            receipt = CanonicalPurchaseInventoryService.recordPurchaseInBatchAtomic(prepared.plan);
+            return this.createCanonicalPurchaseResult_(receipt, purchaseDocument, PurchaseStatus.POSTED, {
+                resumed : true
+            });
+        }
+
+        if([PurchaseStatus.NEW, PurchaseStatus.POSTING, PurchaseStatus.FAILED].indexOf(currentStatus) < 0){
+            throw new Error("Status Purchase canonical tidak dapat diproses: " + currentStatus);
+        }
+
+        try{
+            if(currentStatus !== PurchaseStatus.POSTING){
+                this.updateCanonicalStatus_(prepared.purchaseNumber, PurchaseStatus.POSTING);
+            }
+
+            receipt = CanonicalPurchaseInventoryService.recordPurchaseInBatchAtomic(prepared.plan);
+            inventoryCommitted = true;
+            this.updateCanonicalStatus_(prepared.purchaseNumber, PurchaseStatus.POSTED);
+
+            return this.createCanonicalPurchaseResult_(receipt, purchaseDocument, PurchaseStatus.POSTED, {
+                resumed : prepared.alreadyPrepared || receipt.alreadyRecorded
+            });
+        }
+        catch(error){
+            if(!inventoryCommitted){
+                try{
+                    this.updateCanonicalStatus_(prepared.purchaseNumber, PurchaseStatus.FAILED);
+                }
+                catch(statusError){
+                    Logger.log("[CANONICAL PURCHASE STATUS UPDATE FAILED] " + statusError.message);
+                }
+                throw error;
+            }
+
+            throw new Error("Canonical Purchase inventory sudah committed; finalisasi POSTED perlu retry. " + error.message);
+        }
+    },
+
 
     /**
      * ==========================================
@@ -15,7 +120,7 @@ const PurchaseService = {
      * ==========================================
      */
 
-    createPurchaseDocument(purchase){
+    createPurchaseDocument(purchase, options){
 
     if (!purchase) {
         throw new Error(
@@ -49,9 +154,8 @@ const PurchaseService = {
         header : {
 
             nomor :
-                RunningNumberService.generate(
-                    DocumentType.PURCHASE
-                ),
+                options && options.purchaseNumber ||
+                RunningNumberService.generate(DocumentType.PURCHASE),
 
             tanggal :
                 purchase.tanggal ||
@@ -156,6 +260,15 @@ const PurchaseService = {
      */
 
     receivePurchase(purchase){
+
+        if(purchase && String(purchase.submissionId || "").trim()){
+            return this.receiveCanonicalPurchase_(purchase);
+        }
+
+        return this.receivePurchaseLegacy_(purchase);
+    },
+
+    receivePurchaseLegacy_(purchase){
 
         const purchaseDocument =
             this.createPurchaseDocument(
@@ -508,6 +621,10 @@ function testCreatePurchaseDocumentWithInvoice(){
  * Dipanggil oleh FormPembelian.html
  */
 function submitPurchase(data){
+
+    if(!data || !String(data.submissionId || "").trim()){
+        throw new Error("submissionId Purchase wajib diisi.");
+    }
 
     return PurchaseService.receivePurchase(
         data

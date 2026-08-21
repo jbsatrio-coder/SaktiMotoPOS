@@ -19,7 +19,7 @@
  * =====================================================
  */
 
-function generateRunningNumber_(prefix) {
+function generateRunningNumberNoLock_(prefix) {
 
   if (!prefix) {
 
@@ -28,13 +28,6 @@ function generateRunningNumber_(prefix) {
     );
 
   }
-
-  const lock =
-    LockService.getScriptLock();
-
-  lock.waitLock(30000);
-
-  try {
 
     const ss =
       SpreadsheetApp
@@ -148,10 +141,17 @@ function generateRunningNumber_(prefix) {
     );
 
 
+}
+
+function generateRunningNumber_(prefix) {
+
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+
+  try {
+    return generateRunningNumberNoLock_(prefix);
   } finally {
-
     lock.releaseLock();
-
   }
 
 }

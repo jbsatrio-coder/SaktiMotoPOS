@@ -475,6 +475,60 @@
 let daftarBarang = [];
 let items = [];
 let daftarSupplier = [];
+let currentPurchaseSubmissionId = createPurchaseSubmissionId_();
+let purchaseSubmitInFlight = false;
+
+function createPurchaseSubmissionId_() {
+
+  if (
+    window.crypto &&
+    typeof window.crypto.randomUUID === "function"
+  ) {
+    return window.crypto.randomUUID();
+  }
+
+  if (
+    window.crypto &&
+    typeof window.crypto.getRandomValues === "function"
+  ) {
+    const values = new Uint32Array(4);
+    window.crypto.getRandomValues(values);
+
+    return "purchase-" +
+      Array.prototype.map.call(
+        values,
+        function(value) {
+          return value.toString(16);
+        }
+      ).join("-");
+  }
+
+  return "purchase-" +
+    Math.random().toString(36).slice(2) + "-" +
+    Date.now().toString(36);
+}
+
+function getCurrentPurchaseSubmissionId_() {
+  return currentPurchaseSubmissionId;
+}
+
+function rotatePurchaseSubmissionId_() {
+  currentPurchaseSubmissionId = createPurchaseSubmissionId_();
+  return currentPurchaseSubmissionId;
+}
+
+function beginPurchaseSubmit_() {
+  if (purchaseSubmitInFlight) {
+    return false;
+  }
+
+  purchaseSubmitInFlight = true;
+  return true;
+}
+
+function finishPurchaseSubmit_() {
+  purchaseSubmitInFlight = false;
+}
 
 google.script.run
 
@@ -1090,12 +1144,23 @@ function simpanPembelianMulti() {
     return;
   }
 
+  if (!beginPurchaseSubmit_()) {
+
+    status.innerHTML =
+      "Pembelian sedang diproses.";
+
+    return;
+  }
+
 
   // ==========================================
   // DATA PURCHASE ENGINE
   // ==========================================
 
   const data = {
+
+    submissionId:
+      getCurrentPurchaseSubmissionId_(),
 
     supplier: supplier,
 
@@ -1209,6 +1274,10 @@ function simpanPembelianMulti() {
       // Admin sengaja tetap
       // supaya tidak perlu mengetik berulang kali
 
+      finishPurchaseSubmit_();
+
+      rotatePurchaseSubmissionId_();
+
       tombol.disabled = false;
 
     })
@@ -1218,6 +1287,8 @@ function simpanPembelianMulti() {
       status.innerHTML =
         "<b>GAGAL:</b> " +
         error.message;
+
+      finishPurchaseSubmit_();
 
       tombol.disabled = false;
 
