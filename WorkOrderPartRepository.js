@@ -47,6 +47,46 @@ const WorkOrderPartRepository = {
 
     },
 
+    /**
+     * Fresh read untuk critical section canonical
+     * yang perlu melihat status WOP dari execution
+     * sebelumnya setelah ScriptLock diperoleh.
+     * Method findAll() lama tidak diubah.
+     */
+    findAllFresh(){
+
+        SpreadsheetApp.flush();
+
+        const activeSpreadsheet =
+            SpreadsheetApp.getActiveSpreadsheet();
+
+        const ss =
+            SpreadsheetApp.openById(
+                activeSpreadsheet.getId()
+            );
+
+        const sh =
+            ss.getSheetByName(
+                CONFIG.SHEET.WORK_ORDER_PART
+            );
+
+        if(!sh || sh.getLastRow() < 2){
+
+            return [];
+
+        }
+
+        return sh
+            .getRange(
+                2,
+                1,
+                sh.getLastRow() - 1,
+                COL_WORK_ORDER_PART.TOTAL + 1
+            )
+            .getValues();
+
+    },
+
 
     /**
      * Mencari nomor baris berdasarkan ID
@@ -133,6 +173,42 @@ const WorkOrderPartRepository = {
             )
 
             .getValues()[0];
+
+    },
+
+    findByIdFresh(workOrderPartId){
+
+        const targetId =
+            String(workOrderPartId || "").trim();
+
+        if(!targetId){
+
+            return null;
+
+        }
+
+        const data =
+            this.findAllFresh();
+
+        for(
+            let i = 0;
+            i < data.length;
+            i++
+        ){
+
+            if(
+                String(
+                    data[i][COL_WORK_ORDER_PART.ID] || ""
+                ).trim() === targetId
+            ){
+
+                return data[i];
+
+            }
+
+        }
+
+        return null;
 
     },
 

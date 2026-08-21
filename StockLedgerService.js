@@ -765,6 +765,676 @@ const StockLedgerService = {
 
     },
 
+    /**
+     * ============================================
+     * Record Canonical WOP Out Batch Atomic
+     * ============================================
+     *
+     * Step 2C executor. This method is intentionally
+     * separate from recordOutBatchAtomic() so legacy
+     * callers retain their current behavior.
+     *
+     * The planner is re-run inside ScriptLock, then
+     * every submitted line is compared again with its
+     * authoritative WorkOrderPart before mutation.
+     * ============================================
+     */
+    recordCanonicalWopOutBatchAtomic(batch){
+
+        if(!batch || !Array.isArray(batch.lines)){
+
+            throw new Error(
+                "Canonical WOP batch wajib berisi lines array."
+            );
+
+        }
+
+        if(batch.lines.length === 0){
+
+            throw new Error(
+                "Canonical WOP batch tidak boleh kosong."
+            );
+
+        }
+
+        const workOrderId =
+            String(batch.workOrderId || "").trim();
+
+        if(!workOrderId){
+
+            throw new Error(
+                "Work Order ID wajib diisi."
+            );
+
+        }
+
+        const lock =
+            LockService.getScriptLock();
+
+        lock.waitLock(30000);
+
+        const updatedStocks = [];
+        const createdLedgerIds = [];
+
+        try{
+
+            const submittedBySourceLineId = {};
+            const submittedSourceLineIds = [];
+
+            for(
+                let i = 0;
+                i < batch.lines.length;
+                i++
+            ){
+
+                const line =
+                    batch.lines[i];
+
+                const sourceLineId =
+                    String(
+                        line && line.sourceLineId || ""
+                    ).trim();
+
+                if(!sourceLineId){
+
+                    throw new Error(
+                        "Canonical WOP sourceLineId wajib diisi."
+                    );
+
+                }
+
+                if(submittedBySourceLineId[sourceLineId]){
+
+                    throw new Error(
+                        "Duplicate WorkOrderPart source line pada canonical executor: " +
+                        sourceLineId
+                    );
+
+                }
+
+                submittedBySourceLineId[sourceLineId] =
+                    line;
+
+                submittedSourceLineIds.push(
+                    sourceLineId
+                );
+
+            }
+
+            submittedSourceLineIds.sort();
+
+            const authoritativeBySourceLineId = {};
+
+            for(
+                let i = 0;
+                i < submittedSourceLineIds.length;
+                i++
+            ){
+
+                const sourceLineId =
+                    submittedSourceLineIds[i];
+
+                const submittedLine =
+                    submittedBySourceLineId[sourceLineId];
+
+                const workOrderPart =
+                    WorkOrderPartRepository.findByIdFresh(
+                        sourceLineId
+                    );
+
+                if(!workOrderPart){
+
+                    throw new Error(
+                        "Canonical WOP source tidak ditemukan: " +
+                        sourceLineId
+                    );
+
+                }
+
+                const authoritativeWorkOrderId =
+                    String(
+                        workOrderPart[
+                            COL_WORK_ORDER_PART.WORK_ORDER_ID
+                        ] || ""
+                    ).trim();
+
+                const authoritativeBarangId =
+                    String(
+                        workOrderPart[
+                            COL_WORK_ORDER_PART.BARANG_ID
+                        ] || ""
+                    ).trim();
+
+                const authoritativeQty =
+                    Number(
+                        workOrderPart[
+                            COL_WORK_ORDER_PART.QTY
+                        ]
+                    );
+
+                const expectedIdentity =
+                    WorkOrderPartService
+                        .buildStockOutTransactionIdentity(
+                            authoritativeWorkOrderId,
+                            sourceLineId
+                        );
+
+                if(
+                    authoritativeWorkOrderId !== workOrderId ||
+                    workOrderPart[
+                        COL_WORK_ORDER_PART.STATUS
+                    ] !== WorkOrderPartStatus.PROGRESS ||
+                    !authoritativeBarangId ||
+                    !Number.isFinite(authoritativeQty) ||
+                    authoritativeQty <= 0 ||
+                    submittedLine.transactionId !== expectedIdentity.transactionId ||
+                    submittedLine.transactionType !== "WO_PART_OUT" ||
+                    submittedLine.sourceDocumentType !== "WORK_ORDER_PART" ||
+                    submittedLine.sourceDocumentId !== authoritativeWorkOrderId ||
+                    submittedLine.sourceLineId !== sourceLineId ||
+                    submittedLine.idempotencyKey !== expectedIdentity.idempotencyKey ||
+                    String(submittedLine.barangId || "").trim() !== authoritativeBarangId ||
+                    Number(submittedLine.qty) !== authoritativeQty ||
+                    String(submittedLine.referensi || "").trim() !== sourceLineId
+                ){
+
+                    throw new Error(
+                        "Canonical WOP line tidak sesuai dengan WorkOrderPart authoritative: " +
+                        sourceLineId
+                    );
+
+                }
+
+                authoritativeBySourceLineId[sourceLineId] = {
+                    workOrderPart :
+                        workOrderPart,
+                    barangId :
+                        authoritativeBarangId,
+                    qty :
+                        authoritativeQty
+                };
+
+            }
+
+            /**
+             * Planner is invoked inside the same lock.
+             * The submitted line set must exactly match
+             * all current eligible lines for this Work Order
+             * so no PROGRESS WOP is silently omitted.
+             */
+            const plan =
+                WorkOrderPartService
+                    .planCanonicalStockOutBatch(
+                        workOrderId
+                    );
+
+            const plannedSourceLineIds =
+                plan.lines.map(
+                    function(line){
+
+                        return line.sourceLineId;
+
+                    }
+                ).sort();
+
+            if(
+                plan.invalidLines.length > 0 ||
+                plannedSourceLineIds.length !== submittedSourceLineIds.length ||
+                plannedSourceLineIds.join("|") !==
+                submittedSourceLineIds.join("|")
+            ){
+
+                throw new Error(
+                    "Canonical WOP batch tidak sesuai dengan WorkOrderPart PROGRESS authoritative."
+                );
+
+            }
+
+            const plannedBySourceLineId = {};
+
+            for(
+                let i = 0;
+                i < plan.lines.length;
+                i++
+            ){
+
+                const plannedLine =
+                    plan.lines[i];
+
+                plannedBySourceLineId[
+                    plannedLine.sourceLineId
+                ] = plannedLine;
+
+            }
+
+            const newLines = [];
+            const existingLines = [];
+
+            for(
+                let i = 0;
+                i < submittedSourceLineIds.length;
+                i++
+            ){
+
+                const sourceLineId =
+                    submittedSourceLineIds[i];
+
+                const plannedLine =
+                    plannedBySourceLineId[sourceLineId];
+
+                if(
+                    plannedLine.classification ===
+                    "LEGACY_AMBIGUOUS"
+                ){
+
+                    throw new Error(
+                        "Canonical WOP batch ditolak: LEGACY_AMBIGUOUS pada " +
+                        sourceLineId +
+                        ". " +
+                        plannedLine.classificationReason
+                    );
+
+                }
+
+                if(
+                    plannedLine.classification ===
+                    "CONFLICT"
+                ){
+
+                    throw new Error(
+                        "Canonical WOP batch ditolak: CONFLICT pada " +
+                        sourceLineId +
+                        ". " +
+                        plannedLine.classificationReason
+                    );
+
+                }
+
+                if(
+                    plannedLine.classification ===
+                    "EXISTING_CANONICAL"
+                ){
+
+                    existingLines.push(plannedLine);
+
+                    continue;
+
+                }
+
+                if(plannedLine.classification !== "NEW"){
+
+                    throw new Error(
+                        "Canonical WOP batch memiliki classification tidak dapat dieksekusi: " +
+                        plannedLine.classification
+                    );
+
+                }
+
+                newLines.push(plannedLine);
+
+            }
+
+            const stockStateByBarangId = {};
+
+            for(
+                let i = 0;
+                i < newLines.length;
+                i++
+            ){
+
+                const line =
+                    newLines[i];
+
+                if(!stockStateByBarangId[line.barangId]){
+
+                    const barang =
+                        BarangRepository.findById(
+                            line.barangId
+                        );
+
+                    if(!barang){
+
+                        throw new Error(
+                            "Barang canonical WOP tidak ditemukan: " +
+                            line.barangId
+                        );
+
+                    }
+
+                    stockStateByBarangId[line.barangId] = {
+                        barangId :
+                            line.barangId,
+                        stokAwal :
+                            BarangRepository.getStock(
+                                line.barangId
+                            ),
+                        qtyRequired :
+                            0,
+                        stokAkhir :
+                            0,
+                        currentLedgerStock :
+                            0
+                    };
+
+                }
+
+                stockStateByBarangId[line.barangId]
+                    .qtyRequired += line.qty;
+
+            }
+
+            const barangIds =
+                Object.keys(stockStateByBarangId).sort();
+
+            for(
+                let i = 0;
+                i < barangIds.length;
+                i++
+            ){
+
+                const stockState =
+                    stockStateByBarangId[
+                        barangIds[i]
+                    ];
+
+                if(stockState.stokAwal < stockState.qtyRequired){
+
+                    throw new Error(
+                        "Stok tidak mencukupi untuk canonical WOP batch. Barang: " +
+                        stockState.barangId +
+                        ", Stok: " + stockState.stokAwal +
+                        ", Qty: " + stockState.qtyRequired
+                    );
+
+                }
+
+                stockState.stokAkhir =
+                    stockState.stokAwal -
+                    stockState.qtyRequired;
+
+                stockState.currentLedgerStock =
+                    stockState.stokAwal;
+
+                updatedStocks.push({
+                    barangId :
+                        stockState.barangId,
+                    stokAwal :
+                        stockState.stokAwal,
+                    stokAkhir :
+                        stockState.stokAkhir
+                });
+
+            }
+
+            const ledgerPlans = [];
+
+            for(
+                let i = 0;
+                i < newLines.length;
+                i++
+            ){
+
+                const line =
+                    newLines[i];
+
+                const stockState =
+                    stockStateByBarangId[line.barangId];
+
+                const stokAwal =
+                    stockState.currentLedgerStock;
+
+                const stokAkhir =
+                    stokAwal - line.qty;
+
+                stockState.currentLedgerStock =
+                    stokAkhir;
+
+                ledgerPlans.push({
+                    line :
+                        line,
+                    stokAwal :
+                        stokAwal,
+                    stokAkhir :
+                        stokAkhir
+                });
+
+            }
+
+            for(
+                let i = 0;
+                i < updatedStocks.length;
+                i++
+            ){
+
+                const stock =
+                    updatedStocks[i];
+
+                BarangRepository.updateStockAbsolute(
+                    stock.barangId,
+                    stock.stokAkhir
+                );
+
+            }
+
+            const newResultsBySourceLineId = {};
+
+            for(
+                let i = 0;
+                i < ledgerPlans.length;
+                i++
+            ){
+
+                const ledgerPlan =
+                    ledgerPlans[i];
+
+                const line =
+                    ledgerPlan.line;
+
+                const authoritative =
+                    authoritativeBySourceLineId[
+                        line.sourceLineId
+                    ];
+
+                const stockLedgerId =
+                    RunningNumberService.generate(
+                        DocumentType.STOCK_LEDGER
+                    );
+
+                const result =
+                    this.recordOutLedgerOnly_({
+                        id :
+                            stockLedgerId,
+                        barangId :
+                            line.barangId,
+                        namaBarang :
+                            authoritative.workOrderPart[
+                                COL_WORK_ORDER_PART.NAMA_BARANG_SNAPSHOT
+                            ] || "",
+                        jenisMutasi :
+                            "SERVICE",
+                        referensi :
+                            line.sourceLineId,
+                        stokAwal :
+                            ledgerPlan.stokAwal,
+                        qty :
+                            line.qty,
+                        stokAkhir :
+                            ledgerPlan.stokAkhir,
+                        keterangan :
+                            authoritative.workOrderPart[
+                                COL_WORK_ORDER_PART.CATATAN
+                            ] || "Pemakaian Part Work Order",
+                        admin :
+                            "SYSTEM"
+                    });
+
+                if(!result || result.success !== true){
+
+                    throw new Error(
+                        "Gagal mencatat Stock Ledger canonical WOP: " +
+                        line.sourceLineId
+                    );
+
+                }
+
+                createdLedgerIds.push(stockLedgerId);
+
+                newResultsBySourceLineId[
+                    line.sourceLineId
+                ] = {
+                    success :
+                        true,
+                    alreadyRecorded :
+                        false,
+                    stockLedgerId :
+                        stockLedgerId,
+                    barangId :
+                        line.barangId,
+                    qtyKeluar :
+                        line.qty,
+                    stokAwal :
+                        ledgerPlan.stokAwal,
+                    stokAkhir :
+                        ledgerPlan.stokAkhir,
+                    transaction :
+                        line
+                };
+
+            }
+
+            /**
+             * Stock dan ledger canonical harus sudah
+             * visible sebelum ScriptLock dilepas.
+             * Ini membuat reversal yang menunggu lock
+             * selalu membaca OUT yang sudah committed.
+             */
+            if(newLines.length > 0){
+
+                SpreadsheetApp.flush();
+
+            }
+
+            const results =
+                submittedSourceLineIds.map(
+                    function(sourceLineId){
+
+                        if(newResultsBySourceLineId[sourceLineId]){
+
+                            return newResultsBySourceLineId[
+                                sourceLineId
+                            ];
+
+                        }
+
+                        const existingLine =
+                            plannedBySourceLineId[sourceLineId];
+
+                        return {
+                            success :
+                                true,
+                            alreadyRecorded :
+                                true,
+                            stockLedgerId :
+                                existingLine.stockLedgerId,
+                            barangId :
+                                existingLine.barangId,
+                            qtyKeluar :
+                                existingLine.qty,
+                            transaction :
+                                existingLine
+                        };
+
+                    }
+                );
+
+            return {
+                success :
+                    true,
+                alreadyRecorded :
+                    newLines.length === 0,
+                workOrderId :
+                    workOrderId,
+                totalItem :
+                    results.length,
+                newItemCount :
+                    newLines.length,
+                existingItemCount :
+                    existingLines.length,
+                items :
+                    results
+            };
+
+        }
+        catch(error){
+
+            for(
+                let i = 0;
+                i < updatedStocks.length;
+                i++
+            ){
+
+                const stock =
+                    updatedStocks[i];
+
+                try{
+
+                    BarangRepository.updateStockAbsolute(
+                        stock.barangId,
+                        stock.stokAwal
+                    );
+
+                }
+                catch(rollbackError){
+
+                    Logger.log(
+                        "[CRITICAL CANONICAL WOP STOCK ROLLBACK ERROR] " +
+                        stock.barangId +
+                        " : " + rollbackError.message
+                    );
+
+                }
+
+            }
+
+            for(
+                let i = 0;
+                i < createdLedgerIds.length;
+                i++
+            ){
+
+                try{
+
+                    this.deleteLedgerById_(
+                        createdLedgerIds[i]
+                    );
+
+                }
+                catch(rollbackError){
+
+                    Logger.log(
+                        "[CRITICAL CANONICAL WOP LEDGER ROLLBACK ERROR] " +
+                        createdLedgerIds[i] +
+                        " : " + rollbackError.message
+                    );
+
+                }
+
+            }
+
+            throw new Error(
+                "Canonical WOP batch gagal dan rollback dilakukan. " +
+                error.message
+            );
+
+        }
+        finally{
+
+            lock.releaseLock();
+
+        }
+
+    },
+
 
     /**
      * ============================================

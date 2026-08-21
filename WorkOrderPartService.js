@@ -1458,6 +1458,13 @@ cancel(workOrderPartId){
 
     }
 
+    const lock =
+        LockService.getScriptLock();
+
+    lock.waitLock(30000);
+
+    try{
+
 
     /**
      * ====================================
@@ -1514,10 +1521,18 @@ cancel(workOrderPartId){
      * ====================================
      */
 
+    const reversalAttempt =
+        StockLedgerReversalService
+            .reverseByWorkOrderPartIdNoLock_(
+                workOrderPartId,
+                {
+                    allowNoStockOut :
+                        true
+                }
+            );
+
     const stockOutRecorded =
-        this.isStockOutRecorded(
-            workOrderPartId
-        );
+        reversalAttempt.noStockOut !== true;
 
 
     /**
@@ -1529,20 +1544,10 @@ cancel(workOrderPartId){
      * dahulu sebelum status diubah.
      */
 
-    let reversalResult = null;
-
-
-    if(
+    const reversalResult =
         stockOutRecorded
-    ){
-
-        reversalResult =
-            StockLedgerReversalService
-                .reverseByWorkOrderPartId(
-                    workOrderPartId
-                );
-
-    }
+            ? reversalAttempt
+            : null;
 
 
     /**
@@ -1560,6 +1565,13 @@ cancel(workOrderPartId){
             WorkOrderPartStatus.CANCEL
 
     });
+
+    /**
+     * Status CANCEL harus terlihat sebelum shared
+     * ScriptLock dilepas, agar executor canonical
+     * berikutnya tidak membaca WOP PROGRESS stale.
+     */
+    SpreadsheetApp.flush();
 
 
     /**
@@ -1589,6 +1601,13 @@ cancel(workOrderPartId){
             reversalResult
 
     };
+
+    }
+    finally{
+
+        lock.releaseLock();
+
+    }
 
 },
 

@@ -234,6 +234,72 @@ const StockLedgerRepository = {
       reference
     );
 
+  },
+
+
+  /**
+   * ============================================
+   * FIND BY REFERENCE - FRESH READ
+   * ============================================
+   *
+   * Dipakai hanya pada critical section inventory
+   * yang perlu melihat append ledger dari execution
+   * sebelumnya setelah ScriptLock diperoleh.
+   *
+   * Tidak mengubah kontrak findByReference() lama.
+   * ============================================
+   */
+  findByReferensiFresh(reference) {
+
+    if (!reference) {
+      return [];
+    }
+
+    SpreadsheetApp.flush();
+
+    const activeSpreadsheet =
+      SpreadsheetApp.getActiveSpreadsheet();
+
+    const ss =
+      SpreadsheetApp.openById(
+        activeSpreadsheet.getId()
+      );
+
+    const sh =
+      ss.getSheetByName(
+        CONFIG.SHEET.STOK
+      );
+
+    if (!sh || sh.getLastRow() < 2) {
+      return [];
+    }
+
+    const data =
+      sh
+        .getRange(
+          2,
+          1,
+          sh.getLastRow() - 1,
+          14
+        )
+        .getValues();
+
+    const target =
+      String(reference)
+        .trim();
+
+    return data.filter(row => {
+
+      return (
+        String(
+          row[COL_STOK.REFERENSI]
+        ).trim()
+        ===
+        target
+      );
+
+    });
+
   }
 
 };
