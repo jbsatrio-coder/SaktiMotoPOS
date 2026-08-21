@@ -27,6 +27,10 @@ const TransactionService = {
      */
     saveTransaction(payload){
 
+        if(payload && String(payload.submissionId || "").trim()){
+            return CanonicalSalesProductionService.saveCanonicalDirectSale(payload);
+        }
+
         return SalesService.saveSale(
 
             payload

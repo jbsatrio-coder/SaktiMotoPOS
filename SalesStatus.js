@@ -10,6 +10,8 @@ const SalesStatus = {
 
     DRAFT : "DRAFT",
 
+    POSTING : "POSTING",
+
     LUNAS : "LUNAS",
 
     PIUTANG : "PIUTANG",

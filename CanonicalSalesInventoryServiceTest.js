@@ -152,6 +152,15 @@ function canonicalSalesS3RunFunctional_(){
 
 function runCanonicalSalesS3FunctionalRegressionCli(){ return canonicalSalesS3RunFunctional_(); }
 
+function runCanonicalSalesS3SingleLineSmokeCli(){
+    const barangId=canonicalSalesS3BarangIds_(1)[0],baseline=Number(BarangRepository.getStock(barangId)),plan=canonicalSalesS3Plan_("S5-SMOKE",[{jenis:"BARANG",kode:barangId,qty:1,harga:10000}]);
+    const receipt=CanonicalSalesInventoryService.recordSaleOutBatchAtomic(plan),rows=StockLedgerRepository.findByReferensiFresh(plan.inventoryLines[0].sourceLineId);
+    canonicalSalesS3Assert_(receipt.newItemCount===1&&rows.length===1&&Number(rows[0][COL_STOK.STOKAWAL])===baseline&&Number(rows[0][COL_STOK.STOKAKHIR])===baseline-1,"S3 single-line smoke tidak commit tepat sekali.");
+    canonicalSalesS3Cleanup_(plan);
+    canonicalSalesS3Assert_(Number(BarangRepository.getStock(barangId))===baseline,"S3 single-line smoke cleanup gagal.");
+    return {success:true,test:"CANONICAL_SALES_S3_SINGLE_LINE_SMOKE",barangId:barangId,salesNumber:plan.salesNumber,ledgerId:String(rows[0][COL_STOK.ID]||""),message:"PASS"};
+}
+
 function runCanonicalSalesS3FunctionalWithStatusCli(){
     const key = "CANONICAL_SALES:S3:FUNCTIONAL";
     const properties = PropertiesService.getScriptProperties();

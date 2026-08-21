@@ -68,6 +68,15 @@ window.onload = function () {
 };
 
 const txtPayment = document.getElementById("paymentAmount");
+const txtDiscount = document.getElementById("discountValue");
+const discountType = document.getElementById("discountType");
+
+function getDiscountNominal_(){
+  const subtotal=POSCart.getGrandTotal(), value=parseNumber(txtDiscount.value);
+  return discountType.value === "PERCENT" ? Math.round(subtotal * Math.min(100,value) / 100) : Math.min(subtotal,value);
+}
+txtDiscount.addEventListener("input", function(){txtDiscount.value=formatNumber(txtDiscount.value);renderCart();});
+discountType.addEventListener("change", renderCart);
 
 txtPayment.addEventListener("input", function(){
 
@@ -273,8 +282,9 @@ function renderCart(){
 document.getElementById("jasaTotal").innerHTML =
     rupiah(POSCart.getJasaTotal());
 
-document.getElementById("grandTotal").innerHTML =
-    rupiah(POSCart.getGrandTotal());
+const discountNominal = getDiscountNominal_();
+document.getElementById("diskonTotal").innerHTML = rupiah(discountNominal);
+document.getElementById("grandTotal").innerHTML = rupiah(POSCart.getGrandTotal() - discountNominal);
 
  updatePayment();
  
@@ -310,7 +320,7 @@ function updatePayment(){
     document.getElementById("paymentAmount").value
 );
 
-  const total = POSCart.getGrandTotal();
+  const total = POSCart.getGrandTotal() - getDiscountNominal_();
 
   const kembali = bayar - total;
 
@@ -335,6 +345,9 @@ function saveTransaction() {
 
     submissionId: currentSalesSubmissionId,
 
+    discountType: discountType.value,
+    discountValue: parseNumber(txtDiscount.value),
+
     pelanggan: POSState.pelanggan,
 
     kendaraan: POSState.kendaraan,
@@ -351,6 +364,9 @@ function saveTransaction() {
         POSState.transaksi.metodeBayar,
 
       diskonNota: 0,
+
+      discountType: discountType.value,
+      discountValue: parseNumber(txtDiscount.value),
 
       bayar: parseNumber(
     document.getElementById("paymentAmount").value
@@ -409,6 +425,7 @@ function resetPOS(){
 
     // Reset pembayaran
     document.getElementById("paymentAmount").value = "";
+    document.getElementById("discountValue").value = "";
 
     // Kosongkan keranjang
     POSCart.clear();
@@ -433,7 +450,7 @@ function updateSaveButton(){
 
     if (!btn) return;
 
-    const total = POSCart.getGrandTotal();
+    const total = POSCart.getGrandTotal() - getDiscountNominal_();
 
    const bayar = parseNumber(
     document.getElementById("paymentAmount").value

@@ -121,6 +121,16 @@ const PenjualanRepository = {
     sheet.getRange(sheet.getLastRow() + 1, 1, rows.length, sheet.getLastColumn()).setValues(rows);
   },
 
+  updateCanonicalStatus(noTransaksi, status, updatedAt){
+    const sheet=this.getHeaderSheet(), columns=this.getColumnMap_(sheet), record=this.findBySalesNumber(noTransaksi);
+    if(!record){ throw new Error("Sales canonical tidak ditemukan: " + noTransaksi); }
+    const rows=sheet.getRange(2,1,sheet.getLastRow()-1,sheet.getLastColumn()).getValues();
+    const index=rows.findIndex(function(row){return String(row[columns.NoTransaksi]||"").trim()===String(noTransaksi).trim();});
+    sheet.getRange(index+2,columns.Status+1).setValue(status);
+    sheet.getRange(index+2,columns.UpdatedAt+1).setValue(updatedAt||new Date());
+    return true;
+  },
+
   /**
    * Simpan Header Penjualan
    */
