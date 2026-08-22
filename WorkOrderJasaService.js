@@ -13,6 +13,20 @@ const WorkOrderJasaService = {
         Permission.EDIT_WO
     );
 
+    if(!request || !request.workOrderId){
+        this.validate(request);
+    }
+
+    const workOrder = this.loadWorkOrder(request);
+
+    if(!workOrder){
+        this.validate(request);
+    }
+
+    if(WorkOrderRepository.isWorkOrderSettled(request.workOrderId)){
+        throw new Error("WORK_ORDER_ALREADY_SETTLED");
+    }
+
     this.validate(request);
 
     /**
@@ -39,12 +53,6 @@ if(
     );
 
 }
-
-        const workOrder =
-
-            this.loadWorkOrder(
-                request
-            );
 
         const jasa =
 
@@ -164,6 +172,10 @@ if(
             request.workOrderJasaId
         );
 
+    }
+
+    if(WorkOrderRepository.isWorkOrderSettled(row[COL_WO_JASA.WORK_ORDER_ID])){
+        throw new Error("WORK_ORDER_ALREADY_SETTLED");
     }
 
 
@@ -684,6 +696,14 @@ PermissionService.require(
 
     }
 
+    if(WorkOrderRepository.isWorkOrderSettled(row[COL_WO_JASA.WORK_ORDER_ID])){
+        throw new Error("WORK_ORDER_ALREADY_SETTLED");
+    }
+
+    if(WorkOrderRepository.isWorkOrderSettled(row[COL_WO_JASA.WORK_ORDER_ID])){
+        throw new Error("WORK_ORDER_ALREADY_SETTLED");
+    }
+
 
     /**
      * ========================================
@@ -882,6 +902,10 @@ PermissionService.require(
             workOrderJasaId
         );
 
+    }
+
+    if(WorkOrderRepository.isWorkOrderSettled(row[COL_WO_JASA.WORK_ORDER_ID])){
+        throw new Error("WORK_ORDER_ALREADY_SETTLED");
     }
 
 

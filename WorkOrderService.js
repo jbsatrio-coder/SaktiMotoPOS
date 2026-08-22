@@ -451,6 +451,10 @@ changeStatus(
 
     }
 
+    if(WorkOrderRepository.isWorkOrderSettled(workOrderId) && nextStatus !== WorkOrderStatus.SUDAH_DIAMBIL){
+        throw new Error("WORK_ORDER_ALREADY_SETTLED");
+    }
+
 
     /**
      * ========================================
@@ -899,6 +903,5 @@ changeStatus(
 },
 
 }
-
 
 

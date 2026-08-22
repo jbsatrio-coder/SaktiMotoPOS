@@ -39,6 +39,13 @@ const PenjualanRepository = {
       transactionId : columns.TransactionId === undefined ? "" : row[columns.TransactionId] || "",
       payloadFingerprint : columns.PayloadFingerprint === undefined ? "" : row[columns.PayloadFingerprint] || "",
       status : row[columns.Status] || "",
+      workOrder : columns.WorkOrder === undefined ? "" : row[columns.WorkOrder] || "",
+      subtotal : columns.Subtotal === undefined ? 0 : row[columns.Subtotal] || 0,
+      discount : columns.DiskonNota === undefined ? 0 : row[columns.DiskonNota] || 0,
+      grandTotal : columns.GrandTotal === undefined ? 0 : row[columns.GrandTotal] || 0,
+      amountPaid : columns.Bayar === undefined ? 0 : row[columns.Bayar] || 0,
+      change : columns.Kembalian === undefined ? 0 : row[columns.Kembalian] || 0,
+      paymentMethod : columns.MetodeBayar === undefined ? "" : row[columns.MetodeBayar] || "",
       row : row
     };
   },
@@ -139,6 +146,23 @@ const PenjualanRepository = {
     sheet.getRange(index+2,columns.Status+1).setValue(status);
     sheet.getRange(index+2,columns.UpdatedAt+1).setValue(updatedAt||new Date());
     return true;
+  },
+
+  updateCanonicalSettlementPaymentState(noTransaksi, state){
+    const sheet=this.getHeaderSheet(), columns=this.getColumnMap_(sheet), record=this.findBySalesNumber(noTransaksi);
+    if(!record){ throw new Error("Sales canonical tidak ditemukan: " + noTransaksi); }
+    this.requireColumns_(columns,["Bayar","Kembalian","MetodeBayar","DiskonNota","GrandTotal","Status","UpdatedAt"],sheet.getName());
+    const rows=sheet.getRange(2,1,sheet.getLastRow()-1,sheet.getLastColumn()).getValues();
+    const index=rows.findIndex(function(row){return String(row[columns.NoTransaksi]||"").trim()===String(noTransaksi).trim();});
+    const input=state||{}, row=index+2;
+    sheet.getRange(row,columns.Bayar+1).setValue(input.amountPaid);
+    sheet.getRange(row,columns.Kembalian+1).setValue(input.change);
+    sheet.getRange(row,columns.MetodeBayar+1).setValue(input.paymentMethod);
+    sheet.getRange(row,columns.DiskonNota+1).setValue(input.discount);
+    sheet.getRange(row,columns.GrandTotal+1).setValue(input.grandTotal);
+    sheet.getRange(row,columns.Status+1).setValue(input.status);
+    sheet.getRange(row,columns.UpdatedAt+1).setValue(input.updatedAt||new Date());
+    return this.findBySalesNumber(noTransaksi);
   },
 
   /**

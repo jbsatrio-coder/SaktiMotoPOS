@@ -56,8 +56,13 @@ const CanonicalSalesInventoryService = {
         let fingerprint;
         try{ fingerprint = JSON.parse(plan.payloadFingerprint); }
         catch(error){ throw new Error("Canonical Sales payload fingerprint tidak valid."); }
-        if(!fingerprint || !Array.isArray(fingerprint.items) ||
-            JSON.stringify(fingerprint) !== plan.payloadFingerprint){
+        const settlementExecution = plan.executionContext === "WORK_ORDER_SETTLEMENT";
+        const validFingerprint = settlementExecution ?
+            !!fingerprint && String(fingerprint.settlementIdentity || "").trim() !== "" &&
+                String(fingerprint.workOrderId || "").trim() !== "" &&
+                Array.isArray(fingerprint.directSaleLines) :
+            !!fingerprint && Array.isArray(fingerprint.items);
+        if(!validFingerprint || JSON.stringify(fingerprint) !== plan.payloadFingerprint){
             throw new Error("Canonical Sales payload fingerprint tidak kanonis.");
         }
 
@@ -163,6 +168,19 @@ const CanonicalSalesInventoryService = {
             alreadyRecorded : items.length > 0 && existingItemCount === items.length,
             items : items
         };
+    },
+
+    verifySaleOutEvidence : function(plan){
+        const lock = LockService.getScriptLock();
+        lock.waitLock(30000);
+        try{
+            const lines=this.validatePlan_(plan), evidence=this.getLedgerEvidence_(plan,lines);
+            if(evidence.some(function(item){return item.matching.length!==1;})){
+                throw new Error("Canonical Sales inventory evidence belum lengkap.");
+            }
+            return this.buildReceipt_(plan,evidence,{});
+        }
+        finally{ lock.releaseLock(); }
     },
 
     recordSaleOutBatchAtomic : function(plan){

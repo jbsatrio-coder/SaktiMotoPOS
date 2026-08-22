@@ -27,6 +27,10 @@ const WorkOrderPartService = {
                 request.workOrderId
             );
 
+        if(WorkOrderRepository.isWorkOrderSettled(request.workOrderId)){
+            throw new Error("WORK_ORDER_ALREADY_SETTLED");
+        }
+
 
         const barang =
             this.loadBarang(
@@ -136,6 +140,10 @@ changeStatus(
             workOrderPartId
         );
 
+    }
+
+    if(WorkOrderRepository.isWorkOrderSettled(workOrderPart[COL_WORK_ORDER_PART.WORK_ORDER_ID])){
+        throw new Error("WORK_ORDER_ALREADY_SETTLED");
     }
 
 
@@ -1350,6 +1358,10 @@ consumeStock(workOrderPartId){
 
     }
 
+    if(WorkOrderRepository.isWorkOrderSettled(workOrderPart[COL_WORK_ORDER_PART.WORK_ORDER_ID])){
+        throw new Error("WORK_ORDER_ALREADY_SETTLED");
+    }
+
 
     /**
      * ====================================
@@ -1485,6 +1497,10 @@ cancel(workOrderPartId){
             workOrderPartId
         );
 
+    }
+
+    if(WorkOrderRepository.isWorkOrderSettled(workOrderPart[COL_WORK_ORDER_PART.WORK_ORDER_ID])){
+        throw new Error("WORK_ORDER_ALREADY_SETTLED");
     }
 
 
@@ -1638,6 +1654,10 @@ consumeStockBatch(workOrderId){
 
     const requestedWorkOrderId =
         String(workOrderId).trim();
+
+    if(WorkOrderRepository.isWorkOrderSettled(requestedWorkOrderId)){
+        throw new Error("WORK_ORDER_ALREADY_SETTLED");
+    }
 
     const plan =
         this.planCanonicalStockOutBatch(
