@@ -7,6 +7,27 @@
 
 const WorkOrderRepository = {
 
+    getColumnMap_:function(){
+        return this.sheet().getRange(1,1,1,this.sheet().getLastColumn()).getDisplayValues()[0].reduce(function(map,name,index){name=String(name||"").trim();if(name)map[name]=index;return map;},{});
+    },
+
+    getSettlementMetadata:function(workOrderId){
+        const row=this.findRowById(workOrderId), columns=this.getColumnMap_();
+        if(!row)return null;
+        const values=this.sheet().getRange(row,1,1,this.sheet().getLastColumn()).getValues()[0], get=function(name){return columns[name]===undefined?"":values[columns[name]]||"";};
+        return {workOrderId:String(values[columns.ID===undefined?0:columns.ID]||""),settlementStatus:get("SettlementStatus"),settlementIdentity:get("SettlementIdentity"),settlementSalesNumber:get("SettlementSalesNumber"),settlementFingerprint:get("SettlementFingerprint"),settledAt:get("SettledAt")};
+    },
+
+    updateSettlementMetadata:function(workOrderId,metadata){
+        const row=this.requireRow(workOrderId), columns=this.getColumnMap_(), required=["SettlementStatus","SettlementIdentity","SettlementSalesNumber","SettlementFingerprint","SettledAt"], missing=required.filter(function(name){return columns[name]===undefined;});
+        if(missing.length)throw new Error("Schema settlement Work Order belum siap: "+missing.join(", "));
+        const data=metadata||{}, values=required.map(function(name){const key=name.charAt(0).toLowerCase()+name.slice(1);return data[key]===undefined||data[key]===null?"":data[key];});
+        this.sheet().getRange(row,columns.SettlementStatus+1,1,required.length).setValues([values]);
+        return this.getSettlementMetadata(workOrderId);
+    },
+
+    isWorkOrderSettled:function(workOrderId){const metadata=this.getSettlementMetadata(workOrderId);return !!metadata&&String(metadata.settlementStatus||"").trim()==="SETTLED";},
+
     /**
      * Mengambil Sheet Work Order
      */

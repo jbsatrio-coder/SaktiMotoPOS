@@ -67,6 +67,12 @@ const PenjualanRepository = {
     return row ? this.getHeaderRecord_(row, columns) : null;
   },
 
+  findSettlementSalesByWorkOrder(workOrderId){
+    const sheet=this.getHeaderSheet(), columns=this.getColumnMap_(sheet), id=String(workOrderId||"").trim();
+    if(!id||columns.WorkOrder===undefined||sheet.getLastRow()<2)return [];
+    return sheet.getRange(2,1,sheet.getLastRow()-1,sheet.getLastColumn()).getValues().filter(function(row){return String(row[columns.WorkOrder]||"").trim()===id;}).map(function(row){return PenjualanRepository.getHeaderRecord_(row,columns);});
+  },
+
   findItemsBySalesNumber(noTransaksi){
     const sheet = this.getDetailSheet();
     const columns = this.getColumnMap_(sheet);
@@ -80,7 +86,10 @@ const PenjualanRepository = {
           itemType : row[columns.Tipe] || "", itemId : row[columns.KodeItem] || "",
           quantity : row[columns.Qty], unitPrice : row[columns.Harga], lineDiscount : row[columns.Diskon],
           subtotal : row[columns.Subtotal], fulfillmentSource : columns.FulfillmentSource === undefined ? "" : row[columns.FulfillmentSource] || "",
-          workOrderPartId : columns.WorkOrderPartId === undefined ? "" : row[columns.WorkOrderPartId] || ""
+          workOrderPartId : columns.WorkOrderPartId === undefined ? "" : row[columns.WorkOrderPartId] || "",
+          sourceDocumentType : columns.SourceDocumentType === undefined ? "" : row[columns.SourceDocumentType] || "",
+          sourceDocumentId : columns.SourceDocumentId === undefined ? "" : row[columns.SourceDocumentId] || "",
+          sourceDocumentLineId : columns.SourceDocumentLineId === undefined ? "" : row[columns.SourceDocumentLineId] || ""
         };
       });
   },
@@ -116,6 +125,7 @@ const PenjualanRepository = {
       put("Subtotal", item.calculatedLineTotal); put("Mekanik", item.mechanicIntent); put("KomisiMekanik", 0);
       put("HargaModal", 0); put("LabaKotor", 0); put("CreatedAt", payload.createdAt); put("UpdatedAt", "");
       put("LineId", item.lineId); put("FulfillmentSource", item.fulfillmentSource); put("WorkOrderPartId", item.workOrderPartId);
+      put("SourceDocumentType", item.sourceDocumentType); put("SourceDocumentId", item.sourceDocumentId); put("SourceDocumentLineId", item.sourceDocumentLineId);
       return row;
     });
     sheet.getRange(sheet.getLastRow() + 1, 1, rows.length, sheet.getLastColumn()).setValues(rows);
