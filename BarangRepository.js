@@ -427,6 +427,13 @@ const BarangRepository = {
         }
 
 
+        const lock =
+            LockService.getScriptLock();
+
+        lock.waitLock(30000);
+
+        try{
+
         const barang =
             document.barang;
 
@@ -535,16 +542,60 @@ const BarangRepository = {
         // SIMPAN
         // ======================================
 
-        sheet
-            .getRange(
-                sheet.getLastRow() + 1,
+        const targetRow =
+            sheet.getLastRow() + 1;
+
+        const targetRange =
+            sheet.getRange(
+                targetRow,
                 1,
                 1,
                 COL_BARANG.TOTAL
-            )
-            .setValues([
+            );
+
+        const occupied =
+            targetRange.getValues()[0]
+                .some(function(value){
+                    return String(value || "").trim() !== "";
+                });
+
+        if(occupied){
+            throw new Error(
+                "Baris append MasterBarang tidak kosong : " + targetRow
+            );
+        }
+
+        try{
+
+            targetRange.setValues([
                 row
             ]);
+
+            if(typeof this.__testAfterWriteFailure === "function"){
+                this.__testAfterWriteFailure(
+                    targetRow,
+                    barang
+                );
+            }
+
+        } catch(error){
+
+            // Apps Script dapat menulis sebagian nilai sebelum data validation
+            // menolak satu cell. Target selalu baris append baru di dalam lock.
+            const persisted =
+                targetRange.getValues()[0]
+                    .some(function(value){
+                        return String(value || "").trim() !== "";
+                    });
+
+            if(persisted){
+                targetRange.clearContent();
+                SpreadsheetApp.flush();
+            }
+
+            throw error;
+
+        }
 
 
         Logger.log(
@@ -561,6 +612,12 @@ const BarangRepository = {
 
 
         return barang;
+
+        } finally {
+
+            lock.releaseLock();
+
+        }
 
     },
     /**

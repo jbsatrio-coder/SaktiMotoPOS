@@ -7,6 +7,15 @@
 
 const BarangValidator = {
 
+    VALID_SATUAN : [
+        "PCS",
+        "BOTOL",
+        "SET",
+        "UNIT",
+        "LITER",
+        "METER"
+    ],
+
     /**
      * ==========================================
      * VALIDATE CREATE
@@ -20,6 +29,10 @@ const BarangValidator = {
         this.validateBarcode(document);
 
         this.validateNama(document);
+
+        this.validateKategori(document);
+
+        this.validateMerk(document);
 
         this.validateSatuan(document);
 
@@ -121,6 +134,68 @@ const BarangValidator = {
 
 
     /**
+     * Kategori disimpan sebagai nama kategori, sesuai pilihan FormBarang
+     * dan data validation MasterBarang.
+     */
+    validateKategori(document){
+
+        const kategori =
+            String(
+                document.barang.kategori || ""
+            ).trim();
+
+        if(!kategori){
+            throw new Error(
+                "Kategori Barang wajib diisi."
+            );
+        }
+
+        const allowed =
+            KategoriService.getAll()
+                .map(function(item){
+                    return String(item.nama || "").trim();
+                });
+
+        if(allowed.indexOf(kategori) === -1){
+            throw new Error(
+                "Kategori Barang tidak valid : " + kategori
+            );
+        }
+
+    },
+
+
+    /**
+     * Merk bersifat opsional, tetapi bila diisi harus merupakan nama
+     * yang tersedia pada MasterMerk dan data validation fisik.
+     */
+    validateMerk(document){
+
+        const merk =
+            String(
+                document.barang.merk || ""
+            ).trim();
+
+        if(!merk){
+            return;
+        }
+
+        const exists =
+            MerkRepository.findAll()
+                .some(function(item){
+                    return String(item.nama || "").trim() === merk;
+                });
+
+        if(!exists){
+            throw new Error(
+                "Merk Barang tidak valid : " + merk
+            );
+        }
+
+    },
+
+
+    /**
      * ==========================================
      * VALIDATE SATUAN
      * ==========================================
@@ -141,6 +216,16 @@ const BarangValidator = {
                 "Satuan Barang wajib diisi."
             );
 
+        }
+
+        if(
+            this.VALID_SATUAN.indexOf(
+                String(barang.satuan).trim()
+            ) === -1
+        ){
+            throw new Error(
+                "Satuan Barang tidak valid."
+            );
         }
 
     },
